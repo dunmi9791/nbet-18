@@ -41,10 +41,10 @@
         'views/disco_bill_views.xml',
         'views/billing_adjustment_views.xml',
         'views/billing_config_views.xml',
-        'views/menus.xml',
         'reports/report_genco_settlement.xml',
         'reports/report_disco_billing.xml',
         'reports/report_cycle_summary.xml',
+        'views/menus.xml',
     ],
     'demo': [
         'demo/demo_data.xml',
