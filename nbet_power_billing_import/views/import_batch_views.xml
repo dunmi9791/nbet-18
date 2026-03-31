@@ -139,7 +139,6 @@
                     <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
                     <filter string="Previewed" name="filter_previewed" domain="[('state','=','previewed')]"/>
                     <filter string="Confirmed" name="filter_confirmed" domain="[('state','=','confirmed')]"/>
-                    <filter string="Has Errors" name="filter_errors" domain="[('error_count','>',0)]"/>
                     <group expand="1" string="Group By">
                         <filter string="Billing Cycle" name="group_cycle" context="{'group_by': 'billing_cycle_id'}"/>
                         <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
