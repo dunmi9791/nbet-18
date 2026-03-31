@@ -1,216 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- ============================================================
-             NBET Power Billing Settings Tab in Odoo Settings
-             ============================================================ -->
         <record id="res_config_settings_view_nbet" model="ir.ui.view">
             <field name="name">res.config.settings.view.nbet</field>
             <field name="model">res.config.settings</field>
-            <field name="inherit_id" ref="base_setup.action_general_configuration"/>
+            <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//div[hasclass('settings')]" position="inside">
-                    <div class="app_settings_block" data-string="NBET Power Billing"
-                         data-key="nbet_power_billing" string="NBET Power Billing"
-                         groups="nbet_power_billing.group_nbet_admin">
+                <app string="NBET Power Billing" name="nbet_power_billing"
+                     groups="nbet_power_billing.group_nbet_admin">
 
-                        <h2>NBET Power Billing</h2>
-                        <p class="text-muted">
-                            Configure accounting accounts, journals, and workflow behavior
-                            for NBET monthly power settlement and billing.
-                        </p>
+                    <!-- ── Workflow ─────────────────────────────────────── -->
+                    <block title="Workflow">
+                        <setting string="DISCO Invoice Mode"
+                                 help="Controls how DISCO invoices handle the subsidy/grant shortfall.&#10;DRO Only: invoice the DRO portion only.&#10;Full + Credit: invoice gross then create a subsidy credit note.&#10;DRO + Subsidy JE: invoice DRO and post a separate government receivable entry.">
+                            <field name="nbet_disco_invoice_mode"/>
+                        </setting>
+                        <setting string="Auto-Post Invoices"
+                                 help="Automatically post (confirm) vendor bills and customer invoices after creation. Leave off to review drafts first.">
+                            <field name="nbet_auto_post_invoices"/>
+                        </setting>
+                        <setting string="Variance Tolerance (%)"
+                                 help="GENCO submitted invoice variances within this % are auto-matched; above it triggers a review flag.">
+                            <field name="nbet_variance_tolerance_percent"/>
+                        </setting>
+                        <setting string="Create Analytic Tags"
+                                 help="Attach analytic dimensions to accounting lines for billing cycle and participant tracking.">
+                            <field name="nbet_create_analytic_tags"/>
+                        </setting>
+                        <setting string="Subsidy Sponsor (Partner)"
+                                 help="The government entity that funds subsidy shortfalls. Required for Invoice Mode 'DRO + Subsidy Receivable JE'.">
+                            <field name="nbet_subsidy_partner_id"/>
+                        </setting>
+                    </block>
 
-                        <!-- ── DISCO Invoice Mode ──────────────────────────── -->
-                        <div class="row mt16 o_settings_container">
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">DISCO Invoice Mode</span>
-                                    <div class="text-muted">
-                                        Controls how DISCO invoices handle the subsidy/grant shortfall.
-                                    </div>
-                                    <div class="content-group mt8">
-                                        <div class="row">
-                                            <label for="nbet_disco_invoice_mode" class="col-lg-3 o_light_label"/>
-                                            <field name="nbet_disco_invoice_mode" class="col-lg-9"/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- ── Revenue Accounts ─────────────────────────────── -->
+                    <block title="Revenue Accounts (DISCO Invoices)">
+                        <setting string="Capacity Revenue Account"
+                                 help="Credit account for capacity charge revenue lines on DISCO invoices.">
+                            <field name="nbet_revenue_capacity_account_id"/>
+                        </setting>
+                        <setting string="Energy Revenue Account"
+                                 help="Credit account for energy charge revenue lines on DISCO invoices.">
+                            <field name="nbet_revenue_energy_account_id"/>
+                        </setting>
+                    </block>
 
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="nbet_auto_post_invoices"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="nbet_auto_post_invoices" class="o_form_label"/>
-                                    <div class="text-muted">
-                                        Automatically post invoices and vendor bills after creation.
-                                        Leave off to review drafts first.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- ── Expense Accounts ─────────────────────────────── -->
+                    <block title="Expense Accounts (GENCO Vendor Bills)">
+                        <setting string="Capacity Expense Account"
+                                 help="Debit account for capacity charge expense lines on GENCO vendor bills.">
+                            <field name="nbet_expense_capacity_account_id"/>
+                        </setting>
+                        <setting string="Energy Expense Account"
+                                 help="Debit account for energy charge expense lines on GENCO vendor bills.">
+                            <field name="nbet_expense_energy_account_id"/>
+                        </setting>
+                    </block>
 
-                        <!-- ── Variance Tolerance ──────────────────────────── -->
-                        <div class="row o_settings_container">
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Variance Tolerance (%)</span>
-                                    <div class="text-muted">
-                                        GENCO submitted invoice variances within this percentage
-                                        are auto-matched; above it triggers review flag.
-                                    </div>
-                                    <div class="content-group mt8">
-                                        <div class="row">
-                                            <label for="nbet_variance_tolerance_percent" class="col-lg-6 o_light_label"/>
-                                            <field name="nbet_variance_tolerance_percent" class="col-lg-3"
-                                                   widget="percentage"/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- ── Subsidy / Grant Accounts ─────────────────────── -->
+                    <block title="Subsidy and Grant Accounts">
+                        <setting string="Subsidy Receivable Account"
+                                 help="Receivable account for government subsidy amounts.">
+                            <field name="nbet_subsidy_receivable_account_id"/>
+                        </setting>
+                        <setting string="Grant Receivable Account"
+                                 help="Receivable account for grant funding amounts.">
+                            <field name="nbet_grant_receivable_account_id"/>
+                        </setting>
+                        <setting string="Import Charge Account"
+                                 help="Account for GENCO import liability charges.">
+                            <field name="nbet_import_charge_account_id"/>
+                        </setting>
+                        <setting string="Adjustment Account"
+                                 help="Account for billing adjustments and prior-period corrections.">
+                            <field name="nbet_adjustment_account_id"/>
+                        </setting>
+                    </block>
 
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="nbet_create_analytic_tags"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="nbet_create_analytic_tags" class="o_form_label"/>
-                                    <div class="text-muted">
-                                        Attach analytic dimensions to accounting lines for
-                                        billing cycle and participant tracking.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- ── Journals ─────────────────────────────────────── -->
+                    <block title="Journals">
+                        <setting string="GENCO Payable Journal"
+                                 help="Purchase journal used for GENCO vendor bills.">
+                            <field name="nbet_payable_journal_id"/>
+                        </setting>
+                        <setting string="DISCO Receivable Journal"
+                                 help="Sales journal used for DISCO customer invoices.">
+                            <field name="nbet_receivable_journal_id"/>
+                        </setting>
+                        <setting string="Subsidy / Grant Journal"
+                                 help="Journal used for subsidy receivable and grant journal entries.">
+                            <field name="nbet_subsidy_journal_id"/>
+                        </setting>
+                    </block>
 
-                        <!-- ── Revenue Accounts ───────────────────────────── -->
-                        <h3 class="mt16">Revenue Accounts (DISCO Invoices)</h3>
-                        <div class="row o_settings_container">
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Capacity Revenue Account</span>
-                                    <div class="text-muted">Credit account for capacity charge revenue lines on DISCO invoices.</div>
-                                    <field name="nbet_revenue_capacity_account_id" class="mt8"/>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Energy Revenue Account</span>
-                                    <div class="text-muted">Credit account for energy charge revenue lines on DISCO invoices.</div>
-                                    <field name="nbet_revenue_energy_account_id" class="mt8"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ── Expense Accounts ───────────────────────────── -->
-                        <h3 class="mt16">Expense Accounts (GENCO Vendor Bills)</h3>
-                        <div class="row o_settings_container">
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Capacity Expense Account</span>
-                                    <div class="text-muted">Debit account for capacity charge expense lines on GENCO bills.</div>
-                                    <field name="nbet_expense_capacity_account_id" class="mt8"/>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Energy Expense Account</span>
-                                    <div class="text-muted">Debit account for energy charge expense lines on GENCO bills.</div>
-                                    <field name="nbet_expense_energy_account_id" class="mt8"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ── Subsidy/Grant Accounts ─────────────────────── -->
-                        <h3 class="mt16">Subsidy and Grant Accounts</h3>
-                        <div class="row o_settings_container">
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Subsidy Receivable Account</span>
-                                    <div class="text-muted">Receivable account for government subsidy amounts.</div>
-                                    <field name="nbet_subsidy_receivable_account_id" class="mt8"/>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Grant Receivable Account</span>
-                                    <div class="text-muted">Receivable account for grant funding amounts.</div>
-                                    <field name="nbet_grant_receivable_account_id" class="mt8"/>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Import Charge Account</span>
-                                    <div class="text-muted">Account for GENCO import liability charges.</div>
-                                    <field name="nbet_import_charge_account_id" class="mt8"/>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Adjustment Account</span>
-                                    <div class="text-muted">Account for billing adjustments and prior-period corrections.</div>
-                                    <field name="nbet_adjustment_account_id" class="mt8"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ── Journals ───────────────────────────────────── -->
-                        <h3 class="mt16">Journals</h3>
-                        <div class="row o_settings_container">
-                            <div class="col-xs-12 col-md-4 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">GENCO Payable Journal</span>
-                                    <div class="text-muted">Journal for GENCO vendor bills.</div>
-                                    <field name="nbet_payable_journal_id" class="mt8"/>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-4 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">DISCO Receivable Journal</span>
-                                    <div class="text-muted">Journal for DISCO customer invoices.</div>
-                                    <field name="nbet_receivable_journal_id" class="mt8"/>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-4 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Subsidy/Grant Journal</span>
-                                    <div class="text-muted">Journal for subsidy and grant journal entries.</div>
-                                    <field name="nbet_subsidy_journal_id" class="mt8"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ── Subsidy Partner ────────────────────────────── -->
-                        <div class="row o_settings_container mt8">
-                            <div class="col-xs-12 col-md-6 o_setting_box">
-                                <div class="o_setting_left_pane"/>
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Subsidy Sponsor (Partner)</span>
-                                    <div class="text-muted">
-                                        The government entity that funds subsidy shortfalls.
-                                        Required for Invoice Mode "DRO + Subsidy Receivable".
-                                    </div>
-                                    <field name="nbet_subsidy_partner_id" class="mt8"/>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </xpath>
+                </app>
             </field>
         </record>
     </data>
