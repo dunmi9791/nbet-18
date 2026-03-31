@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_nbet_genco_monthly_data_list" model="ir.ui.view">
+            <field name="name">nbet.genco.monthly.data.list</field>
+            <field name="model">nbet.genco.monthly.data</field>
+            <field name="arch" type="xml">
+                <list string="GENCO Monthly Data" decoration-warning="has_import_liability">
+                    <field name="billing_cycle_id"/>
+                    <field name="participant_id"/>
+                    <field name="capacity_sent_out_mw" string="Cap. Sent Out (MW)"/>
+                    <field name="net_energy_kwh" string="Net Energy (kWh)" optional="show"/>
+                    <field name="capacity_import_mw" string="Import Cap. (MW)" optional="show"/>
+                    <field name="invoiced_capacity_mw" string="Inv. Cap. (MW)"/>
+                    <field name="invoiced_energy_kwh" string="Inv. Energy (kWh)" optional="show"/>
+                    <field name="has_import_liability" string="Import Liability" widget="boolean"/>
+                    <field name="import_excess_mw" string="Excess (MW)" optional="show"/>
+                    <field name="imported_from_file" optional="show"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_nbet_genco_monthly_data_form" model="ir.ui.view">
+            <field name="name">nbet.genco.monthly.data.form</field>
+            <field name="model">nbet.genco.monthly.data</field>
+            <field name="arch" type="xml">
+                <form string="GENCO Monthly Data">
+                    <sheet>
+                        <div class="alert alert-warning" role="alert"
+                             invisible="not has_import_liability">
+                            <strong>Import Liability:</strong>
+                            This GENCO's import (<field name="capacity_import_mw"/> MW)
+                            exceeds its supply (<field name="capacity_sent_out_mw"/> MW).
+                            Excess: <field name="import_excess_mw"/> MW.
+                            An import liability charge will be computed.
+                        </div>
+                        <group>
+                            <group string="Reference">
+                                <field name="billing_cycle_id"/>
+                                <field name="participant_id"/>
+                                <field name="contract_id" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Supply">
+                                <field name="capacity_sent_out_mw"/>
+                                <field name="gross_energy_kwh"/>
+                                <field name="net_energy_kwh"/>
+                            </group>
+                            <group string="Imports">
+                                <field name="capacity_import_mw"/>
+                                <field name="energy_import_kwh"/>
+                                <field name="net_energy_import_kwh"/>
+                            </group>
+                            <group string="Invoiced Quantities">
+                                <field name="invoiced_capacity_mw"/>
+                                <field name="invoiced_energy_kwh"/>
+                                <field name="gas_fx_rate"/>
+                            </group>
+                            <group string="Import Liability (computed)">
+                                <field name="has_import_liability" readonly="1"/>
+                                <field name="import_excess_mw" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="Source / Import Metadata">
+                            <field name="imported_from_file"/>
+                            <field name="source_file" optional="show"/>
+                            <field name="source_sheet" optional="show"/>
+                            <field name="source_row_no" optional="show"/>
+                            <field name="remarks"/>
+                        </group>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_nbet_genco_monthly_data" model="ir.actions.act_window">
+            <field name="name">GENCO Monthly Data</field>
+            <field name="res_model">nbet.genco.monthly.data</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

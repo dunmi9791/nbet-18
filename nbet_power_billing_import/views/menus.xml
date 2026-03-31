@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ── Sub-menu under NBET Billing > Import ── -->
+        <menuitem id="menu_nbet_import_root"
+                  name="Import"
+                  parent="nbet_power_billing.menu_nbet_root"
+                  sequence="40"
+                  groups="nbet_power_billing.group_nbet_billing_officer"/>
+
+        <menuitem id="menu_nbet_import_batches"
+                  name="Import Batches"
+                  parent="menu_nbet_import_root"
+                  action="action_nbet_import_batch"
+                  sequence="10"
+                  groups="nbet_power_billing.group_nbet_billing_officer"/>
+
+    </data>
+</odoo>

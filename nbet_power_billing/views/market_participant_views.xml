@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ── List View ──────────────────────────────────────────────────── -->
+        <record id="view_nbet_market_participant_list" model="ir.ui.view">
+            <field name="name">nbet.market.participant.list</field>
+            <field name="model">nbet.market.participant</field>
+            <field name="arch" type="xml">
+                <list string="Market Participants" decoration-muted="not active">
+                    <field name="code" string="Code" optional="show"/>
+                    <field name="name"/>
+                    <field name="participant_type" widget="badge"
+                           decoration-success="participant_type == 'genco'"
+                           decoration-info="participant_type == 'disco'"
+                           decoration-warning="participant_type == 'tso'"/>
+                    <field name="partner_id" optional="show"/>
+                    <field name="active" column_invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- ── Form View ──────────────────────────────────────────────────── -->
+        <record id="view_nbet_market_participant_form" model="ir.ui.view">
+            <field name="name">nbet.market.participant.form</field>
+            <field name="model">nbet.market.participant</field>
+            <field name="arch" type="xml">
+                <form string="Market Participant">
+                    <header>
+                        <field name="active" widget="boolean_button" options="{'terminology': 'active'}"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_contracts" type="object"
+                                    class="oe_stat_button" icon="fa-file-text-o"
+                                    invisible="participant_type != 'genco'">
+                                <field name="contract_count" widget="statinfo" string="Contracts"/>
+                            </button>
+                            <button name="action_view_dro" type="object"
+                                    class="oe_stat_button" icon="fa-percent"
+                                    invisible="participant_type != 'disco'">
+                                <field name="dro_count" widget="statinfo" string="DRO Records"/>
+                            </button>
+                        </div>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name" placeholder="Participant Name"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="code" string="Short Code"/>
+                                <field name="participant_type"/>
+                                <field name="partner_id" string="Odoo Contact"
+                                       options="{'no_create_edit': True}"/>
+                            </group>
+                            <group>
+                                <field name="company_id" groups="base.group_multi_company"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Notes" name="notes">
+                                <field name="notes" placeholder="Additional notes about this participant..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <!-- ── Search View ────────────────────────────────────────────────── -->
+        <record id="view_nbet_market_participant_search" model="ir.ui.view">
+            <field name="name">nbet.market.participant.search</field>
+            <field name="model">nbet.market.participant</field>
+            <field name="arch" type="xml">
+                <search string="Market Participants">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <filter string="GENCOs" name="gencos"
+                            domain="[('participant_type','=','genco')]"/>
+                    <filter string="DISCOs" name="discos"
+                            domain="[('participant_type','=','disco')]"/>
+                    <filter string="TSOs" name="tsos"
+                            domain="[('participant_type','=','tso')]"/>
+                    <separator/>
+                    <filter string="Active" name="active" domain="[('active','=',True)]"/>
+                    <filter string="Archived" name="archived" domain="[('active','=',False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Type" name="by_type" context="{'group_by': 'participant_type'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- ── Action ─────────────────────────────────────────────────────── -->
+        <record id="action_nbet_market_participant" model="ir.actions.act_window">
+            <field name="name">Market Participants</field>
+            <field name="res_model">nbet.market.participant</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+        </record>
+
+        <record id="action_nbet_gencos" model="ir.actions.act_window">
+            <field name="name">GENCOs</field>
+            <field name="res_model">nbet.market.participant</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('participant_type','=','genco')]</field>
+            <field name="context">{'default_participant_type': 'genco'}</field>
+        </record>
+
+        <record id="action_nbet_discos" model="ir.actions.act_window">
+            <field name="name">DISCOs</field>
+            <field name="res_model">nbet.market.participant</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('participant_type','=','disco')]</field>
+            <field name="context">{'default_participant_type': 'disco'}</field>
+        </record>
+
+    </data>
+</odoo>

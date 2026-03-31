@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ══════════════════════════════════════════════════════════
+             Import Batch — List View
+        ══════════════════════════════════════════════════════════ -->
+        <record id="view_nbet_import_batch_list" model="ir.ui.view">
+            <field name="name">nbet.import.batch.list</field>
+            <field name="model">nbet.import.batch</field>
+            <field name="arch" type="xml">
+                <list string="Import Batches" default_order="create_date desc"
+                      decoration-danger="state == 'cancelled'"
+                      decoration-success="state == 'confirmed'"
+                      decoration-muted="state == 'draft'">
+                    <field name="name"/>
+                    <field name="billing_cycle_id"/>
+                    <field name="source_filename"/>
+                    <field name="import_date"/>
+                    <field name="imported_by"/>
+                    <field name="total_lines"/>
+                    <field name="error_count" decoration-danger="error_count > 0"/>
+                    <field name="state" widget="badge"
+                           decoration-info="state == 'draft'"
+                           decoration-warning="state == 'previewed'"
+                           decoration-success="state == 'confirmed'"
+                           decoration-danger="state == 'cancelled'"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- ══════════════════════════════════════════════════════════
+             Import Batch — Form View
+        ══════════════════════════════════════════════════════════ -->
+        <record id="view_nbet_import_batch_form" model="ir.ui.view">
+            <field name="name">nbet.import.batch.form</field>
+            <field name="model">nbet.import.batch</field>
+            <field name="arch" type="xml">
+                <form string="Import Batch">
+                    <header>
+                        <button name="action_confirm" string="Confirm" type="object"
+                                class="btn-primary"
+                                invisible="state != 'previewed'"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <button name="action_cancel" string="Cancel" type="object"
+                                invisible="state in ('confirmed', 'cancelled')"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"
+                                confirm="Cancel this import batch?"/>
+                        <button name="action_reset" string="Reset to Draft" type="object"
+                                invisible="state != 'cancelled'"
+                                groups="nbet_power_billing.group_nbet_admin"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,previewed,confirmed"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_lines" type="object"
+                                    class="oe_stat_button" icon="fa-list">
+                                <field name="total_lines" widget="statinfo" string="Lines"/>
+                            </button>
+                            <button name="action_view_errors" type="object"
+                                    class="oe_stat_button" icon="fa-exclamation-triangle"
+                                    invisible="error_count == 0">
+                                <field name="error_count" widget="statinfo" string="Errors"/>
+                            </button>
+                        </div>
+                        <group>
+                            <group string="Batch Details">
+                                <field name="name"/>
+                                <field name="billing_cycle_id" options="{'no_create': True}"/>
+                                <field name="source_filename"/>
+                            </group>
+                            <group string="Import Info">
+                                <field name="import_date"/>
+                                <field name="imported_by"/>
+                            </group>
+                        </group>
+                        <field name="notes" placeholder="Notes about this import batch…"/>
+
+                        <notebook>
+                            <page string="Staged Lines" name="lines">
+                                <field name="line_ids" readonly="1">
+                                    <list>
+                                        <field name="sheet_name"/>
+                                        <field name="row_number"/>
+                                        <field name="record_type"/>
+                                        <field name="participant_code"/>
+                                        <field name="field_label"/>
+                                        <field name="input_type_code"/>
+                                        <field name="raw_value"/>
+                                        <field name="parsed_value_float" digits="[16,4]"/>
+                                        <field name="parsed_value_char"/>
+                                        <field name="status" widget="badge"
+                                               decoration-success="status == 'imported'"
+                                               decoration-warning="status == 'mapped'"
+                                               decoration-danger="status == 'error'"
+                                               decoration-muted="status == 'skipped'"/>
+                                        <field name="error_message" optional="hide"/>
+                                        <field name="target_record_ref" optional="hide"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Errors" name="errors"
+                                  invisible="error_count == 0">
+                                <field name="error_log_ids" readonly="1">
+                                    <list decoration-danger="error_type in ('parse_error','validation_error')"
+                                          decoration-warning="error_type == 'mapping_error'">
+                                        <field name="sheet_name"/>
+                                        <field name="row_number"/>
+                                        <field name="cell_ref"/>
+                                        <field name="error_type"/>
+                                        <field name="raw_value"/>
+                                        <field name="message"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- ══════════════════════════════════════════════════════════
+             Import Batch — Search View
+        ══════════════════════════════════════════════════════════ -->
+        <record id="view_nbet_import_batch_search" model="ir.ui.view">
+            <field name="name">nbet.import.batch.search</field>
+            <field name="model">nbet.import.batch</field>
+            <field name="arch" type="xml">
+                <search string="Search Import Batches">
+                    <field name="name"/>
+                    <field name="billing_cycle_id"/>
+                    <field name="source_filename"/>
+                    <field name="imported_by"/>
+                    <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
+                    <filter string="Previewed" name="filter_previewed" domain="[('state','=','previewed')]"/>
+                    <filter string="Confirmed" name="filter_confirmed" domain="[('state','=','confirmed')]"/>
+                    <filter string="Has Errors" name="filter_errors" domain="[('error_count','>',0)]"/>
+                    <group expand="1" string="Group By">
+                        <filter string="Billing Cycle" name="group_cycle" context="{'group_by': 'billing_cycle_id'}"/>
+                        <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                        <filter string="Import Date" name="group_date" context="{'group_by': 'import_date:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- ══════════════════════════════════════════════════════════
+             Import Batch — Window Action
+        ══════════════════════════════════════════════════════════ -->
+        <record id="action_nbet_import_batch" model="ir.actions.act_window">
+            <field name="name">Import Batches</field>
+            <field name="res_model">nbet.import.batch</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_nbet_import_batch_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No import batches yet.
+                </p>
+                <p>
+                    Use the <strong>Import Billing Workbook</strong> action on a Billing Cycle
+                    to upload and stage data from the NBET Excel workbook.
+                </p>
+            </field>
+        </record>
+
+        <!-- ══════════════════════════════════════════════════════════
+             Smart Button helper actions (called from batch form)
+        ══════════════════════════════════════════════════════════ -->
+        <record id="action_nbet_import_batch_lines" model="ir.actions.act_window">
+            <field name="name">Staged Lines</field>
+            <field name="res_model">nbet.import.batch.line</field>
+            <field name="view_mode">list</field>
+            <field name="domain">[('batch_id', '=', active_id)]</field>
+            <field name="context">{'default_batch_id': active_id}</field>
+        </record>
+
+        <record id="action_nbet_import_batch_errors" model="ir.actions.act_window">
+            <field name="name">Import Errors</field>
+            <field name="res_model">nbet.import.error.log</field>
+            <field name="view_mode">list</field>
+            <field name="domain">[('batch_id', '=', active_id)]</field>
+            <field name="context">{'default_batch_id': active_id}</field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_nbet_disco_bill_list" model="ir.ui.view">
+            <field name="name">nbet.disco.bill.list</field>
+            <field name="model">nbet.disco.bill</field>
+            <field name="arch" type="xml">
+                <list string="DISCO Bills"
+                      decoration-success="state in ('approved','invoiced','paid')"
+                      decoration-warning="state == 'reviewed'">
+                    <field name="billing_cycle_id"/>
+                    <field name="participant_id"/>
+                    <field name="gross_bill_amount" string="Gross Bill"/>
+                    <field name="applied_dro_percent" string="DRO %" widget="percentage"/>
+                    <field name="expected_payable_amount" string="Payable"/>
+                    <field name="subsidy_amount" string="Subsidy" optional="show"/>
+                    <field name="total_invoice_amount" string="Invoice Total"/>
+                    <field name="currency_id" column_invisible="1"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state in ('approved','invoiced','paid')"
+                           decoration-warning="state == 'reviewed'"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_nbet_disco_bill_form" model="ir.ui.view">
+            <field name="name">nbet.disco.bill.form</field>
+            <field name="model">nbet.disco.bill</field>
+            <field name="arch" type="xml">
+                <form string="DISCO Bill">
+                    <header>
+                        <button name="action_review" type="object" string="Review"
+                                invisible="state != 'computed'" class="btn-secondary"/>
+                        <button name="action_approve" type="object" string="Approve"
+                                invisible="state != 'reviewed'" class="btn-primary"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <button name="action_create_invoice" type="object" string="Create Invoice"
+                                invisible="state != 'approved' or invoice_move_id != False"
+                                groups="nbet_power_billing.group_nbet_accounting_officer"/>
+                        <button name="action_view_invoice" type="object" string="View Invoice"
+                                invisible="not invoice_move_id"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,computed,reviewed,approved,invoiced"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_invoice" type="object"
+                                    class="oe_stat_button" icon="fa-file-text-o"
+                                    invisible="not invoice_move_id">
+                                <span class="o_stat_info">
+                                    <span class="o_stat_text">Customer Invoice</span>
+                                </span>
+                            </button>
+                        </div>
+                        <group>
+                            <group string="Reference">
+                                <field name="billing_cycle_id"/>
+                                <field name="participant_id"/>
+                                <field name="compute_date" readonly="1"/>
+                            </group>
+                            <group string="Delivered Quantities">
+                                <field name="capacity_delivered_mw"/>
+                                <field name="energy_delivered_kwh"/>
+                            </group>
+                        </group>
+                        <group string="DRO and Amounts">
+                            <group>
+                                <field name="applied_dro_id"/>
+                                <field name="applied_dro_percent" widget="percentage"/>
+                                <field name="gross_bill_amount" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="expected_payable_amount" readonly="1"/>
+                                <field name="subsidy_amount" readonly="1"/>
+                                <field name="grant_amount"/>
+                                <field name="adjustment_amount"/>
+                                <field name="total_invoice_amount" readonly="1"
+                                       class="oe_subtotal_footer_separator"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Bill Lines" name="lines">
+                                <field name="line_ids">
+                                    <list>
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="line_type" widget="badge"/>
+                                        <field name="description"/>
+                                        <field name="quantity" optional="show"/>
+                                        <field name="rate" optional="show"/>
+                                        <field name="amount"/>
+                                        <field name="is_subsidy_line" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                        <field name="notes"/>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_nbet_disco_bill" model="ir.actions.act_window">
+            <field name="name">DISCO Bills</field>
+            <field name="res_model">nbet.disco.bill</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Report Action -->
+        <record id="action_report_nbet_genco_settlement" model="ir.actions.report">
+            <field name="name">GENCO Settlement Schedule</field>
+            <field name="model">nbet.billing.cycle</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">nbet_power_billing.report_genco_settlement_template</field>
+            <field name="report_file">nbet_power_billing.report_genco_settlement</field>
+            <field name="print_report_name">'NBET GENCO Settlement - ' + object.name</field>
+            <field name="binding_model_id" ref="model_nbet_billing_cycle"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- QWeb Template -->
+        <template id="report_genco_settlement_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="cycle">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <!-- Header -->
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <h2>Nigerian Bulk Electricity Trading (NBET)</h2>
+                                    <h3>Monthly GENCO Settlement Schedule</h3>
+                                    <h4><t t-esc="cycle.name"/></h4>
+                                    <p>
+                                        Period: <t t-esc="cycle.date_start"/> to <t t-esc="cycle.date_end"/>
+                                        &amp;nbsp;|&amp;nbsp;
+                                        Invoice Date: <t t-esc="cycle.invoice_date or 'TBD'"/>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Period Inputs Summary -->
+                            <div class="row mt16">
+                                <div class="col-12">
+                                    <h5>Period Inputs</h5>
+                                    <table class="table table-sm table-bordered">
+                                        <tr>
+                                            <td><strong>Hours in Period</strong></td>
+                                            <td><t t-esc="cycle.hours_in_period"/></td>
+                                            <td><strong>CBN FX Central Rate (₦/$)</strong></td>
+                                            <td><t t-esc="'%.4f' % cycle.fx_central_rate"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>TLF Old</strong></td>
+                                            <td><t t-esc="'%.6f' % cycle.old_tlf"/></td>
+                                            <td><strong>TLF New</strong></td>
+                                            <td><t t-esc="'%.6f' % cycle.new_tlf"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- GENCO Rate Snapshots -->
+                            <div class="row mt16">
+                                <div class="col-12">
+                                    <h5>Applied Rates</h5>
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>GENCO</th>
+                                                <th>Plant Type</th>
+                                                <th>Cap. Rate (₦/MW/h)</th>
+                                                <th>Eng. Rate (₦/kWh)</th>
+                                                <th>FX Used</th>
+                                                <th>TLF Used</th>
+                                                <th>Index Used</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="cycle.rate_snapshot_ids.filtered(lambda r: r.is_current)" t-as="snap">
+                                                <tr>
+                                                    <td><t t-esc="snap.participant_id.name"/></td>
+                                                    <td><t t-esc="snap.contract_id.plant_type or '-'"/></td>
+                                                    <td class="text-end"><t t-esc="'%.4f' % snap.capacity_rate"/></td>
+                                                    <td class="text-end"><t t-esc="'%.6f' % snap.energy_rate"/></td>
+                                                    <td class="text-end"><t t-esc="'%.4f' % snap.fx_rate_used"/></td>
+                                                    <td class="text-end"><t t-esc="'%.6f' % snap.tlf_used"/></td>
+                                                    <td class="text-end"><t t-esc="'%.4f' % snap.index_value_used"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- GENCO Expected Bills -->
+                            <div class="row mt16">
+                                <div class="col-12">
+                                    <h5>Expected Settlement Amounts</h5>
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>GENCO</th>
+                                                <th>Inv. Cap. (MW)</th>
+                                                <th>Inv. Energy (kWh)</th>
+                                                <th>Capacity Charge (₦)</th>
+                                                <th>Energy Charge (₦)</th>
+                                                <th>Import Charge (₦)</th>
+                                                <th>Total Expected (₦)</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="cycle.expected_bill_ids" t-as="bill">
+                                                <tr>
+                                                    <td><t t-esc="bill.participant_id.name"/></td>
+                                                    <td class="text-end"><t t-esc="'%.2f' % bill.invoiced_capacity_mw"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.0f}'.format(bill.invoiced_energy_kwh)"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(bill.capacity_charge_amount)"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(bill.energy_charge_amount)"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(bill.import_charge_amount)"/></td>
+                                                    <td class="text-end"><strong><t t-esc="'{:,.2f}'.format(bill.total_expected_amount)"/></strong></td>
+                                                    <td><t t-esc="bill.state"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-secondary">
+                                                <td colspan="3"><strong>TOTAL</strong></td>
+                                                <td class="text-end">
+                                                    <strong><t t-esc="'{:,.2f}'.format(sum(b.capacity_charge_amount for b in cycle.expected_bill_ids))"/></strong>
+                                                </td>
+                                                <td class="text-end">
+                                                    <strong><t t-esc="'{:,.2f}'.format(sum(b.energy_charge_amount for b in cycle.expected_bill_ids))"/></strong>
+                                                </td>
+                                                <td class="text-end">
+                                                    <strong><t t-esc="'{:,.2f}'.format(sum(b.import_charge_amount for b in cycle.expected_bill_ids))"/></strong>
+                                                </td>
+                                                <td class="text-end">
+                                                    <strong><t t-esc="'{:,.2f}'.format(cycle.total_expected_genco_amount)"/></strong>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="row mt32">
+                                <div class="col-6">
+                                    <p><em>Prepared by NBET Settlement Department</em></p>
+                                    <p>Report generated: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/></p>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <p><em>Cycle Status: <t t-esc="cycle.state"/></em></p>
+                                    <p><em>Cycle Code: <t t-esc="cycle.code"/></em></p>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>

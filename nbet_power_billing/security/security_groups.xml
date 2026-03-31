@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ── Module Category ────────────────────────────────────────────── -->
+        <record id="module_category_nbet" model="ir.module.category">
+            <field name="name">NBET Power Billing</field>
+            <field name="description">NBET Power Settlement and Billing Management</field>
+            <field name="sequence">100</field>
+        </record>
+
+        <!-- ── Groups ────────────────────────────────────────────────────── -->
+
+        <!-- Billing Officer: can create/edit cycles, import data, compute bills -->
+        <record id="group_nbet_billing_officer" model="res.groups">
+            <field name="name">Billing Officer</field>
+            <field name="category_id" ref="module_category_nbet"/>
+            <field name="comment">
+                Can create and edit billing cycles, enter operational data,
+                import Excel workbooks, and compute bills.
+            </field>
+        </record>
+
+        <!-- Billing Reviewer: can review bills and flag variances -->
+        <record id="group_nbet_billing_reviewer" model="res.groups">
+            <field name="name">Billing Reviewer</field>
+            <field name="category_id" ref="module_category_nbet"/>
+            <field name="implied_ids" eval="[(4, ref('group_nbet_billing_officer'))]"/>
+            <field name="comment">
+                Can review computed bills, compare GENCO invoices, and flag variances.
+                Inherits Billing Officer permissions.
+            </field>
+        </record>
+
+        <!-- Settlement Manager: can approve cycles, DRO records, adjustments -->
+        <record id="group_nbet_settlement_manager" model="res.groups">
+            <field name="name">Settlement Manager</field>
+            <field name="category_id" ref="module_category_nbet"/>
+            <field name="implied_ids" eval="[(4, ref('group_nbet_billing_reviewer'))]"/>
+            <field name="comment">
+                Can approve billing cycles, DRO history records, GENCO invoice
+                submissions, and adjustments. Inherits Reviewer permissions.
+            </field>
+        </record>
+
+        <!-- Accounting Officer: can post accounting documents -->
+        <record id="group_nbet_accounting_officer" model="res.groups">
+            <field name="name">Accounting Officer</field>
+            <field name="category_id" ref="module_category_nbet"/>
+            <field name="implied_ids" eval="[(4, ref('group_nbet_settlement_manager'))]"/>
+            <field name="comment">
+                Can create and post Odoo accounting documents (vendor bills,
+                customer invoices, journal entries) for billing cycles.
+                Inherits Settlement Manager permissions.
+            </field>
+        </record>
+
+        <!-- Administrator: full access including reset and config -->
+        <record id="group_nbet_admin" model="res.groups">
+            <field name="name">Administrator</field>
+            <field name="category_id" ref="module_category_nbet"/>
+            <field name="implied_ids" eval="[(4, ref('group_nbet_accounting_officer'))]"/>
+            <field name="comment">
+                Full access including resetting locked cycles, deleting records,
+                and managing billing configuration. Inherits all other groups.
+            </field>
+        </record>
+
+    </data>
+</odoo>

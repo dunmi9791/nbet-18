@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_nbet_genco_invoice_submission_list" model="ir.ui.view">
+            <field name="name">nbet.genco.invoice.submission.list</field>
+            <field name="model">nbet.genco.invoice.submission</field>
+            <field name="arch" type="xml">
+                <list string="GENCO Invoice Submissions"
+                      decoration-danger="state == 'variance' and not is_within_tolerance"
+                      decoration-success="state in ('matched','approved','posted')">
+                    <field name="billing_cycle_id"/>
+                    <field name="participant_id"/>
+                    <field name="invoice_number" optional="show"/>
+                    <field name="invoice_date" optional="show"/>
+                    <field name="submitted_amount" string="Submitted"/>
+                    <field name="variance_amount" string="Variance"/>
+                    <field name="variance_percent" string="Var. %" widget="percentage"/>
+                    <field name="is_within_tolerance" string="OK?" widget="boolean"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state in ('matched','approved','posted')"
+                           decoration-danger="state == 'variance'"
+                           decoration-warning="state == 'under_review'"/>
+                    <field name="currency_id" column_invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_nbet_genco_invoice_submission_form" model="ir.ui.view">
+            <field name="name">nbet.genco.invoice.submission.form</field>
+            <field name="model">nbet.genco.invoice.submission</field>
+            <field name="arch" type="xml">
+                <form string="GENCO Invoice Submission">
+                    <header>
+                        <button name="action_submit" type="object" string="Submit for Review"
+                                invisible="state != 'draft'" class="btn-primary"/>
+                        <button name="action_compare" type="object" string="Compare vs Expected Bill"
+                                invisible="state not in ('submitted','under_review')"/>
+                        <button name="action_under_review" type="object" string="Mark Under Review"
+                                invisible="state != 'submitted'"/>
+                        <button name="action_approve" type="object" string="Approve"
+                                invisible="state not in ('matched','variance','under_review')"
+                                class="btn-primary"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <button name="action_reject" type="object" string="Reject"
+                                invisible="state in ('draft','rejected','posted')"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,submitted,under_review,matched,approved"/>
+                    </header>
+                    <sheet>
+                        <div class="alert alert-danger" role="alert"
+                             invisible="is_within_tolerance or state not in ('variance','matched')">
+                            <strong>Variance Flagged:</strong>
+                            Variance of <field name="variance_amount"/> (
+                            <field name="variance_percent" widget="percentage"/>) exceeds
+                            configured tolerance of <field name="tolerance_percent"/>%.
+                        </div>
+                        <div class="alert alert-success" role="alert"
+                             invisible="not is_within_tolerance or state not in ('matched',)">
+                            <strong>Matched:</strong> Variance is within the configured tolerance.
+                        </div>
+                        <group>
+                            <group string="Invoice Details">
+                                <field name="billing_cycle_id"/>
+                                <field name="participant_id"/>
+                                <field name="invoice_number"/>
+                                <field name="invoice_date"/>
+                                <field name="submitted_amount"/>
+                                <field name="tolerance_percent" string="Tolerance (%)"/>
+                            </group>
+                            <group string="Comparison">
+                                <field name="expected_bill_id"/>
+                                <field name="variance_amount" readonly="1"/>
+                                <field name="variance_percent" readonly="1" widget="percentage"/>
+                                <field name="is_within_tolerance" readonly="1"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Comparison Lines" name="comparison">
+                                <field name="comparison_line_ids">
+                                    <list decoration-danger="status in ('missing','over')"
+                                          decoration-warning="status == 'under'"
+                                          decoration-success="status == 'matched'">
+                                        <field name="submitted_component_name"/>
+                                        <field name="expected_amount"/>
+                                        <field name="submitted_amount"/>
+                                        <field name="variance_amount"/>
+                                        <field name="variance_percent" widget="percentage"/>
+                                        <field name="status" widget="badge"/>
+                                        <field name="notes" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Attachments" name="attachments">
+                                <field name="attachment_ids" widget="many2many_binary"/>
+                            </page>
+                        </notebook>
+                        <field name="review_notes" placeholder="Review notes, variance explanations..."/>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_nbet_genco_invoice_submission" model="ir.actions.act_window">
+            <field name="name">GENCO Invoice Submissions</field>
+            <field name="res_model">nbet.genco.invoice.submission</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

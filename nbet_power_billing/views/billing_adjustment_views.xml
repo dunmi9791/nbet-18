@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_nbet_billing_adjustment_list" model="ir.ui.view">
+            <field name="name">nbet.billing.adjustment.list</field>
+            <field name="model">nbet.billing.adjustment</field>
+            <field name="arch" type="xml">
+                <list string="Billing Adjustments"
+                      decoration-success="approval_state == 'approved'"
+                      decoration-danger="approval_state == 'rejected'">
+                    <field name="billing_cycle_id"/>
+                    <field name="participant_id"/>
+                    <field name="participant_role" optional="show"/>
+                    <field name="adjustment_type" widget="badge"/>
+                    <field name="reference" optional="show"/>
+                    <field name="amount"/>
+                    <field name="currency_id" column_invisible="1"/>
+                    <field name="approval_state" widget="badge"
+                           decoration-success="approval_state == 'approved'"
+                           decoration-danger="approval_state == 'rejected'"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_nbet_billing_adjustment_form" model="ir.ui.view">
+            <field name="name">nbet.billing.adjustment.form</field>
+            <field name="model">nbet.billing.adjustment</field>
+            <field name="arch" type="xml">
+                <form string="Billing Adjustment">
+                    <header>
+                        <button name="action_submit" type="object" string="Submit"
+                                invisible="approval_state != 'draft'" class="btn-secondary"/>
+                        <button name="action_approve" type="object" string="Approve"
+                                invisible="approval_state != 'submitted'" class="btn-primary"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <button name="action_reject" type="object" string="Reject"
+                                invisible="approval_state not in ('submitted',)"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <field name="approval_state" widget="statusbar"
+                               statusbar_visible="draft,submitted,approved"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group string="Reference">
+                                <field name="billing_cycle_id"/>
+                                <field name="participant_id"/>
+                                <field name="participant_role"/>
+                                <field name="reference"/>
+                                <field name="source_document"/>
+                            </group>
+                            <group string="Amount">
+                                <field name="adjustment_type"/>
+                                <field name="amount"/>
+                                <field name="currency_id"/>
+                            </group>
+                            <group string="Approval">
+                                <field name="approved_by" readonly="1"/>
+                                <field name="approved_date" readonly="1"/>
+                            </group>
+                        </group>
+                        <field name="description" placeholder="Describe the adjustment, its basis, and reference documents..."/>
+                        <field name="notes" placeholder="Internal notes..."/>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_nbet_billing_adjustment" model="ir.actions.act_window">
+            <field name="name">Billing Adjustments</field>
+            <field name="res_model">nbet.billing.adjustment</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

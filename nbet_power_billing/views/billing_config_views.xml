@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_nbet_billing_config_form" model="ir.ui.view">
+            <field name="name">nbet.billing.config.form</field>
+            <field name="model">nbet.billing.config</field>
+            <field name="arch" type="xml">
+                <form string="NBET Billing Configuration">
+                    <sheet>
+                        <div class="oe_title">
+                            <h2>NBET Billing Configuration</h2>
+                        </div>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <notebook>
+                            <page string="Revenue Accounts" name="revenue">
+                                <group>
+                                    <field name="revenue_capacity_account_id"/>
+                                    <field name="revenue_energy_account_id"/>
+                                </group>
+                            </page>
+                            <page string="Expense Accounts" name="expense">
+                                <group>
+                                    <field name="expense_capacity_account_id"/>
+                                    <field name="expense_energy_account_id"/>
+                                    <field name="import_charge_account_id"/>
+                                    <field name="adjustment_account_id"/>
+                                </group>
+                            </page>
+                            <page string="Subsidy and Grant" name="subsidy">
+                                <group>
+                                    <field name="subsidy_receivable_account_id"/>
+                                    <field name="grant_receivable_account_id"/>
+                                    <field name="subsidy_partner_id"/>
+                                </group>
+                            </page>
+                            <page string="Journals" name="journals">
+                                <group>
+                                    <field name="payable_journal_id"/>
+                                    <field name="receivable_journal_id"/>
+                                    <field name="subsidy_journal_id"/>
+                                </group>
+                            </page>
+                            <page string="Workflow Settings" name="workflow">
+                                <group>
+                                    <field name="disco_invoice_mode"/>
+                                    <field name="auto_post_invoices"/>
+                                    <field name="variance_tolerance_percent"/>
+                                    <field name="create_analytic_tags"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_nbet_billing_config" model="ir.actions.act_window">
+            <field name="name">Billing Configuration</field>
+            <field name="res_model">nbet.billing.config</field>
+            <field name="view_mode">form</field>
+            <field name="target">current</field>
+        </record>
+    </data>
+</odoo>

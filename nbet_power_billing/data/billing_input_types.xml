@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Standard NBET Billing Input Types
+             noupdate="1" so these are not overwritten on module upgrade.
+             Administrators can add custom types via the UI. -->
+
+        <!-- FX / Exchange Rates -->
+        <record id="input_type_cbn_fx_central" model="nbet.billing.input.type">
+            <field name="name">CBN FX Central Rate</field>
+            <field name="code">CBN_FX_CENTRAL</field>
+            <field name="category">fx</field>
+            <field name="value_type">float</field>
+            <field name="description">Central Bank of Nigeria official central FX rate (₦/$). Used as the primary FX input for GENCO rate adjustments.</field>
+        </record>
+
+        <record id="input_type_cbn_fx_selling" model="nbet.billing.input.type">
+            <field name="name">CBN FX Selling Rate</field>
+            <field name="code">CBN_FX_SELLING</field>
+            <field name="category">fx</field>
+            <field name="value_type">float</field>
+            <field name="description">Central Bank of Nigeria selling rate (₦/$). Used where contracts specify selling-rate-based FX adjustment.</field>
+        </record>
+
+        <record id="input_type_agip_fx" model="nbet.billing.input.type">
+            <field name="name">Agip Exchange Rate</field>
+            <field name="code">AGIP_FX</field>
+            <field name="category">fx</field>
+            <field name="value_type">float</field>
+            <field name="description">Agip-specific exchange rate used for gas cost calculations on relevant GENCO contracts.</field>
+        </record>
+
+        <!-- Price Indices -->
+        <record id="input_type_agip_index" model="nbet.billing.input.type">
+            <field name="name">Agip Quarterly Gas Price Index</field>
+            <field name="code">AGIP_INDEX</field>
+            <field name="category">index</field>
+            <field name="value_type">float</field>
+            <field name="description">Quarterly Agip gas price index. Applied to gas GENCO energy tariff calculations. MAPPING NOTE: Verify update schedule and applicable GENCOs with NBET team.</field>
+        </record>
+
+        <record id="input_type_myto_inflation" model="nbet.billing.input.type">
+            <field name="name">MYTO Inflation Index</field>
+            <field name="code">MYTO_INFLATION</field>
+            <field name="category">index</field>
+            <field name="value_type">float</field>
+            <field name="description">NERC MYTO inflation adjustment index for annual tariff reviews.</field>
+        </record>
+
+        <record id="input_type_gas_price_index" model="nbet.billing.input.type">
+            <field name="name">Gas Price Index</field>
+            <field name="code">GAS_PRICE_INDEX</field>
+            <field name="category">index</field>
+            <field name="value_type">float</field>
+            <field name="description">General gas price index for thermal GENCO cost adjustments.</field>
+        </record>
+
+        <!-- Loss Factors -->
+        <record id="input_type_tlf_old" model="nbet.billing.input.type">
+            <field name="name">TLF Old</field>
+            <field name="code">TLF_OLD</field>
+            <field name="category">loss_factor</field>
+            <field name="value_type">float</field>
+            <field name="description">Transmission Loss Factor — previous period value. Used for contracts specifying old TLF for billing. MAPPING NOTE: Confirm per-contract TLF assignment with NBET team.</field>
+        </record>
+
+        <record id="input_type_tlf_new" model="nbet.billing.input.type">
+            <field name="name">TLF New</field>
+            <field name="code">TLF_NEW</field>
+            <field name="category">loss_factor</field>
+            <field name="value_type">float</field>
+            <field name="description">Transmission Loss Factor — current period value. Default TLF for contracts with uses_tlf_adjustment=True.</field>
+        </record>
+
+        <!-- Operational Parameters -->
+        <record id="input_type_hours_in_month" model="nbet.billing.input.type">
+            <field name="name">Hours in Month</field>
+            <field name="code">HOURS_IN_MONTH</field>
+            <field name="category">operational</field>
+            <field name="value_type">float</field>
+            <field name="description">Total hours in the billing period. Standard: 720 (30 days), varies for months with different day counts.</field>
+        </record>
+
+        <!-- Tariff References -->
+        <record id="input_type_nerc_vesting_rate" model="nbet.billing.input.type">
+            <field name="name">NERC Vesting Contract Rate</field>
+            <field name="code">NERC_VESTING_RATE</field>
+            <field name="category">tariff</field>
+            <field name="value_type">float</field>
+            <field name="description">NERC-published bulk supply vesting contract rate. Used as reference for DISCO bulk tariff calculations.</field>
+        </record>
+
+    </data>
+</odoo>

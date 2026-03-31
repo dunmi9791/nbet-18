@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ══ Root Menu ════════════════════════════════════════════════════ -->
+        <menuitem id="menu_nbet_root"
+                  name="NBET Power Billing"
+                  sequence="200"
+                  web_icon="nbet_power_billing,static/description/icon.png"
+                  groups="nbet_power_billing.group_nbet_billing_officer"/>
+
+        <!-- ══ Billing Cycles (Primary) ═════════════════════════════════════ -->
+        <menuitem id="menu_nbet_billing_cycles"
+                  name="Billing Cycles"
+                  parent="menu_nbet_root"
+                  action="action_nbet_billing_cycle"
+                  sequence="10"/>
+
+        <!-- ══ Settlement ═══════════════════════════════════════════════════ -->
+        <menuitem id="menu_nbet_settlement"
+                  name="Settlement"
+                  parent="menu_nbet_root"
+                  sequence="20"/>
+
+        <menuitem id="menu_nbet_expected_bills"
+                  name="Expected GENCO Bills"
+                  parent="menu_nbet_settlement"
+                  action="action_nbet_genco_expected_bill"
+                  sequence="10"/>
+
+        <menuitem id="menu_nbet_submissions"
+                  name="GENCO Invoice Submissions"
+                  parent="menu_nbet_settlement"
+                  action="action_nbet_genco_invoice_submission"
+                  sequence="20"/>
+
+        <menuitem id="menu_nbet_disco_bills"
+                  name="DISCO Bills"
+                  parent="menu_nbet_settlement"
+                  action="action_nbet_disco_bill"
+                  sequence="30"/>
+
+        <menuitem id="menu_nbet_adjustments"
+                  name="Adjustments"
+                  parent="menu_nbet_settlement"
+                  action="action_nbet_billing_adjustment"
+                  sequence="40"/>
+
+        <!-- ══ Market Participants ═══════════════════════════════════════════ -->
+        <menuitem id="menu_nbet_participants"
+                  name="Market Participants"
+                  parent="menu_nbet_root"
+                  sequence="30"/>
+
+        <menuitem id="menu_nbet_all_participants"
+                  name="All Participants"
+                  parent="menu_nbet_participants"
+                  action="action_nbet_market_participant"
+                  sequence="10"/>
+
+        <menuitem id="menu_nbet_gencos"
+                  name="GENCOs"
+                  parent="menu_nbet_participants"
+                  action="action_nbet_gencos"
+                  sequence="20"/>
+
+        <menuitem id="menu_nbet_discos"
+                  name="DISCOs"
+                  parent="menu_nbet_participants"
+                  action="action_nbet_discos"
+                  sequence="30"/>
+
+        <menuitem id="menu_nbet_contracts"
+                  name="GENCO Contracts"
+                  parent="menu_nbet_participants"
+                  action="action_nbet_genco_contract"
+                  sequence="40"/>
+
+        <menuitem id="menu_nbet_dro"
+                  name="DISCO DRO History"
+                  parent="menu_nbet_participants"
+                  action="action_nbet_disco_dro"
+                  sequence="50"/>
+
+        <!-- ══ Rates ═════════════════════════════════════════════════════════ -->
+        <menuitem id="menu_nbet_rates"
+                  name="Rate Snapshots"
+                  parent="menu_nbet_root"
+                  action="action_nbet_rate_snapshot"
+                  sequence="35"/>
+
+        <!-- ══ Reporting ═════════════════════════════════════════════════════ -->
+        <menuitem id="menu_nbet_reporting"
+                  name="Reporting"
+                  parent="menu_nbet_root"
+                  sequence="40"/>
+
+        <menuitem id="menu_nbet_report_genco"
+                  name="GENCO Settlement Schedule"
+                  parent="menu_nbet_reporting"
+                  action="action_report_nbet_genco_settlement"
+                  sequence="10"/>
+
+        <menuitem id="menu_nbet_report_disco"
+                  name="DISCO Billing Schedule"
+                  parent="menu_nbet_reporting"
+                  action="action_report_nbet_disco_billing"
+                  sequence="20"/>
+
+        <menuitem id="menu_nbet_report_cycle"
+                  name="Cycle Summary"
+                  parent="menu_nbet_reporting"
+                  action="action_report_nbet_cycle_summary"
+                  sequence="30"/>
+
+        <!-- ══ Configuration ═════════════════════════════════════════════════ -->
+        <menuitem id="menu_nbet_config"
+                  name="Configuration"
+                  parent="menu_nbet_root"
+                  sequence="90"
+                  groups="nbet_power_billing.group_nbet_admin"/>
+
+        <menuitem id="menu_nbet_input_types"
+                  name="Billing Input Types"
+                  parent="menu_nbet_config"
+                  action="action_nbet_billing_input_type"
+                  sequence="10"/>
+
+        <menuitem id="menu_nbet_billing_config"
+                  name="Billing Configuration"
+                  parent="menu_nbet_config"
+                  action="action_nbet_billing_config"
+                  sequence="20"/>
+
+    </data>
+</odoo>

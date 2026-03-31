@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_nbet_rate_snapshot_list" model="ir.ui.view">
+            <field name="name">nbet.rate.snapshot.list</field>
+            <field name="model">nbet.rate.snapshot</field>
+            <field name="arch" type="xml">
+                <list string="Rate Snapshots" decoration-muted="not is_current">
+                    <field name="billing_cycle_id"/>
+                    <field name="participant_id"/>
+                    <field name="contract_id" optional="show"/>
+                    <field name="capacity_rate" string="Cap. Rate (₦/MW/h)"/>
+                    <field name="energy_rate" string="Eng. Rate (₦/kWh)"/>
+                    <field name="tlf_used" optional="show"/>
+                    <field name="fx_rate_used" optional="show"/>
+                    <field name="index_value_used" optional="show"/>
+                    <field name="version" optional="show"/>
+                    <field name="is_current" string="Current" widget="boolean"/>
+                    <field name="compute_date" optional="show"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_nbet_rate_snapshot_form" model="ir.ui.view">
+            <field name="name">nbet.rate.snapshot.form</field>
+            <field name="model">nbet.rate.snapshot</field>
+            <field name="arch" type="xml">
+                <form string="Rate Snapshot" create="0" edit="0">
+                    <sheet>
+                        <div class="oe_title">
+                            <h2>
+                                Rate Snapshot — <field name="participant_id" readonly="1"/> /
+                                <field name="billing_cycle_id" readonly="1"/>
+                                (Version <field name="version" readonly="1"/>)
+                            </h2>
+                        </div>
+                        <group>
+                            <group string="Rates Applied">
+                                <field name="capacity_rate" readonly="1"/>
+                                <field name="energy_rate" readonly="1"/>
+                            </group>
+                            <group string="Inputs Used">
+                                <field name="fx_rate_used" readonly="1"/>
+                                <field name="tlf_used" readonly="1"/>
+                                <field name="index_value_used" readonly="1"/>
+                            </group>
+                            <group string="Metadata">
+                                <field name="contract_id" readonly="1"/>
+                                <field name="compute_date" readonly="1"/>
+                                <field name="computed_by" readonly="1"/>
+                                <field name="version" readonly="1"/>
+                                <field name="is_current" readonly="1"/>
+                            </group>
+                        </group>
+                        <separator string="Formula Trace (JSON)"/>
+                        <field name="formula_trace_json" readonly="1" widget="ace" options="{'mode': 'json'}"/>
+                        <field name="notes"/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_nbet_rate_snapshot" model="ir.actions.act_window">
+            <field name="name">Rate Snapshots</field>
+            <field name="res_model">nbet.rate.snapshot</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_is_current': 1}</field>
+        </record>
+    </data>
+</odoo>

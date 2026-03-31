@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_nbet_genco_expected_bill_list" model="ir.ui.view">
+            <field name="name">nbet.genco.expected.bill.list</field>
+            <field name="model">nbet.genco.expected.bill</field>
+            <field name="arch" type="xml">
+                <list string="GENCO Expected Bills"
+                      decoration-success="state in ('approved','posted')"
+                      decoration-warning="state == 'reviewed'">
+                    <field name="billing_cycle_id"/>
+                    <field name="participant_id"/>
+                    <field name="capacity_charge_amount" string="Cap. Charge" optional="show"/>
+                    <field name="energy_charge_amount" string="Eng. Charge" optional="show"/>
+                    <field name="import_charge_amount" string="Import Charge" optional="show"/>
+                    <field name="total_expected_amount" string="Total Expected"/>
+                    <field name="currency_id" column_invisible="1"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state in ('approved','posted')"
+                           decoration-warning="state == 'reviewed'"/>
+                    <field name="compute_date" optional="show"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_nbet_genco_expected_bill_form" model="ir.ui.view">
+            <field name="name">nbet.genco.expected.bill.form</field>
+            <field name="model">nbet.genco.expected.bill</field>
+            <field name="arch" type="xml">
+                <form string="GENCO Expected Bill">
+                    <header>
+                        <button name="action_review" type="object" string="Review"
+                                invisible="state != 'computed'" class="btn-secondary"/>
+                        <button name="action_approve" type="object" string="Approve"
+                                invisible="state != 'reviewed'" class="btn-primary"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <button name="action_reset_to_draft" type="object" string="Reset"
+                                invisible="state in ('draft','posted')"
+                                groups="nbet_power_billing.group_nbet_admin"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,computed,reviewed,approved,posted"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group string="Reference">
+                                <field name="billing_cycle_id"/>
+                                <field name="participant_id"/>
+                                <field name="contract_id"/>
+                                <field name="rate_snapshot_id"/>
+                                <field name="compute_date" readonly="1"/>
+                            </group>
+                            <group string="Quantities">
+                                <field name="invoiced_capacity_mw"/>
+                                <field name="invoiced_energy_kwh"/>
+                            </group>
+                        </group>
+                        <group string="Bill Amounts">
+                            <group>
+                                <field name="capacity_charge_amount"/>
+                                <field name="energy_charge_amount"/>
+                            </group>
+                            <group>
+                                <field name="import_charge_amount"/>
+                                <field name="adjustment_amount"/>
+                                <field name="total_expected_amount" class="oe_subtotal_footer_separator"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Bill Lines" name="lines">
+                                <field name="line_ids">
+                                    <list>
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="line_type" widget="badge"/>
+                                        <field name="description"/>
+                                        <field name="quantity"/>
+                                        <field name="rate"/>
+                                        <field name="amount"/>
+                                        <field name="formula_trace" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Invoice Comparison" name="comparison">
+                                <field name="comparison_line_ids">
+                                    <list decoration-danger="status in ('missing','over')"
+                                          decoration-warning="status == 'under'"
+                                          decoration-success="status == 'matched'">
+                                        <field name="submitted_component_name"/>
+                                        <field name="expected_amount"/>
+                                        <field name="submitted_amount"/>
+                                        <field name="variance_amount"/>
+                                        <field name="variance_percent" widget="percentage"/>
+                                        <field name="status" widget="badge"/>
+                                        <field name="notes" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                        <field name="notes"/>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_nbet_genco_expected_bill" model="ir.actions.act_window">
+            <field name="name">GENCO Expected Bills</field>
+            <field name="res_model">nbet.genco.expected.bill</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ══════════════════════════════════════════════════════════════════
+             NBET Demo Data — April 2024 Billing Cycle
+             Provides a working example with 4 GENCOs and 4 DISCOs.
+             ══════════════════════════════════════════════════════════════════ -->
+
+        <!-- ── res.partner records ────────────────────────────────────────── -->
+        <record id="partner_egbin" model="res.partner">
+            <field name="name">Egbin Power Plc</field>
+            <field name="is_company">1</field>
+            <field name="country_id" ref="base.ng"/>
+        </record>
+        <record id="partner_kainji" model="res.partner">
+            <field name="name">Kainji Hydro Power Plc</field>
+            <field name="is_company">1</field>
+            <field name="country_id" ref="base.ng"/>
+        </record>
+        <record id="partner_afam" model="res.partner">
+            <field name="name">Afam Power Plc</field>
+            <field name="is_company">1</field>
+            <field name="country_id" ref="base.ng"/>
+        </record>
+        <record id="partner_transcorp" model="res.partner">
+            <field name="name">Transcorp Power Ltd</field>
+            <field name="is_company">1</field>
+            <field name="country_id" ref="base.ng"/>
+        </record>
+        <record id="partner_ibedc" model="res.partner">
+            <field name="name">Ibadan Electricity Distribution Company (IBEDC)</field>
+            <field name="is_company">1</field>
+            <field name="country_id" ref="base.ng"/>
+        </record>
+        <record id="partner_ekedc" model="res.partner">
+            <field name="name">Eko Electricity Distribution Company (EKEDC)</field>
+            <field name="is_company">1</field>
+            <field name="country_id" ref="base.ng"/>
+        </record>
+        <record id="partner_ikedc" model="res.partner">
+            <field name="name">Ikeja Electric Plc (IKEDC)</field>
+            <field name="is_company">1</field>
+            <field name="country_id" ref="base.ng"/>
+        </record>
+        <record id="partner_kedco" model="res.partner">
+            <field name="name">Kano Electricity Distribution Company (KEDCO)</field>
+            <field name="is_company">1</field>
+            <field name="country_id" ref="base.ng"/>
+        </record>
+        <record id="partner_govt_subsidy" model="res.partner">
+            <field name="name">Federal Government of Nigeria (Subsidy Sponsor)</field>
+            <field name="is_company">1</field>
+            <field name="country_id" ref="base.ng"/>
+        </record>
+
+        <!-- ── Market Participants ────────────────────────────────────────── -->
+        <record id="participant_egbin" model="nbet.market.participant">
+            <field name="name">Egbin Power Plc</field>
+            <field name="code">EGBIN</field>
+            <field name="participant_type">genco</field>
+            <field name="partner_id" ref="partner_egbin"/>
+        </record>
+        <record id="participant_kainji" model="nbet.market.participant">
+            <field name="name">Kainji Hydro Power Plc</field>
+            <field name="code">KAINJI</field>
+            <field name="participant_type">genco</field>
+            <field name="partner_id" ref="partner_kainji"/>
+        </record>
+        <record id="participant_afam" model="nbet.market.participant">
+            <field name="name">Afam Power Plc</field>
+            <field name="code">AFAM</field>
+            <field name="participant_type">genco</field>
+            <field name="partner_id" ref="partner_afam"/>
+        </record>
+        <record id="participant_transcorp" model="nbet.market.participant">
+            <field name="name">Transcorp Power Ltd</field>
+            <field name="code">TRANSCORP</field>
+            <field name="participant_type">genco</field>
+            <field name="partner_id" ref="partner_transcorp"/>
+        </record>
+        <record id="participant_ibedc" model="nbet.market.participant">
+            <field name="name">Ibadan DISCO (IBEDC)</field>
+            <field name="code">IBEDC</field>
+            <field name="participant_type">disco</field>
+            <field name="partner_id" ref="partner_ibedc"/>
+        </record>
+        <record id="participant_ekedc" model="nbet.market.participant">
+            <field name="name">Eko DISCO (EKEDC)</field>
+            <field name="code">EKEDC</field>
+            <field name="participant_type">disco</field>
+            <field name="partner_id" ref="partner_ekedc"/>
+        </record>
+        <record id="participant_ikedc" model="nbet.market.participant">
+            <field name="name">Ikeja Electric (IKEDC)</field>
+            <field name="code">IKEDC</field>
+            <field name="participant_type">disco</field>
+            <field name="partner_id" ref="partner_ikedc"/>
+        </record>
+        <record id="participant_kedco" model="nbet.market.participant">
+            <field name="name">Kano DISCO (KEDCO)</field>
+            <field name="code">KEDCO</field>
+            <field name="participant_type">disco</field>
+            <field name="partner_id" ref="partner_kedco"/>
+        </record>
+
+        <!-- ── GENCO Contracts ────────────────────────────────────────────── -->
+        <!-- EGBIN: Gas, parametric, FX and TLF adjustment -->
+        <record id="contract_egbin" model="nbet.genco.contract">
+            <field name="contract_name">Egbin Power MYTO Contract 2024</field>
+            <field name="contract_code">EGBIN-2024</field>
+            <field name="participant_id" ref="participant_egbin"/>
+            <field name="plant_type">gas</field>
+            <field name="start_date">2022-01-01</field>
+            <field name="formula_mode">parametric</field>
+            <field name="state">active</field>
+            <field name="base_capacity_tariff">1250.00</field>
+            <field name="base_energy_tariff">2.8500</field>
+            <field name="has_capacity_charge">1</field>
+            <field name="has_energy_charge">1</field>
+            <field name="uses_fx_adjustment">1</field>
+            <field name="base_fx_rate">850.00</field>
+            <field name="uses_tlf_adjustment">1</field>
+            <field name="base_tlf">0.975000</field>
+            <field name="uses_index_adjustment">1</field>
+            <field name="base_index_value">100.00</field>
+        </record>
+
+        <!-- KAINJI: Hydro, fixed rate (no FX/TLF adjustment) -->
+        <record id="contract_kainji" model="nbet.genco.contract">
+            <field name="contract_name">Kainji Hydro MYTO Contract 2024</field>
+            <field name="contract_code">KAINJI-2024</field>
+            <field name="participant_id" ref="participant_kainji"/>
+            <field name="plant_type">hydro</field>
+            <field name="start_date">2022-01-01</field>
+            <field name="formula_mode">fixed</field>
+            <field name="state">active</field>
+            <field name="base_capacity_tariff">900.00</field>
+            <field name="base_energy_tariff">2.1000</field>
+            <field name="has_capacity_charge">1</field>
+            <field name="has_energy_charge">1</field>
+        </record>
+
+        <!-- AFAM: Gas, parametric, FX adjustment only -->
+        <record id="contract_afam" model="nbet.genco.contract">
+            <field name="contract_name">Afam Power MYTO Contract 2024</field>
+            <field name="contract_code">AFAM-2024</field>
+            <field name="participant_id" ref="participant_afam"/>
+            <field name="plant_type">gas</field>
+            <field name="start_date">2022-01-01</field>
+            <field name="formula_mode">parametric</field>
+            <field name="state">active</field>
+            <field name="base_capacity_tariff">1180.00</field>
+            <field name="base_energy_tariff">3.0500</field>
+            <field name="has_capacity_charge">1</field>
+            <field name="has_energy_charge">1</field>
+            <field name="uses_fx_adjustment">1</field>
+            <field name="base_fx_rate">850.00</field>
+            <field name="uses_tlf_adjustment">0</field>
+        </record>
+
+        <!-- TRANSCORP: NIPP, parametric, FX + TLF + index -->
+        <record id="contract_transcorp" model="nbet.genco.contract">
+            <field name="contract_name">Transcorp Power NIPP MYTO Contract 2024</field>
+            <field name="contract_code">TRANSCORP-2024</field>
+            <field name="participant_id" ref="participant_transcorp"/>
+            <field name="plant_type">nipp</field>
+            <field name="start_date">2022-01-01</field>
+            <field name="formula_mode">parametric</field>
+            <field name="state">active</field>
+            <field name="base_capacity_tariff">1350.00</field>
+            <field name="base_energy_tariff">3.2000</field>
+            <field name="has_capacity_charge">1</field>
+            <field name="has_energy_charge">1</field>
+            <field name="uses_fx_adjustment">1</field>
+            <field name="base_fx_rate">850.00</field>
+            <field name="uses_tlf_adjustment">1</field>
+            <field name="base_tlf">0.975000</field>
+            <field name="uses_index_adjustment">1</field>
+            <field name="base_index_value">100.00</field>
+        </record>
+
+        <!-- ── DISCO DRO History ──────────────────────────────────────────── -->
+        <!-- IBEDC: 2023 rate then 2024 rate -->
+        <record id="dro_ibedc_2023" model="nbet.disco.dro">
+            <field name="participant_id" ref="participant_ibedc"/>
+            <field name="effective_from">2023-01-01</field>
+            <field name="effective_to">2023-12-31</field>
+            <field name="dro_percent">45.00</field>
+            <field name="source_reference">NERC-DRO-2023-Q1</field>
+            <field name="approval_state">approved</field>
+            <field name="notes">IBEDC DRO for 2023 per NERC determination.</field>
+        </record>
+        <record id="dro_ibedc_2024" model="nbet.disco.dro">
+            <field name="participant_id" ref="participant_ibedc"/>
+            <field name="effective_from">2024-01-01</field>
+            <field name="dro_percent">48.00</field>
+            <field name="source_reference">NERC-DRO-2024-Q1</field>
+            <field name="approval_state">approved</field>
+            <field name="notes">IBEDC DRO for 2024 — increased from 45% per Q1 review.</field>
+        </record>
+
+        <!-- EKEDC -->
+        <record id="dro_ekedc_2023" model="nbet.disco.dro">
+            <field name="participant_id" ref="participant_ekedc"/>
+            <field name="effective_from">2023-01-01</field>
+            <field name="effective_to">2023-12-31</field>
+            <field name="dro_percent">55.00</field>
+            <field name="source_reference">NERC-DRO-2023-Q1</field>
+            <field name="approval_state">approved</field>
+        </record>
+        <record id="dro_ekedc_2024" model="nbet.disco.dro">
+            <field name="participant_id" ref="participant_ekedc"/>
+            <field name="effective_from">2024-01-01</field>
+            <field name="dro_percent">58.00</field>
+            <field name="source_reference">NERC-DRO-2024-Q1</field>
+            <field name="approval_state">approved</field>
+        </record>
+
+        <!-- IKEDC -->
+        <record id="dro_ikedc_2024" model="nbet.disco.dro">
+            <field name="participant_id" ref="participant_ikedc"/>
+            <field name="effective_from">2024-01-01</field>
+            <field name="dro_percent">62.00</field>
+            <field name="source_reference">NERC-DRO-2024-Q1</field>
+            <field name="approval_state">approved</field>
+        </record>
+
+        <!-- KEDCO -->
+        <record id="dro_kedco_2024" model="nbet.disco.dro">
+            <field name="participant_id" ref="participant_kedco"/>
+            <field name="effective_from">2024-01-01</field>
+            <field name="dro_percent">40.00</field>
+            <field name="source_reference">NERC-DRO-2024-Q1</field>
+            <field name="approval_state">approved</field>
+            <field name="notes">KEDCO has lowest DRO due to ongoing collection challenges in northern zone.</field>
+        </record>
+
+        <!-- ── Billing Cycle: April 2024 ──────────────────────────────────── -->
+        <record id="cycle_apr2024" model="nbet.billing.cycle">
+            <field name="name">April 2024</field>
+            <field name="code">2024-04</field>
+            <field name="date_start">2024-04-01</field>
+            <field name="date_end">2024-04-30</field>
+            <field name="invoice_date">2024-05-15</field>
+            <field name="hours_in_period">720.0</field>
+            <field name="old_tlf">0.975000</field>
+            <field name="new_tlf">0.968000</field>
+            <field name="fx_central_rate">1450.00</field>
+            <field name="fx_selling_rate">1485.00</field>
+            <field name="state">draft</field>
+            <field name="notes">April 2024 — Demo billing cycle. Import Excel workbook to populate operational data, then compute rates and bills.</field>
+        </record>
+
+        <!-- ── Billing Cycle Inputs for April 2024 ───────────────────────── -->
+        <record id="input_apr2024_fx_central" model="nbet.billing.cycle.input">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="input_type_id" ref="input_type_cbn_fx_central"/>
+            <field name="value_float">1450.00</field>
+            <field name="source_document">CBN Market Rates — April 2024</field>
+            <field name="source_sheet">Inputs</field>
+            <field name="source_cell">B5</field>
+        </record>
+        <record id="input_apr2024_fx_selling" model="nbet.billing.cycle.input">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="input_type_id" ref="input_type_cbn_fx_selling"/>
+            <field name="value_float">1485.00</field>
+            <field name="source_document">CBN Market Rates — April 2024</field>
+            <field name="source_sheet">Inputs</field>
+            <field name="source_cell">B6</field>
+        </record>
+        <record id="input_apr2024_tlf_old" model="nbet.billing.cycle.input">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="input_type_id" ref="input_type_tlf_old"/>
+            <field name="value_float">0.975000</field>
+            <field name="source_document">NBET TLF Schedule 2024</field>
+            <field name="source_sheet">Inputs</field>
+            <field name="source_cell">B8</field>
+        </record>
+        <record id="input_apr2024_tlf_new" model="nbet.billing.cycle.input">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="input_type_id" ref="input_type_tlf_new"/>
+            <field name="value_float">0.968000</field>
+            <field name="source_document">NBET TLF Schedule 2024</field>
+            <field name="source_sheet">Inputs</field>
+            <field name="source_cell">B9</field>
+        </record>
+        <record id="input_apr2024_hours" model="nbet.billing.cycle.input">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="input_type_id" ref="input_type_hours_in_month"/>
+            <field name="value_float">720.0</field>
+            <field name="source_sheet">Inputs</field>
+            <field name="source_cell">B3</field>
+        </record>
+        <record id="input_apr2024_agip_index" model="nbet.billing.cycle.input">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="input_type_id" ref="input_type_agip_index"/>
+            <field name="value_float">112.50</field>
+            <field name="source_document">Agip Q2 2024 Price Index Letter</field>
+            <field name="source_sheet">Inputs</field>
+            <field name="source_cell">B12</field>
+            <field name="remarks">MAPPING NOTE: Confirm whether Q1 or Q2 index applies to April. Verify with NBET team.</field>
+        </record>
+
+        <!-- ── GENCO Monthly Operational Data: April 2024 ────────────────── -->
+        <record id="genco_data_egbin_apr2024" model="nbet.genco.monthly.data">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="participant_id" ref="participant_egbin"/>
+            <field name="capacity_sent_out_mw">900.0</field>
+            <field name="gross_energy_kwh">648000000.0</field>
+            <field name="net_energy_kwh">627840000.0</field>
+            <field name="capacity_import_mw">0.0</field>
+            <field name="energy_import_kwh">0.0</field>
+            <field name="invoiced_capacity_mw">900.0</field>
+            <field name="invoiced_energy_kwh">627840000.0</field>
+            <field name="source_sheet">Inputs</field>
+        </record>
+        <record id="genco_data_kainji_apr2024" model="nbet.genco.monthly.data">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="participant_id" ref="participant_kainji"/>
+            <field name="capacity_sent_out_mw">320.0</field>
+            <field name="gross_energy_kwh">230400000.0</field>
+            <field name="net_energy_kwh">223488000.0</field>
+            <field name="invoiced_capacity_mw">320.0</field>
+            <field name="invoiced_energy_kwh">223488000.0</field>
+            <field name="source_sheet">Inputs</field>
+        </record>
+        <record id="genco_data_afam_apr2024" model="nbet.genco.monthly.data">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="participant_id" ref="participant_afam"/>
+            <field name="capacity_sent_out_mw">580.0</field>
+            <field name="gross_energy_kwh">417600000.0</field>
+            <field name="net_energy_kwh">404472000.0</field>
+            <field name="invoiced_capacity_mw">580.0</field>
+            <field name="invoiced_energy_kwh">404472000.0</field>
+            <field name="source_sheet">Inputs</field>
+        </record>
+        <!-- TRANSCORP: import exceeds supply — triggers import liability -->
+        <record id="genco_data_transcorp_apr2024" model="nbet.genco.monthly.data">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="participant_id" ref="participant_transcorp"/>
+            <field name="capacity_sent_out_mw">450.0</field>
+            <field name="gross_energy_kwh">324000000.0</field>
+            <field name="net_energy_kwh">313632000.0</field>
+            <field name="capacity_import_mw">480.0</field>
+            <field name="energy_import_kwh">345600000.0</field>
+            <field name="invoiced_capacity_mw">450.0</field>
+            <field name="invoiced_energy_kwh">313632000.0</field>
+            <field name="source_sheet">Inputs</field>
+            <field name="remarks">Import (480 MW) exceeds supply (450 MW). Import excess = 30 MW triggers import liability charge.</field>
+        </record>
+
+        <!-- ── DISCO Monthly Operational Data: April 2024 ────────────────── -->
+        <record id="disco_data_ibedc_apr2024" model="nbet.disco.monthly.data">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="participant_id" ref="participant_ibedc"/>
+            <field name="capacity_delivered_mw">250.0</field>
+            <field name="energy_delivered_kwh">180000000.0</field>
+            <field name="applied_dro_percent">48.00</field>
+            <field name="market_allocation_basis">ATC-based allocation per NBET market rules</field>
+        </record>
+        <record id="disco_data_ekedc_apr2024" model="nbet.disco.monthly.data">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="participant_id" ref="participant_ekedc"/>
+            <field name="capacity_delivered_mw">380.0</field>
+            <field name="energy_delivered_kwh">273600000.0</field>
+            <field name="applied_dro_percent">58.00</field>
+            <field name="market_allocation_basis">ATC-based allocation per NBET market rules</field>
+        </record>
+        <record id="disco_data_ikedc_apr2024" model="nbet.disco.monthly.data">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="participant_id" ref="participant_ikedc"/>
+            <field name="capacity_delivered_mw">420.0</field>
+            <field name="energy_delivered_kwh">302400000.0</field>
+            <field name="applied_dro_percent">62.00</field>
+            <field name="market_allocation_basis">ATC-based allocation per NBET market rules</field>
+        </record>
+        <record id="disco_data_kedco_apr2024" model="nbet.disco.monthly.data">
+            <field name="billing_cycle_id" ref="cycle_apr2024"/>
+            <field name="participant_id" ref="participant_kedco"/>
+            <field name="capacity_delivered_mw">180.0</field>
+            <field name="energy_delivered_kwh">129600000.0</field>
+            <field name="applied_dro_percent">40.00</field>
+            <field name="market_allocation_basis">ATC-based allocation per NBET market rules</field>
+        </record>
+
+    </data>
+</odoo>

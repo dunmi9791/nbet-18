@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ── Excel Import Wizard Form View ── -->
+        <record id="view_nbet_excel_import_wizard_form" model="ir.ui.view">
+            <field name="name">nbet.excel.import.wizard.form</field>
+            <field name="model">nbet.excel.import.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Import NBET Billing Workbook">
+                    <field name="state" invisible="1"/>
+                    <field name="batch_id" invisible="1"/>
+
+                    <!-- Step 1: Upload (state = draft) -->
+                    <group invisible="state != 'draft'">
+                        <group string="Step 1 — Select Workbook">
+                            <field name="billing_cycle_id" options="{'no_create': True}"/>
+                            <field name="excel_file" widget="binary" filename="excel_filename"/>
+                            <field name="excel_filename" invisible="1"/>
+                        </group>
+                        <group string="Sheet Mapping">
+                            <field name="map_inputs_sheet"/>
+                            <field name="inputs_sheet_name" invisible="not map_inputs_sheet"/>
+                            <field name="map_rates_sheet"/>
+                            <field name="rates_sheet_name" invisible="not map_rates_sheet"/>
+                        </group>
+                    </group>
+
+                    <!-- Step 2: Preview (state = previewed) -->
+                    <group invisible="state != 'previewed'">
+                        <group string="Step 2 — Review Staged Data">
+                            <field name="billing_cycle_id" readonly="1" options="{'no_create': True}"/>
+                            <field name="excel_filename" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="preview_html" widget="html"
+                           invisible="state != 'previewed'"
+                           readonly="1"
+                           string="Preview (first 50 rows)"/>
+
+                    <!-- Step 3: Done (state = done) -->
+                    <group invisible="state != 'done'">
+                        <group string="Import Complete">
+                            <field name="billing_cycle_id" readonly="1" options="{'no_create': True}"/>
+                            <field name="batch_id" readonly="1" widget="many2one"/>
+                        </group>
+                    </group>
+
+                    <footer>
+                        <!-- Upload step -->
+                        <button name="action_preview"
+                                string="Preview Import"
+                                type="object"
+                                class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <!-- Preview step -->
+                        <button name="action_confirm_import"
+                                string="Confirm &amp; Import"
+                                type="object"
+                                class="btn-primary"
+                                invisible="state != 'previewed'"
+                                confirm="This will overwrite any existing cycle inputs for the selected cycle. Continue?"/>
+                        <button name="action_reset"
+                                string="Back / Re-upload"
+                                type="object"
+                                invisible="state == 'draft'"/>
+                        <button string="Close" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- ── Wizard Launch Action (called from billing cycle form) ── -->
+        <record id="action_nbet_excel_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import Billing Workbook</field>
+            <field name="res_model">nbet.excel.import.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_nbet_excel_import_wizard_form"/>
+            <field name="target">new</field>
+            <field name="context">{'default_billing_cycle_id': active_id}</field>
+            <field name="binding_model_id" ref="nbet_power_billing.model_nbet_billing_cycle"/>
+            <field name="binding_type">action</field>
+            <field name="groups_id" eval="[(4, ref('nbet_power_billing.group_nbet_settlement_manager'))]"/>
+        </record>
+
+    </data>
+</odoo>

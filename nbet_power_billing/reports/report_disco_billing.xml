@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="action_report_nbet_disco_billing" model="ir.actions.report">
+            <field name="name">DISCO Billing Schedule</field>
+            <field name="model">nbet.billing.cycle</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">nbet_power_billing.report_disco_billing_template</field>
+            <field name="report_file">nbet_power_billing.report_disco_billing</field>
+            <field name="print_report_name">'NBET DISCO Billing - ' + object.name</field>
+            <field name="binding_model_id" ref="model_nbet_billing_cycle"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <template id="report_disco_billing_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="cycle">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <h2>Nigerian Bulk Electricity Trading (NBET)</h2>
+                                    <h3>Monthly DISCO Billing Schedule</h3>
+                                    <h4><t t-esc="cycle.name"/></h4>
+                                    <p>Period: <t t-esc="cycle.date_start"/> to <t t-esc="cycle.date_end"/></p>
+                                </div>
+                            </div>
+
+                            <div class="row mt16">
+                                <div class="col-12">
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>DISCO</th>
+                                                <th>Cap. Del. (MW)</th>
+                                                <th>Energy Del. (kWh)</th>
+                                                <th>Gross Bill (₦)</th>
+                                                <th>DRO %</th>
+                                                <th>Expected Payable (₦)</th>
+                                                <th>Subsidy (₦)</th>
+                                                <th>Grant (₦)</th>
+                                                <th>Total Invoice (₦)</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="cycle.disco_bill_ids" t-as="db">
+                                                <tr>
+                                                    <td><t t-esc="db.participant_id.name"/></td>
+                                                    <td class="text-end"><t t-esc="'%.2f' % db.capacity_delivered_mw"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.0f}'.format(db.energy_delivered_kwh)"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(db.gross_bill_amount)"/></td>
+                                                    <td class="text-end"><t t-esc="'%.2f%%' % db.applied_dro_percent"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(db.expected_payable_amount)"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(db.subsidy_amount)"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(db.grant_amount)"/></td>
+                                                    <td class="text-end"><strong><t t-esc="'{:,.2f}'.format(db.total_invoice_amount)"/></strong></td>
+                                                    <td><t t-esc="db.state"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-secondary">
+                                                <td><strong>TOTAL</strong></td>
+                                                <td></td><td></td>
+                                                <td class="text-end"><strong><t t-esc="'{:,.2f}'.format(cycle.total_disco_gross_amount)"/></strong></td>
+                                                <td></td>
+                                                <td class="text-end"><strong><t t-esc="'{:,.2f}'.format(cycle.total_disco_dro_payable)"/></strong></td>
+                                                <td class="text-end"><strong><t t-esc="'{:,.2f}'.format(sum(d.subsidy_amount for d in cycle.disco_bill_ids))"/></strong></td>
+                                                <td class="text-end"><strong><t t-esc="'{:,.2f}'.format(sum(d.grant_amount for d in cycle.disco_bill_ids))"/></strong></td>
+                                                <td class="text-end"><strong><t t-esc="'{:,.2f}'.format(sum(d.total_invoice_amount for d in cycle.disco_bill_ids))"/></strong></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row mt16">
+                                <div class="col-6">
+                                    <strong>Total Subsidy/Grant Exposure:</strong>
+                                    ₦<t t-esc="'{:,.2f}'.format(cycle.total_subsidy_grant_exposure)"/>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <p><em>Report generated: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/></em></p>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>

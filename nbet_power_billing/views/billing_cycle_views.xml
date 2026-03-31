@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ── Billing Cycle List ─────────────────────────────────────────── -->
+        <record id="view_nbet_billing_cycle_list" model="ir.ui.view">
+            <field name="name">nbet.billing.cycle.list</field>
+            <field name="model">nbet.billing.cycle</field>
+            <field name="arch" type="xml">
+                <list string="Billing Cycles"
+                      decoration-success="state in ('approved','posted','locked')"
+                      decoration-warning="state in ('reviewed','calculated')"
+                      decoration-muted="state == 'cancelled'">
+                    <field name="name"/>
+                    <field name="code" optional="show"/>
+                    <field name="date_start"/>
+                    <field name="date_end"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state in ('approved','posted','locked')"
+                           decoration-warning="state in ('reviewed','calculated')"
+                           decoration-info="state == 'input_loaded'"
+                           decoration-muted="state in ('cancelled','draft')"/>
+                    <field name="total_expected_genco_amount" string="GENCO Expected (₦)" optional="show"/>
+                    <field name="total_disco_dro_payable" string="DISCO Payable (₦)" optional="show"/>
+                    <field name="total_subsidy_grant_exposure" string="Subsidy/Grant (₦)" optional="show"/>
+                    <field name="currency_id" column_invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- ── Billing Cycle Form (Main Dashboard) ───────────────────────── -->
+        <record id="view_nbet_billing_cycle_form" model="ir.ui.view">
+            <field name="name">nbet.billing.cycle.form</field>
+            <field name="model">nbet.billing.cycle</field>
+            <field name="arch" type="xml">
+                <form string="Billing Cycle">
+                    <header>
+                        <!-- State transition buttons -->
+                        <button name="action_load_inputs" type="object"
+                                string="Mark Inputs Loaded" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_compute_rates" type="object"
+                                string="Compute Rates"
+                                invisible="state not in ('input_loaded','calculated','reviewed')"/>
+                        <button name="action_compute_genco_bills" type="object"
+                                string="Compute GENCO Bills"
+                                invisible="state not in ('input_loaded','calculated','reviewed')"/>
+                        <button name="action_compute_disco_bills" type="object"
+                                string="Compute DISCO Bills"
+                                invisible="state not in ('input_loaded','calculated','reviewed')"/>
+                        <button name="action_calculate" type="object"
+                                string="Compute All" class="btn-secondary"
+                                invisible="state not in ('input_loaded','calculated')"/>
+                        <button name="action_review" type="object"
+                                string="Mark Reviewed"
+                                invisible="state != 'calculated'"/>
+                        <button name="action_approve" type="object"
+                                string="Approve" class="btn-primary"
+                                invisible="state != 'reviewed'"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <button name="action_post" type="object"
+                                string="Post Accounting" class="btn-primary"
+                                invisible="state != 'approved'"
+                                groups="nbet_power_billing.group_nbet_accounting_officer"/>
+                        <button name="action_lock" type="object"
+                                string="Lock Cycle"
+                                invisible="state != 'posted'"
+                                groups="nbet_power_billing.group_nbet_admin"/>
+                        <button name="action_cancel" type="object"
+                                string="Cancel"
+                                invisible="state in ('posted','locked','cancelled')"
+                                groups="nbet_power_billing.group_nbet_admin"/>
+                        <button name="action_reset_to_draft" type="object"
+                                string="Reset to Draft"
+                                invisible="state not in ('cancelled','calculated','reviewed','locked')"
+                                groups="nbet_power_billing.group_nbet_admin"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,input_loaded,calculated,reviewed,approved,posted,locked"/>
+                    </header>
+                    <sheet>
+                        <!-- Smart Buttons -->
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_genco_data" type="object"
+                                    class="oe_stat_button" icon="fa-bolt">
+                                <field name="count_genco_data" widget="statinfo" string="GENCO Data"/>
+                            </button>
+                            <button name="action_view_disco_data" type="object"
+                                    class="oe_stat_button" icon="fa-building">
+                                <field name="count_disco_data" widget="statinfo" string="DISCO Data"/>
+                            </button>
+                            <button name="action_view_expected_bills" type="object"
+                                    class="oe_stat_button" icon="fa-file-text">
+                                <field name="count_expected_bills" widget="statinfo" string="Expected Bills"/>
+                            </button>
+                            <button name="action_view_submissions" type="object"
+                                    class="oe_stat_button" icon="fa-upload">
+                                <field name="count_submissions" widget="statinfo" string="Submissions"/>
+                            </button>
+                            <button name="action_view_disco_bills" type="object"
+                                    class="oe_stat_button" icon="fa-money">
+                                <field name="count_disco_bills" widget="statinfo" string="DISCO Bills"/>
+                            </button>
+                            <button name="action_view_adjustments" type="object"
+                                    class="oe_stat_button" icon="fa-sliders">
+                                <field name="count_adjustments" widget="statinfo" string="Adjustments"/>
+                            </button>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name" placeholder="e.g. April 2024"/></h1>
+                        </div>
+
+                        <!-- Main Fields -->
+                        <group>
+                            <group string="Period">
+                                <field name="code"/>
+                                <field name="date_start"/>
+                                <field name="date_end"/>
+                                <field name="invoice_date"/>
+                                <field name="hours_in_period"/>
+                                <field name="company_id" groups="base.group_multi_company"/>
+                            </group>
+                            <group string="Key Inputs">
+                                <field name="old_tlf" string="TLF Old"/>
+                                <field name="new_tlf" string="TLF New"/>
+                                <field name="fx_central_rate" string="CBN FX Central (₦/$)"/>
+                                <field name="fx_selling_rate" string="CBN FX Selling (₦/$)"/>
+                            </group>
+                        </group>
+
+                        <!-- KPI Summary Row -->
+                        <div class="o_horizontal_separator mt16">Settlement Summary</div>
+                        <div class="row">
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <div class="o_stat_info text-center p-2 border rounded">
+                                    <span class="o_stat_value text-primary">
+                                        <field name="total_expected_genco_amount" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">GENCO Expected</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <div class="o_stat_info text-center p-2 border rounded">
+                                    <span class="o_stat_value text-info">
+                                        <field name="total_submitted_genco_amount" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">GENCO Submitted</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <div class="o_stat_info text-center p-2 border rounded">
+                                    <span class="o_stat_value text-success">
+                                        <field name="total_disco_gross_amount" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">DISCO Gross Bill</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <div class="o_stat_info text-center p-2 border rounded">
+                                    <span class="o_stat_value text-success">
+                                        <field name="total_disco_dro_payable" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">DISCO DRO Payable</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <div class="o_stat_info text-center p-2 border rounded">
+                                    <span class="o_stat_value text-warning">
+                                        <field name="total_subsidy_grant_exposure" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Subsidy/Grant</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <div class="o_stat_info text-center p-2 border rounded">
+                                    <span class="o_stat_value text-danger">
+                                        <field name="total_variance_flagged" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Variance Flagged</span>
+                                </div>
+                            </div>
+                        </div>
+                        <field name="currency_id" invisible="1"/>
+
+                        <!-- Detailed Tabs -->
+                        <notebook>
+                            <page string="Inputs" name="inputs">
+                                <field name="input_line_ids">
+                                    <list editable="bottom">
+                                        <field name="input_type_id"/>
+                                        <field name="computed_display_value" string="Value" readonly="1"/>
+                                        <field name="value_float" optional="show"/>
+                                        <field name="source_document" optional="show"/>
+                                        <field name="source_sheet" optional="show"/>
+                                        <field name="source_cell" optional="show"/>
+                                        <field name="remarks" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="GENCO Operational Data" name="genco_data">
+                                <field name="genco_data_ids">
+                                    <list>
+                                        <field name="participant_id"/>
+                                        <field name="capacity_sent_out_mw" string="Cap. Sent Out (MW)"/>
+                                        <field name="net_energy_kwh" string="Net Energy (kWh)" optional="show"/>
+                                        <field name="capacity_import_mw" string="Import Cap. (MW)" optional="show"/>
+                                        <field name="invoiced_capacity_mw" string="Inv. Cap. (MW)"/>
+                                        <field name="invoiced_energy_kwh" string="Inv. Energy (kWh)" optional="show"/>
+                                        <field name="has_import_liability" string="Import Liability?" widget="boolean"/>
+                                        <field name="imported_from_file" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="DISCO Data" name="disco_data">
+                                <field name="disco_data_ids">
+                                    <list>
+                                        <field name="participant_id"/>
+                                        <field name="capacity_delivered_mw" string="Cap. Delivered (MW)"/>
+                                        <field name="energy_delivered_kwh" string="Energy Del. (kWh)" optional="show"/>
+                                        <field name="applied_dro_percent" string="DRO %" widget="percentage"/>
+                                        <field name="expected_payable_amount" string="Expected Payable"/>
+                                        <field name="subsidy_amount" string="Subsidy" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Rate Snapshots" name="rates">
+                                <field name="rate_snapshot_ids">
+                                    <list>
+                                        <field name="participant_id"/>
+                                        <field name="capacity_rate" string="Cap. Rate (₦/MW/h)"/>
+                                        <field name="energy_rate" string="Eng. Rate (₦/kWh)"/>
+                                        <field name="tlf_used" string="TLF Used" optional="show"/>
+                                        <field name="fx_rate_used" string="FX Used" optional="show"/>
+                                        <field name="index_value_used" string="Index Used" optional="show"/>
+                                        <field name="version" optional="show"/>
+                                        <field name="is_current" string="Current?" widget="boolean" optional="show"/>
+                                        <field name="compute_date" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Expected Bills" name="expected_bills">
+                                <field name="expected_bill_ids">
+                                    <list>
+                                        <field name="participant_id"/>
+                                        <field name="capacity_charge_amount" string="Cap. Charge" optional="show"/>
+                                        <field name="energy_charge_amount" string="Eng. Charge" optional="show"/>
+                                        <field name="import_charge_amount" string="Import Charge" optional="show"/>
+                                        <field name="total_expected_amount" string="Total Expected"/>
+                                        <field name="state" widget="badge"/>
+                                        <field name="compute_date" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Submitted Invoices" name="submissions">
+                                <field name="invoice_submission_ids">
+                                    <list decoration-danger="not is_within_tolerance and state == 'variance'">
+                                        <field name="participant_id"/>
+                                        <field name="invoice_number" optional="show"/>
+                                        <field name="submitted_amount" string="Submitted"/>
+                                        <field name="variance_amount" string="Variance"/>
+                                        <field name="variance_percent" string="Var. %" widget="percentage"/>
+                                        <field name="is_within_tolerance" string="Within Tol." widget="boolean"/>
+                                        <field name="state" widget="badge"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="DISCO Bills" name="disco_bills">
+                                <field name="disco_bill_ids">
+                                    <list>
+                                        <field name="participant_id"/>
+                                        <field name="gross_bill_amount" string="Gross Bill"/>
+                                        <field name="applied_dro_percent" string="DRO %" widget="percentage"/>
+                                        <field name="expected_payable_amount" string="Payable"/>
+                                        <field name="subsidy_amount" string="Subsidy" optional="show"/>
+                                        <field name="total_invoice_amount" string="Invoice Total"/>
+                                        <field name="state" widget="badge"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Adjustments" name="adjustments">
+                                <field name="adjustment_ids">
+                                    <list>
+                                        <field name="participant_id"/>
+                                        <field name="participant_role" optional="show"/>
+                                        <field name="adjustment_type" widget="badge"/>
+                                        <field name="description"/>
+                                        <field name="amount"/>
+                                        <field name="approval_state" widget="badge"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Run Log" name="run_log">
+                                <field name="run_log_ids">
+                                    <list>
+                                        <field name="run_date"/>
+                                        <field name="run_by"/>
+                                        <field name="run_type" widget="badge"/>
+                                        <field name="status" widget="badge"
+                                               decoration-success="status == 'success'"
+                                               decoration-warning="status == 'partial'"
+                                               decoration-danger="status == 'failed'"/>
+                                        <field name="genco_records_affected" optional="show"/>
+                                        <field name="disco_records_affected" optional="show"/>
+                                        <field name="duration_seconds" optional="show"/>
+                                        <field name="notes" optional="show"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Notes and Attachments" name="notes">
+                                <group>
+                                    <field name="notes" nolabel="1"/>
+                                </group>
+                                <field name="attachment_ids" widget="many2many_binary"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <!-- ── Search ─────────────────────────────────────────────────────── -->
+        <record id="view_nbet_billing_cycle_search" model="ir.ui.view">
+            <field name="name">nbet.billing.cycle.search</field>
+            <field name="model">nbet.billing.cycle</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <filter string="Draft" name="draft" domain="[('state','=','draft')]"/>
+                    <filter string="In Progress" name="in_progress"
+                            domain="[('state','in',('input_loaded','calculated','reviewed'))]"/>
+                    <filter string="Approved" name="approved"
+                            domain="[('state','in',('approved','posted','locked'))]"/>
+                    <filter string="Locked" name="locked" domain="[('state','=','locked')]"/>
+                    <separator/>
+                    <filter string="Current Year" name="current_year"
+                            domain="[('date_start','&gt;=', (context_today().strftime('%Y') + '-01-01'))]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="State" name="by_state" context="{'group_by': 'state'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- ── Action ─────────────────────────────────────────────────────── -->
+        <record id="action_nbet_billing_cycle" model="ir.actions.act_window">
+            <field name="name">Billing Cycles</field>
+            <field name="res_model">nbet.billing.cycle</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_in_progress': 1}</field>
+        </record>
+
+    </data>
+</odoo>

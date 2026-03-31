@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_nbet_billing_input_type_list" model="ir.ui.view">
+            <field name="name">nbet.billing.input.type.list</field>
+            <field name="model">nbet.billing.input.type</field>
+            <field name="arch" type="xml">
+                <list string="Billing Input Types" decoration-muted="not active">
+                    <field name="name"/>
+                    <field name="code" optional="show"/>
+                    <field name="category" widget="badge"/>
+                    <field name="value_type" optional="show"/>
+                    <field name="active" column_invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_nbet_billing_input_type_form" model="ir.ui.view">
+            <field name="name">nbet.billing.input.type.form</field>
+            <field name="model">nbet.billing.input.type</field>
+            <field name="arch" type="xml">
+                <form string="Billing Input Type">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="category"/>
+                                <field name="value_type"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <field name="description" placeholder="Description and usage notes..."/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_nbet_billing_input_type" model="ir.actions.act_window">
+            <field name="name">Billing Input Types</field>
+            <field name="res_model">nbet.billing.input.type</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

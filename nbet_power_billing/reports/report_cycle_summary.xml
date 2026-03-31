@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="action_report_nbet_cycle_summary" model="ir.actions.report">
+            <field name="name">Cycle Summary Report</field>
+            <field name="model">nbet.billing.cycle</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">nbet_power_billing.report_cycle_summary_template</field>
+            <field name="report_file">nbet_power_billing.report_cycle_summary</field>
+            <field name="print_report_name">'NBET Cycle Summary - ' + object.name</field>
+            <field name="binding_model_id" ref="model_nbet_billing_cycle"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <template id="report_cycle_summary_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="cycle">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <div class="text-center">
+                                <h2>Nigerian Bulk Electricity Trading (NBET)</h2>
+                                <h3>Monthly Settlement Cycle Summary</h3>
+                                <h4><t t-esc="cycle.name"/> — <t t-esc="cycle.state.upper()"/></h4>
+                            </div>
+
+                            <!-- KPI Summary -->
+                            <h5 class="mt16">Settlement KPIs</h5>
+                            <table class="table table-bordered table-sm">
+                                <tr>
+                                    <td><strong>Total Expected GENCO Payable</strong></td>
+                                    <td class="text-end">₦<t t-esc="'{:,.2f}'.format(cycle.total_expected_genco_amount)"/></td>
+                                    <td><strong>Total GENCO Submitted</strong></td>
+                                    <td class="text-end">₦<t t-esc="'{:,.2f}'.format(cycle.total_submitted_genco_amount)"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Variance Flagged</strong></td>
+                                    <td class="text-end">₦<t t-esc="'{:,.2f}'.format(cycle.total_variance_flagged)"/></td>
+                                    <td><strong>Total Approved GENCO Payable</strong></td>
+                                    <td class="text-end">₦<t t-esc="'{:,.2f}'.format(cycle.total_approved_genco_amount)"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total DISCO Gross Bill</strong></td>
+                                    <td class="text-end">₦<t t-esc="'{:,.2f}'.format(cycle.total_disco_gross_amount)"/></td>
+                                    <td><strong>Total DISCO DRO Payable</strong></td>
+                                    <td class="text-end">₦<t t-esc="'{:,.2f}'.format(cycle.total_disco_dro_payable)"/></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><strong>Total Subsidy/Grant Exposure</strong></td>
+                                    <td colspan="2" class="text-end">₦<t t-esc="'{:,.2f}'.format(cycle.total_subsidy_grant_exposure)"/></td>
+                                </tr>
+                            </table>
+
+                            <!-- GENCO Summary -->
+                            <h5 class="mt16">GENCO Settlement Summary</h5>
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>GENCO</th><th>Total Expected (₦)</th><th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="cycle.expected_bill_ids" t-as="b">
+                                        <tr>
+                                            <td><t t-esc="b.participant_id.name"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(b.total_expected_amount)"/></td>
+                                            <td><t t-esc="b.state"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <!-- DISCO Summary -->
+                            <h5 class="mt16">DISCO Billing Summary</h5>
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>DISCO</th><th>DRO %</th><th>Payable (₦)</th>
+                                        <th>Subsidy (₦)</th><th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="cycle.disco_bill_ids" t-as="d">
+                                        <tr>
+                                            <td><t t-esc="d.participant_id.name"/></td>
+                                            <td class="text-end"><t t-esc="'%.2f%%' % d.applied_dro_percent"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(d.expected_payable_amount)"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(d.subsidy_amount)"/></td>
+                                            <td><t t-esc="d.state"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <!-- Cycle Run Log -->
+                            <h5 class="mt16">Calculation Run Log</h5>
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-secondary">
+                                    <tr><th>Date</th><th>Type</th><th>Status</th><th>By</th><th>Notes</th></tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="cycle.run_log_ids" t-as="log">
+                                        <tr>
+                                            <td><t t-esc="log.run_date"/></td>
+                                            <td><t t-esc="log.run_type"/></td>
+                                            <td><t t-esc="log.status"/></td>
+                                            <td><t t-esc="log.run_by.name"/></td>
+                                            <td><t t-esc="log.notes or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <div class="row mt16">
+                                <div class="col-12 text-end">
+                                    <em>Report generated: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/></em>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>
