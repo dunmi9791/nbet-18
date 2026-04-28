@@ -245,6 +245,30 @@ class TestNbetRateCalculation(TransactionCase):
         self.assertEqual(rate, 0.0)
         self.assertIn('error', trace)
 
+    def test_structured_components_many2one(self):
+        """Test that structured components mode works with the new Many2one component_type"""
+        cap_type = self.env['nbet.genco.component.type'].search([('code', '=', 'capacity')], limit=1)
+        if not cap_type:
+             cap_type = self.env['nbet.genco.component.type'].create({
+                 'name': 'Capacity Charge',
+                 'code': 'capacity',
+             })
+        
+        contract = self._make_contract(formula_mode='structured_components')
+        self.env['nbet.genco.contract.line'].create({
+            'contract_id': contract.id,
+            'component_type_id': cap_type.id,
+            'name': 'Base Capacity',
+            'basis': 'fixed_value',
+            'value': 1200.0,
+        })
+        
+        billing_inputs = {}
+        rate, trace = self.svc._compute_capacity_rate(contract, self.cycle, False, billing_inputs)
+        self.assertEqual(rate, 1200.0)
+        self.assertEqual(len(trace.get('components', [])), 1)
+        self.assertEqual(trace['components'][0]['name'], 'Base Capacity')
+
 
 class TestNbetDiscoBillCalculation(TransactionCase):
     """DISCO bill computations"""

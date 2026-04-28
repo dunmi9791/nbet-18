@@ -126,6 +126,12 @@
                   action="action_nbet_billing_input_type"
                   sequence="10"/>
 
+        <menuitem id="menu_nbet_genco_component_types"
+                  name="Genco Component Types"
+                  parent="menu_nbet_config"
+                  action="action_nbet_genco_component_type"
+                  sequence="15"/>
+
         <menuitem id="menu_nbet_billing_config"
                   name="Billing Configuration"
                   parent="menu_nbet_config"

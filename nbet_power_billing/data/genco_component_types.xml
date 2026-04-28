@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="component_type_capacity" model="nbet.genco.component.type">
+            <field name="name">Capacity Charge</field>
+            <field name="code">capacity</field>
+            <field name="description">Standard capacity payment component.</field>
+        </record>
+        <record id="component_type_energy" model="nbet.genco.component.type">
+            <field name="name">Energy Charge</field>
+            <field name="code">energy</field>
+            <field name="description">Energy payment component (fuel + non-fuel O&amp;M).</field>
+        </record>
+        <record id="component_type_fx" model="nbet.genco.component.type">
+            <field name="name">FX Adjustment</field>
+            <field name="code">fx</field>
+            <field name="description">Foreign exchange rate adjustment component.</field>
+        </record>
+        <record id="component_type_gas" model="nbet.genco.component.type">
+            <field name="name">Gas / Fuel Component</field>
+            <field name="code">gas</field>
+            <field name="description">Component specific to fuel cost indexing.</field>
+        </record>
+        <record id="component_type_index" model="nbet.genco.component.type">
+            <field name="name">Index Adjustment</field>
+            <field name="code">index</field>
+            <field name="description">General inflation or index adjustment.</field>
+        </record>
+        <record id="component_type_tlf" model="nbet.genco.component.type">
+            <field name="name">TLF (Transmission Loss Factor)</field>
+            <field name="code">tlf</field>
+            <field name="description">Transmission loss factor adjustment.</field>
+        </record>
+        <record id="component_type_adjustment" model="nbet.genco.component.type">
+            <field name="name">Adjustment / Penalty</field>
+            <field name="code">adjustment</field>
+            <field name="description">General adjustments or penalties.</field>
+        </record>
+        <record id="component_type_import_charge" model="nbet.genco.component.type">
+            <field name="name">Import Liability Charge</field>
+            <field name="code">import_charge</field>
+            <field name="description">Charge related to imported power liability.</field>
+        </record>
+        <record id="component_type_other" model="nbet.genco.component.type">
+            <field name="name">Other</field>
+            <field name="code">other</field>
+            <field name="description">Miscellaneous components.</field>
+        </record>
+    </data>
+</odoo>

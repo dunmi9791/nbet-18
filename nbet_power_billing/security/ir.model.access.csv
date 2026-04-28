@@ -1,6 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_nbet_market_participant_officer,nbet.market.participant officer,model_nbet_market_participant,group_nbet_billing_officer,1,1,1,0
 access_nbet_market_participant_admin,nbet.market.participant admin,model_nbet_market_participant,group_nbet_admin,1,1,1,1
+access_nbet_genco_component_type_officer,nbet.genco.component.type officer,model_nbet_genco_component_type,group_nbet_billing_officer,1,1,1,0
+access_nbet_genco_component_type_admin,nbet.genco.component.type admin,model_nbet_genco_component_type,group_nbet_admin,1,1,1,1
 access_nbet_genco_contract_officer,nbet.genco.contract officer,model_nbet_genco_contract,group_nbet_billing_officer,1,1,1,0
 access_nbet_genco_contract_admin,nbet.genco.contract admin,model_nbet_genco_contract,group_nbet_admin,1,1,1,1
 access_nbet_genco_contract_line_officer,nbet.genco.contract.line officer,model_nbet_genco_contract_line,group_nbet_billing_officer,1,1,1,0

@@ -21,20 +21,11 @@ class NbetGencoContractLine(models.Model):
     active = fields.Boolean(default=True)
 
     # ── Component Identity ────────────────────────────────────────────────────
-    component_type = fields.Selection(
-        selection=[
-            ('capacity', 'Capacity Charge'),
-            ('energy', 'Energy Charge'),
-            ('fx', 'FX Adjustment'),
-            ('gas', 'Gas / Fuel Component'),
-            ('index', 'Index Adjustment'),
-            ('tlf', 'TLF (Transmission Loss Factor)'),
-            ('adjustment', 'Adjustment / Penalty'),
-            ('import_charge', 'Import Liability Charge'),
-            ('other', 'Other'),
-        ],
+    component_type_id = fields.Many2one(
+        'nbet.genco.component.type',
         string='Component Type', required=True,
     )
+    component_type = fields.Char(related='component_type_id.code', string='Type Code', store=True)
     name = fields.Char(string='Component Name', required=True)
 
     # ── Value Basis ───────────────────────────────────────────────────────────

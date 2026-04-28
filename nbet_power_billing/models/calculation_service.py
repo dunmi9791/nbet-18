@@ -327,7 +327,7 @@ class NbetCalculationService(models.TransientModel):
         rate = 0.0
         components = []
         for line in contract.line_ids.filtered(
-            lambda l: l.component_type == 'capacity' and l.active
+            lambda l: l.component_type_id.code == 'capacity' and l.active
         ):
             val = self._resolve_component_value(line, billing_inputs)
             components.append({'name': line.name, 'value': val, 'basis': line.basis})
@@ -369,7 +369,7 @@ class NbetCalculationService(models.TransientModel):
         elif mode == 'python_expression':
             ctx = self._build_eval_context(contract, cycle, monthly_data, billing_inputs)
             formula_line = contract.line_ids.filtered(
-                lambda l: l.component_type == 'energy' and l.basis == 'formula' and l.active
+                lambda l: l.component_type_id.code == 'energy' and l.basis == 'formula' and l.active
             )[:1]
             expression = formula_line.formula_expression if formula_line else None
             if expression:
@@ -386,7 +386,7 @@ class NbetCalculationService(models.TransientModel):
             rate = 0.0
             components = []
             for line in contract.line_ids.filtered(
-                lambda l: l.component_type == 'energy' and l.active
+                lambda l: l.component_type_id.code == 'energy' and l.active
             ):
                 val = self._resolve_component_value(line, billing_inputs)
                 components.append({'name': line.name, 'value': val})

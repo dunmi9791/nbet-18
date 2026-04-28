@@ -1,4 +1,5 @@
 from . import market_participant
+from . import genco_component_type
 from . import genco_contract
 from . import genco_contract_line
 from . import disco_dro

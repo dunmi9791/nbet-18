@@ -98,7 +98,7 @@
                                 <field name="line_ids">
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
-                                        <field name="component_type"/>
+                                        <field name="component_type_id"/>
                                         <field name="name"/>
                                         <field name="basis"/>
                                         <field name="value" optional="show"/>
