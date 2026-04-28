@@ -94,71 +94,91 @@
                                     </group>
                                 </group>
                             </page>
-                            <page string="MYTO Hydro Rates" name="myto_hydro_rates"
-                                  invisible="formula_mode != 'myto_hydro'">
-                                <!-- Fixed inputs: Column D (MYTO 2016 base values) -->
-                                <group string="Base MYTO Rates (Column D — MYTO 2016)">
-                                    <group string="Index Parameters">
-                                        <field name="myto_base_fx_rate"
-                                               string="USD/Naira FX Rate (₦/$)"/>
-                                        <field name="myto_base_cpi"
-                                               string="US CPI Index"/>
-                                    </group>
-                                    <group string="Component Base Rates">
-                                        <field name="myto_base_fixed_om"
-                                               string="Fixed O&amp;M (₦/MW/Hr)"/>
-                                        <field name="myto_base_variable_om"
-                                               string="Variable O&amp;M (₦/MWh)"/>
-                                        <field name="myto_base_capital_recovery"
-                                               string="Capital Recovery (₦/MW/Hr)"/>
-                                    </group>
-                                </group>
-                                <!-- Derived row expressions: user writes how D40, D41, D42 are built -->
-                                <group string="Derived Base Rates — Expressions (Column D rows 40–42)">
-                                    <div colspan="2" class="alert alert-info" role="alert"
-                                         style="margin-bottom:8px;">
-                                        <strong>Available variables:</strong>
-                                        <code>base_fixed_om</code>,
-                                        <code>base_variable_om</code>,
-                                        <code>base_capital_recovery</code>,
-                                        <code>energy_charge</code> (in Wholesale expr only),
-                                        <code>capacity_charge</code> (in Wholesale expr only).
+                            <page string="MYTO Rate Table" name="myto_components"
+                                  invisible="formula_mode != 'myto_components'">
+                                <!-- Step 1: named base parameters (Column D header block) -->
+                                <group string="Base Parameters (Column D — MYTO Baseline)">
+                                    <div colspan="2" class="text-muted mb-2">
+                                        Add one row per index parameter used in this contract's
+                                        Rates sheet section (e.g. FX rate, US CPI, Nigerian CPI,
+                                        Gas Fuel Price). Each parameter's code becomes available
+                                        in component formulas as
+                                        <strong>base_&lt;code&gt;</strong> (MYTO baseline) and
+                                        <strong>current_&lt;code&gt;</strong> (value from billing cycle).
                                     </div>
-                                    <field name="energy_charge_expr"
-                                           string="Energy Charge = "
-                                           placeholder="base_variable_om"/>
-                                    <field name="capacity_charge_expr"
-                                           string="Capacity Charge = "
-                                           placeholder="base_fixed_om + base_capital_recovery"/>
-                                    <field name="wholesale_charge_expr"
-                                           string="Wholesale Charge = "
-                                           placeholder="energy_charge + capacity_charge"/>
+                                    <field name="rate_param_ids" nolabel="1" colspan="2">
+                                        <list editable="bottom">
+                                            <field name="sequence" widget="handle"/>
+                                            <field name="code"
+                                                   placeholder="e.g. fx, cpi, ncpi, gas"/>
+                                            <field name="name"
+                                                   placeholder="e.g. USD/Naira FX Rate (₦/$)"/>
+                                            <field name="base_value"
+                                                   string="Base Value (MYTO)"
+                                                   digits="[16,6]"/>
+                                            <field name="billing_input_code"
+                                                   placeholder="e.g. CBN_FX_CENTRAL"/>
+                                        </list>
+                                    </field>
                                 </group>
-                                <!-- Monthly rate adjustment sources (Column E inputs) -->
-                                <group string="Monthly Billing Rate Inputs (Column E Sources)">
-                                    <div colspan="2" style="color:#666; margin-bottom:6px;">
-                                        Monthly rates are computed during each billing cycle run using:
-                                        Fixed O&amp;M × (FX/Base FX) × (CPI/Base CPI) |
-                                        Variable O&amp;M × (CPI/Base CPI) × (FX/Base FX) |
-                                        Capital Recovery × (FX/Base FX).
+                                <!-- Step 2: component lines with base value + monthly formula -->
+                                <group string="Rate Components (Column D base + Column E formula)">
+                                    <div colspan="2" class="text-muted mb-2">
+                                        Add one row per component (Fixed O&amp;M, Variable O&amp;M,
+                                        VFCR, Capital Recovery, derived charges).
+                                        Set <strong>Basis = Formula Expression</strong> and write
+                                        the monthly rate formula. Available in every formula:
+                                        <strong>base_value</strong> (this row's MYTO base),
+                                        <strong>base_&lt;code&gt;</strong> /
+                                        <strong>current_&lt;code&gt;</strong> for each parameter above,
+                                        and the <strong>component_code</strong> of any earlier row.
+                                        Components whose Type is <em>Capacity</em> sum into the
+                                        capacity rate; <em>Energy</em> into the energy rate.
                                     </div>
-                                    <field name="myto_fx_input_code"
-                                           string="Current FX Input Code"
-                                           placeholder="CBN_FX_CENTRAL"/>
-                                    <field name="myto_cpi_input_code"
-                                           string="Current CPI Input Code"
-                                           placeholder="US_CPI"/>
+                                    <field name="line_ids" nolabel="1" colspan="2">
+                                        <list editable="bottom">
+                                            <field name="sequence" widget="handle"/>
+                                            <field name="component_type_id" string="Type"/>
+                                            <field name="name" string="Component"/>
+                                            <field name="component_code"
+                                                   placeholder="e.g. fixed_om, energy_charge"/>
+                                            <field name="base_value"
+                                                   string="Base Value (MYTO)"
+                                                   digits="[16,6]"
+                                                   optional="show"/>
+                                            <field name="uom_description"
+                                                   string="Unit"
+                                                   optional="show"/>
+                                            <field name="basis"/>
+                                            <field name="formula_expression"
+                                                   string="Monthly Rate Formula"
+                                                   widget="char"
+                                                   placeholder="base_value * (current_fx / base_fx) * (current_cpi / base_cpi)"
+                                                   invisible="basis != 'formula'"/>
+                                            <field name="value"
+                                                   invisible="basis != 'fixed_value'"
+                                                   optional="show"/>
+                                            <field name="input_type_code"
+                                                   invisible="basis != 'input_reference'"
+                                                   optional="show"/>
+                                            <field name="active"/>
+                                        </list>
+                                    </field>
                                 </group>
                             </page>
                             <page string="Tariff Components" name="components"
-                                  invisible="formula_mode == 'myto_hydro'">
+                                  invisible="formula_mode == 'myto_components'">
                                 <field name="line_ids">
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
                                         <field name="component_type_id"/>
                                         <field name="name"/>
+                                        <field name="component_code" optional="show"/>
                                         <field name="basis"/>
+                                        <field name="base_value" optional="show"/>
                                         <field name="value" optional="show"/>
+                                        <field name="formula_expression"
+                                               widget="char" optional="show"/>
                                         <field name="uom_description" optional="show"/>
                                         <field name="input_type_code" optional="show"/>
                                         <field name="active"/>

@@ -2,6 +2,7 @@ from . import market_participant
 from . import genco_component_type
 from . import genco_contract
 from . import genco_contract_line
+from . import genco_rate_param
 from . import disco_dro
 from . import billing_input_type
 from . import billing_cycle

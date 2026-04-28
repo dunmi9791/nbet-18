@@ -7,6 +7,8 @@ access_nbet_genco_contract_officer,nbet.genco.contract officer,model_nbet_genco_
 access_nbet_genco_contract_admin,nbet.genco.contract admin,model_nbet_genco_contract,group_nbet_admin,1,1,1,1
 access_nbet_genco_contract_line_officer,nbet.genco.contract.line officer,model_nbet_genco_contract_line,group_nbet_billing_officer,1,1,1,0
 access_nbet_genco_contract_line_admin,nbet.genco.contract.line admin,model_nbet_genco_contract_line,group_nbet_admin,1,1,1,1
+access_nbet_genco_rate_param_officer,nbet.genco.rate.param officer,model_nbet_genco_rate_param,group_nbet_billing_officer,1,1,1,0
+access_nbet_genco_rate_param_admin,nbet.genco.rate.param admin,model_nbet_genco_rate_param,group_nbet_admin,1,1,1,1
 access_nbet_disco_dro_officer,nbet.disco.dro officer,model_nbet_disco_dro,group_nbet_billing_officer,1,1,1,0
 access_nbet_disco_dro_manager,nbet.disco.dro manager,model_nbet_disco_dro,group_nbet_settlement_manager,1,1,1,0
 access_nbet_disco_dro_admin,nbet.disco.dro admin,model_nbet_disco_dro,group_nbet_admin,1,1,1,1

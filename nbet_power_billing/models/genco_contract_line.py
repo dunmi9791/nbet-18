@@ -27,6 +27,16 @@ class NbetGencoContractLine(models.Model):
     )
     component_type = fields.Char(related='component_type_id.code', string='Type Code', store=True)
     name = fields.Char(string='Component Name', required=True)
+    component_code = fields.Char(
+        string='Component Code',
+        help=(
+            'Short machine-readable identifier for this component (no spaces).\n'
+            'Once computed, the result is available under this name in subsequent '
+            'component formulas within the same contract.\n'
+            'Examples: fixed_om, variable_om, vfcr, capital_recovery, energy_charge, '
+            'capacity_charge, wholesale_charge.'
+        ),
+    )
 
     # ── Value Basis ───────────────────────────────────────────────────────────
     basis = fields.Selection(
@@ -38,12 +48,31 @@ class NbetGencoContractLine(models.Model):
         ],
         string='Basis', required=True, default='fixed_value',
     )
-    formula_expression = fields.Text(
-        string='Formula Expression',
+    base_value = fields.Float(
+        string='Base Value (MYTO)',
+        digits=(16, 6),
         help=(
-            'Python expression evaluated in the rate engine context.\n'
-            'Available variables: base_capacity, base_energy, fx_rate, base_fx,\n'
-            'tlf, base_tlf, index, base_index, hours, capacity_sent_out, net_energy.'
+            'The MYTO baseline rate for this component (Column D in Rates sheet).\n'
+            'Available as the variable base_value inside the Formula Expression.'
+        ),
+    )
+    formula_expression = fields.Text(
+        string='Monthly Rate Formula',
+        help=(
+            'Python expression that computes this component\'s current-period rate.\n\n'
+            'For MYTO Components mode the context includes:\n'
+            '  base_value          — this line\'s Base Value (MYTO baseline)\n'
+            '  base_<code>         — base value of each contract rate parameter\n'
+            '  current_<code>      — current-period value of each rate parameter\n'
+            '  <component_code>    — already-computed value of earlier component lines\n\n'
+            'Examples (Hydros):\n'
+            '  Fixed O&M:       base_value * (current_fx / base_fx) * (current_cpi / base_cpi)\n'
+            '  Capital Recovery: base_value * (current_fx / base_fx)\n'
+            '  Energy Charge:   variable_om\n'
+            '  Capacity Charge: fixed_om + capital_recovery\n\n'
+            'For structured_components / python_expression modes the context includes:\n'
+            '  base_capacity, base_energy, fx_rate, base_fx, tlf, base_tlf,\n'
+            '  index, base_index, hours, capacity_sent_out, net_energy.'
         ),
     )
     input_type_code = fields.Char(

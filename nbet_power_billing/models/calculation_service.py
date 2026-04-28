@@ -240,12 +240,11 @@ class NbetCalculationService(models.TransientModel):
         elif mode == 'structured_components':
             rate, trace = self._component_capacity_rate(contract, billing_inputs, trace)
 
-        elif mode == 'myto_hydro':
-            hydro = self._compute_hydro_myto_rates(contract, billing_inputs)
-            rate = hydro['capacity_rate']
-            trace.update(hydro['trace'])
+        elif mode == 'myto_components':
+            rates = self._compute_myto_component_rates(contract, billing_inputs)
+            rate = rates['capacity_rate']
+            trace.update(rates['trace'])
             trace['result'] = rate
-            trace['note'] = 'MYTO Hydro: capacity_charge from component rate table.'
 
         else:
             rate = contract.base_capacity_tariff
@@ -401,12 +400,11 @@ class NbetCalculationService(models.TransientModel):
             trace['components'] = components
             trace['result'] = rate
 
-        elif mode == 'myto_hydro':
-            hydro = self._compute_hydro_myto_rates(contract, billing_inputs)
-            rate = hydro['energy_rate']
-            trace.update(hydro['trace'])
+        elif mode == 'myto_components':
+            rates = self._compute_myto_component_rates(contract, billing_inputs)
+            rate = rates['energy_rate']
+            trace.update(rates['trace'])
             trace['result'] = rate
-            trace['note'] = 'MYTO Hydro: energy_charge from component rate table.'
 
         else:
             rate = contract.base_energy_tariff
@@ -667,105 +665,100 @@ class NbetCalculationService(models.TransientModel):
     # Helpers
     # ──────────────────────────────────────────────────────────────────────────
 
-    def _compute_hydro_myto_rates(self, contract, billing_inputs):
-        """Compute monthly billing rates for a hydro GENCO using the MYTO Rates-sheet formulas.
+    def _compute_myto_component_rates(self, contract, billing_inputs):
+        """Generic MYTO component engine — works for any plant type.
 
-        Column D (base) → Column E (monthly) mapping:
-          E37 = D37 * (E35/D35) * (E36/D36)   Fixed O&M — FX + CPI adjusted
-          E38 = D38 * (E36/D36) * (E35/D35)   Variable O&M — FX + CPI adjusted
-          E39 = D39 * (E35/D35)               Capital Recovery — FX only
-          E40 = E38                            Energy Charge
-          E41 = E37 + E39                      Capacity Charge
-          E42 = E40 + E41                      Wholesale Charge
+        Reads the contract's rate_param_ids to build an evaluation context:
+          base_<code>    = param.base_value
+          current_<code> = billing_inputs[param.billing_input_code] or param.base_value
 
+        Then evaluates each active component line's formula_expression in sequence,
+        accumulating computed values under the line's component_code so later lines
+        (derived rows like Energy Charge, Capacity Charge) can reference earlier ones.
+
+        Lines whose component_type is 'capacity' feed capacity_rate;
+        lines whose component_type is 'energy' feed energy_rate.
         Returns dict with energy_rate, capacity_rate, wholesale_rate, and full trace.
         """
-        base_fx = contract.myto_base_fx_rate or 1.0
-        base_cpi = contract.myto_base_cpi or 1.0
-        base_fixed_om = contract.myto_base_fixed_om
-        base_variable_om = contract.myto_base_variable_om
-        base_capital_recovery = contract.myto_base_capital_recovery
+        # Build param context from contract's rate parameter table
+        ctx = {}
+        param_trace = []
+        for param in contract.rate_param_ids:
+            if not param.code:
+                continue
+            base_val = param.base_value
+            current_val = (
+                billing_inputs.get(param.billing_input_code, base_val)
+                if param.billing_input_code
+                else base_val
+            )
+            ctx[f'base_{param.code}'] = base_val
+            ctx[f'current_{param.code}'] = current_val
+            param_trace.append({
+                'code': param.code,
+                'name': param.name,
+                'base': base_val,
+                'current': current_val,
+                'input_code': param.billing_input_code,
+            })
 
-        fx_code = contract.myto_fx_input_code or 'CBN_FX_CENTRAL'
-        cpi_code = contract.myto_cpi_input_code or 'US_CPI'
-        current_fx = billing_inputs.get(fx_code, base_fx)
-        current_cpi = billing_inputs.get(cpi_code, base_cpi)
+        # Evaluate component lines in sequence order
+        energy_rate = 0.0
+        capacity_rate = 0.0
+        wholesale_rate = 0.0
+        component_trace = []
 
-        fx_ratio = current_fx / base_fx if base_fx else 1.0
-        cpi_ratio = current_cpi / base_cpi if base_cpi else 1.0
+        for line in contract.line_ids.filtered(lambda l: l.active):
+            if line.basis != 'formula' or not line.formula_expression:
+                continue
 
-        # Evaluate user expressions for base derived rows (Column D)
-        base_ctx = {
-            'base_fixed_om': base_fixed_om,
-            'base_variable_om': base_variable_om,
-            'base_capital_recovery': base_capital_recovery,
-        }
-        base_energy_charge = self._eval_myto_expr(
-            contract.energy_charge_expr or 'base_variable_om',
-            base_ctx, base_variable_om,
-        )
-        base_ctx['energy_charge'] = base_energy_charge
-        base_capacity_charge = self._eval_myto_expr(
-            contract.capacity_charge_expr or 'base_fixed_om + base_capital_recovery',
-            base_ctx, base_fixed_om + base_capital_recovery,
-        )
-        base_ctx['capacity_charge'] = base_capacity_charge
-        base_wholesale_charge = self._eval_myto_expr(
-            contract.wholesale_charge_expr or 'energy_charge + capacity_charge',
-            base_ctx, base_energy_charge + base_capacity_charge,
-        )
+            # Each line gets its own base_value in scope
+            line_ctx = dict(ctx)
+            line_ctx['base_value'] = line.base_value
 
-        # Apply column-E adjustment formulas to produce monthly billing rates
-        monthly_fixed_om = base_fixed_om * fx_ratio * cpi_ratio          # E37
-        monthly_variable_om = base_variable_om * cpi_ratio * fx_ratio    # E38
-        monthly_capital_recovery = base_capital_recovery * fx_ratio       # E39
-        monthly_energy_charge = monthly_variable_om                       # E40
-        monthly_capacity_charge = monthly_fixed_om + monthly_capital_recovery  # E41
-        monthly_wholesale_charge = monthly_energy_charge + monthly_capacity_charge  # E42
+            try:
+                result = float(safe_eval(line.formula_expression, locals_dict=line_ctx))
+            except Exception as exc:
+                _logger.warning(
+                    'MYTO component eval failed — line: %r | expr: %r | error: %s',
+                    line.name, line.formula_expression, exc,
+                )
+                result = 0.0
 
-        trace = {
-            'mode': 'myto_hydro',
-            'base_fx': base_fx,
-            'current_fx': current_fx,
-            'fx_ratio': round(fx_ratio, 6),
-            'base_cpi': base_cpi,
-            'current_cpi': current_cpi,
-            'cpi_ratio': round(cpi_ratio, 6),
-            'base_rates': {
-                'fixed_om': base_fixed_om,
-                'variable_om': base_variable_om,
-                'capital_recovery': base_capital_recovery,
-                'energy_charge_expr': contract.energy_charge_expr,
-                'energy_charge': base_energy_charge,
-                'capacity_charge_expr': contract.capacity_charge_expr,
-                'capacity_charge': base_capacity_charge,
-                'wholesale_charge_expr': contract.wholesale_charge_expr,
-                'wholesale_charge': base_wholesale_charge,
-            },
-            'monthly_rates': {
-                'fixed_om': monthly_fixed_om,
-                'variable_om': monthly_variable_om,
-                'capital_recovery': monthly_capital_recovery,
-                'energy_charge': monthly_energy_charge,
-                'capacity_charge': monthly_capacity_charge,
-                'wholesale_charge': monthly_wholesale_charge,
-            },
-        }
+            # Accumulate under the component code so subsequent lines can reference it
+            if line.component_code:
+                ctx[line.component_code] = result
+
+            comp_type = line.component_type or ''
+            if comp_type == 'capacity':
+                capacity_rate += result
+            elif comp_type == 'energy':
+                energy_rate += result
+            elif comp_type == 'wholesale':
+                wholesale_rate = result
+
+            component_trace.append({
+                'name': line.name,
+                'code': line.component_code,
+                'type': comp_type,
+                'base_value': line.base_value,
+                'expression': line.formula_expression,
+                'result': result,
+            })
+
+        if not wholesale_rate:
+            wholesale_rate = energy_rate + capacity_rate
 
         return {
-            'energy_rate': monthly_energy_charge,
-            'capacity_rate': monthly_capacity_charge,
-            'wholesale_rate': monthly_wholesale_charge,
-            'trace': trace,
+            'energy_rate': energy_rate,
+            'capacity_rate': capacity_rate,
+            'wholesale_rate': wholesale_rate,
+            'trace': {
+                'mode': 'myto_components',
+                'params': param_trace,
+                'components': component_trace,
+            },
         }
-
-    def _eval_myto_expr(self, expression, context, default):
-        """Evaluate a user-supplied MYTO expression string against numeric context."""
-        try:
-            return float(safe_eval(expression, locals_dict=dict(context)))
-        except Exception as exc:
-            _logger.warning('MYTO expr eval failed — expr: %r | error: %s', expression, exc)
-            return default
 
     def _build_eval_context(self, contract, cycle, monthly_data, billing_inputs):
         """Build the safe_eval context dict for python_expression formula mode."""
