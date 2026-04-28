@@ -97,14 +97,83 @@ class NbetGencoContract(models.Model):
             ('parametric', 'Parametric — apply FX / TLF / index ratios'),
             ('python_expression', 'Python Expression — eval custom formula'),
             ('structured_components', 'Structured Components — sum tariff lines'),
+            ('myto_hydro', 'MYTO Hydro — structured MYTO rate component table'),
         ],
         string='Formula Mode', default='parametric', required=True, tracking=True,
         help=(
             'fixed: Returns base_capacity_tariff and base_energy_tariff unchanged.\n'
             'parametric: Multiplies base by FX, TLF, and index adjustment ratios.\n'
             'python_expression: Evaluates formula_expression on contract lines.\n'
-            'structured_components: Sums all active tariff component lines.'
+            'structured_components: Sums all active tariff component lines.\n'
+            'myto_hydro: Uses MYTO Hydro rate table (Fixed O&M, Variable O&M, '
+            'Capital Recovery) with FX and CPI adjustments per the Rates sheet formulas.'
         ),
+    )
+
+    # ── MYTO Hydro Rate Table (mirrors Rates sheet C33:E42) ──────────────────
+    # Fixed inputs — Column D (MYTO 2016 base values)
+    myto_base_fx_rate = fields.Float(
+        string='Base FX Rate (₦/$)', digits=(16, 4), default=197.0,
+        help='MYTO 2016 base USD/Naira exchange rate (Rates!D35).',
+    )
+    myto_base_cpi = fields.Float(
+        string='Base US CPI Index', digits=(16, 4), default=108.47,
+        help='MYTO 2016 base US CPI index value (Rates!D36).',
+    )
+    myto_base_fixed_om = fields.Float(
+        string='Base Fixed O&M (₦/MW/Hr)', digits=(16, 6),
+        help='MYTO 2016 base Fixed O&M rate (Rates!D37).',
+    )
+    myto_base_variable_om = fields.Float(
+        string='Base Variable O&M (₦/MWh)', digits=(16, 6),
+        help='MYTO 2016 base Variable O&M rate (Rates!D38).',
+    )
+    myto_base_capital_recovery = fields.Float(
+        string='Base Capital Recovery (₦/MW/Hr)', digits=(16, 6),
+        help='MYTO 2016 base Capital Recovery rate (Rates!D39).',
+    )
+
+    # Derived row expressions — user writes how D40, D41, D42 are composed
+    # Variables available: base_fixed_om, base_variable_om, base_capital_recovery
+    energy_charge_expr = fields.Char(
+        string='Energy Charge Expression',
+        default='base_variable_om',
+        help=(
+            'Expression evaluated to derive the base Energy Charge (Rates!D40).\n'
+            'Available variables: base_fixed_om, base_variable_om, base_capital_recovery\n'
+            'Default (D40 = D38): base_variable_om'
+        ),
+    )
+    capacity_charge_expr = fields.Char(
+        string='Capacity Charge Expression',
+        default='base_fixed_om + base_capital_recovery',
+        help=(
+            'Expression evaluated to derive the base Capacity Charge (Rates!D41).\n'
+            'Available variables: base_fixed_om, base_variable_om, base_capital_recovery\n'
+            'Default (D41 = D37+D39): base_fixed_om + base_capital_recovery'
+        ),
+    )
+    wholesale_charge_expr = fields.Char(
+        string='Wholesale Charge Expression',
+        default='energy_charge + capacity_charge',
+        help=(
+            'Expression evaluated to derive the base Wholesale Charge (Rates!D42).\n'
+            'Available variables: base_fixed_om, base_variable_om, base_capital_recovery,\n'
+            '  energy_charge, capacity_charge\n'
+            'Default (D42 = D40+D41): energy_charge + capacity_charge'
+        ),
+    )
+
+    # Billing input codes that supply the current-period FX and CPI (for Column E)
+    myto_fx_input_code = fields.Char(
+        string='Current FX Input Code',
+        default='CBN_FX_CENTRAL',
+        help='Billing input type code for the current-month USD/Naira rate (Rates!E35 source).',
+    )
+    myto_cpi_input_code = fields.Char(
+        string='Current CPI Input Code',
+        default='US_CPI',
+        help='Billing input type code for the current-month US CPI index (Rates!E36 source).',
     )
 
     # ── Tariff Components ──────────────────────────────────────────────────────

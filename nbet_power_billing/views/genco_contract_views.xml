@@ -94,7 +94,64 @@
                                     </group>
                                 </group>
                             </page>
-                            <page string="Base Myto" name="components">
+                            <page string="MYTO Hydro Rates" name="myto_hydro_rates"
+                                  invisible="formula_mode != 'myto_hydro'">
+                                <!-- Fixed inputs: Column D (MYTO 2016 base values) -->
+                                <group string="Base MYTO Rates (Column D — MYTO 2016)">
+                                    <group string="Index Parameters">
+                                        <field name="myto_base_fx_rate"
+                                               string="USD/Naira FX Rate (₦/$)"/>
+                                        <field name="myto_base_cpi"
+                                               string="US CPI Index"/>
+                                    </group>
+                                    <group string="Component Base Rates">
+                                        <field name="myto_base_fixed_om"
+                                               string="Fixed O&amp;M (₦/MW/Hr)"/>
+                                        <field name="myto_base_variable_om"
+                                               string="Variable O&amp;M (₦/MWh)"/>
+                                        <field name="myto_base_capital_recovery"
+                                               string="Capital Recovery (₦/MW/Hr)"/>
+                                    </group>
+                                </group>
+                                <!-- Derived row expressions: user writes how D40, D41, D42 are built -->
+                                <group string="Derived Base Rates — Expressions (Column D rows 40–42)">
+                                    <div colspan="2" class="alert alert-info" role="alert"
+                                         style="margin-bottom:8px;">
+                                        <strong>Available variables:</strong>
+                                        <code>base_fixed_om</code>,
+                                        <code>base_variable_om</code>,
+                                        <code>base_capital_recovery</code>,
+                                        <code>energy_charge</code> (in Wholesale expr only),
+                                        <code>capacity_charge</code> (in Wholesale expr only).
+                                    </div>
+                                    <field name="energy_charge_expr"
+                                           string="Energy Charge = "
+                                           placeholder="base_variable_om"/>
+                                    <field name="capacity_charge_expr"
+                                           string="Capacity Charge = "
+                                           placeholder="base_fixed_om + base_capital_recovery"/>
+                                    <field name="wholesale_charge_expr"
+                                           string="Wholesale Charge = "
+                                           placeholder="energy_charge + capacity_charge"/>
+                                </group>
+                                <!-- Monthly rate adjustment sources (Column E inputs) -->
+                                <group string="Monthly Billing Rate Inputs (Column E Sources)">
+                                    <div colspan="2" style="color:#666; margin-bottom:6px;">
+                                        Monthly rates are computed during each billing cycle run using:
+                                        Fixed O&amp;M × (FX/Base FX) × (CPI/Base CPI) |
+                                        Variable O&amp;M × (CPI/Base CPI) × (FX/Base FX) |
+                                        Capital Recovery × (FX/Base FX).
+                                    </div>
+                                    <field name="myto_fx_input_code"
+                                           string="Current FX Input Code"
+                                           placeholder="CBN_FX_CENTRAL"/>
+                                    <field name="myto_cpi_input_code"
+                                           string="Current CPI Input Code"
+                                           placeholder="US_CPI"/>
+                                </group>
+                            </page>
+                            <page string="Tariff Components" name="components"
+                                  invisible="formula_mode == 'myto_hydro'">
                                 <field name="line_ids">
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
