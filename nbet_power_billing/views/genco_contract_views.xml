@@ -94,7 +94,7 @@
                                     </group>
                                 </group>
                             </page>
-                            <page string="Tariff Components" name="components">
+                            <page string="Base Myto" name="components">
                                 <field name="line_ids">
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
