@@ -32,7 +32,7 @@
                         <group>
                             <field name="fiscal_year"/>
                             <field name="date"/>
-                            <field name="department_id"/>
+                            <field name="department"/>
                         </group>
                         <group>
                             <field name="requested_by"/>
@@ -77,7 +77,7 @@
                   decoration-danger="state == 'rejected'">
                 <field name="name"/>
                 <field name="fiscal_year"/>
-                <field name="department_id"/>
+                <field name="department"/>
                 <field name="requested_by"/>
                 <field name="date"/>
                 <field name="total_estimated" widget="monetary"/>
@@ -99,7 +99,7 @@
             <search string="Search Needs Assessments">
                 <field name="name"/>
                 <field name="fiscal_year"/>
-                <field name="department_id"/>
+                <field name="department"/>
                 <field name="requested_by"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="submitted" string="Submitted" domain="[('state', '=', 'submitted')]"/>
@@ -107,7 +107,7 @@
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter name="group_fiscal_year" string="Fiscal Year" context="{'group_by': 'fiscal_year'}"/>
-                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department'}"/>
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
                 </group>
             </search>
