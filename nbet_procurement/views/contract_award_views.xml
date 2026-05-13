@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Contract Award Form -->
+    <record id="view_contract_award_form" model="ir.ui.view">
+        <field name="name">nbet.contract.award.form</field>
+        <field name="model">nbet.contract.award</field>
+        <field name="arch" type="xml">
+            <form string="Contract Award">
+                <header>
+                    <button name="action_send_award_letter" string="Send Award Letter" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_prepare_agreement" string="Prepare Agreement" type="object"
+                            class="btn-primary" invisible="state != 'letter_sent'"/>
+                    <button name="action_sign_agreement" string="Sign Agreement" type="object"
+                            class="btn-primary" invisible="state != 'agreement_prep'"
+                            groups="nbet_procurement.group_procurement_approver"/>
+                    <button name="action_start_execution" string="Start Execution" type="object"
+                            class="btn-primary" invisible="state != 'agreement_signed'"/>
+                    <button name="action_mark_delivered" string="Mark Delivered" type="object"
+                            class="btn-primary" invisible="state != 'in_execution'"/>
+                    <button name="action_verify" string="Complete Verification" type="object"
+                            class="btn-primary" invisible="state != 'delivered'"/>
+                    <button name="action_process_payment" string="Process Payment" type="object"
+                            class="btn-primary" invisible="state != 'verified'"/>
+                    <button name="action_complete" string="Complete" type="object"
+                            class="btn-success" invisible="state != 'payment_processing'"/>
+                    <button name="action_create_purchase_order" string="Create Purchase Order" type="object"
+                            class="btn-secondary" invisible="state not in ('agreement_signed', 'in_execution') or purchase_order_id"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            class="btn-danger" invisible="state in ('completed', 'cancelled')"/>
+                    <button name="action_reset_draft" string="Reset to Draft" type="object"
+                            invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,letter_sent,agreement_signed,in_execution,delivered,verified,payment_processing,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="vendor_id"/>
+                            <field name="description"/>
+                            <field name="category"/>
+                            <field name="award_amount" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="evaluation_id"/>
+                            <field name="award_date"/>
+                            <field name="award_letter_date"/>
+                            <field name="agreement_date"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Delivery &amp; Inspection" name="delivery">
+                            <group>
+                                <group>
+                                    <field name="expected_delivery_date"/>
+                                    <field name="actual_delivery_date"/>
+                                </group>
+                                <group>
+                                    <field name="verification_date"/>
+                                    <field name="verified_by"/>
+                                </group>
+                            </group>
+                            <group string="Sign-offs Required">
+                                <field name="ia_signoff"/>
+                                <field name="user_dept_signoff"/>
+                            </group>
+                            <group>
+                                <field name="verification_report" placeholder="Enter inspection/verification findings..."/>
+                            </group>
+                        </page>
+                        <page string="Payment" name="payment">
+                            <group>
+                                <group>
+                                    <field name="purchase_order_id"/>
+                                    <field name="payment_date"/>
+                                    <field name="payment_reference"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Contract Terms" name="terms">
+                            <field name="terms_of_contract"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Contract Award List -->
+    <record id="view_contract_award_list" model="ir.ui.view">
+        <field name="name">nbet.contract.award.list</field>
+        <field name="model">nbet.contract.award</field>
+        <field name="arch" type="xml">
+            <list string="Contract Awards"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state == 'completed'"
+                  decoration-danger="state == 'cancelled'">
+                <field name="name"/>
+                <field name="vendor_id"/>
+                <field name="description"/>
+                <field name="category"/>
+                <field name="award_amount" widget="monetary"/>
+                <field name="award_date"/>
+                <field name="purchase_order_id" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state in ('letter_sent', 'agreement_prep', 'in_execution', 'delivered')"
+                       decoration-success="state in ('completed', 'verified')"
+                       decoration-danger="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Contract Award Search -->
+    <record id="view_contract_award_search" model="ir.ui.view">
+        <field name="name">nbet.contract.award.search</field>
+        <field name="model">nbet.contract.award</field>
+        <field name="arch" type="xml">
+            <search string="Search Contract Awards">
+                <field name="name"/>
+                <field name="vendor_id"/>
+                <field name="description"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="in_progress" string="In Progress"
+                        domain="[('state', 'not in', ('draft', 'completed', 'cancelled'))]"/>
+                <filter name="completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                <filter name="pending_verification" string="Pending Verification"
+                        domain="[('state', '=', 'delivered')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
+                    <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Contract Award Action -->
+    <record id="action_contract_award" model="ir.actions.act_window">
+        <field name="name">Contract Awards</field>
+        <field name="res_model">nbet.contract.award</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a Contract Award</p>
+            <p>Manage contract awards from letter issuance through delivery, verification and payment.</p>
+        </field>
+    </record>
+
+</odoo>

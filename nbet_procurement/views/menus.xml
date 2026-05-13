@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Root menu under Purchase -->
+    <menuitem id="menu_nbet_procurement_root"
+              name="NBET Procurement"
+              parent="purchase.menu_purchase_root"
+              sequence="5"/>
+
+    <!-- Procurement Process -->
+    <menuitem id="menu_procurement_process"
+              name="Procurement Process"
+              parent="menu_nbet_procurement_root"
+              sequence="10"/>
+
+    <menuitem id="menu_needs_assessment"
+              name="Needs Assessments"
+              parent="menu_procurement_process"
+              action="action_needs_assessment"
+              sequence="10"/>
+
+    <menuitem id="menu_procurement_plan"
+              name="Procurement Plans"
+              parent="menu_procurement_process"
+              action="action_procurement_plan"
+              sequence="20"/>
+
+    <menuitem id="menu_bid_evaluation"
+              name="Bid Evaluations"
+              parent="menu_procurement_process"
+              action="action_bid_evaluation"
+              sequence="30"/>
+
+    <menuitem id="menu_contract_award"
+              name="Contract Awards"
+              parent="menu_procurement_process"
+              action="action_contract_award"
+              sequence="40"/>
+
+    <!-- Configuration -->
+    <menuitem id="menu_procurement_config"
+              name="Configuration"
+              parent="menu_nbet_procurement_root"
+              sequence="90"
+              groups="nbet_procurement.group_procurement_head"/>
+
+    <menuitem id="menu_procurement_method"
+              name="Procurement Methods"
+              parent="menu_procurement_config"
+              action="action_procurement_method"
+              sequence="10"/>
+
+    <menuitem id="menu_approval_threshold"
+              name="Approval Thresholds"
+              parent="menu_procurement_config"
+              action="action_approval_threshold"
+              sequence="20"/>
+
+    <!-- Configuration Actions -->
+    <record id="action_procurement_method" model="ir.actions.act_window">
+        <field name="name">Procurement Methods</field>
+        <field name="res_model">nbet.procurement.method</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_approval_threshold" model="ir.actions.act_window">
+        <field name="name">Approval Thresholds</field>
+        <field name="res_model">nbet.approval.threshold</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Goods Thresholds -->
+    <record id="threshold_goods_md" model="nbet.approval.threshold">
+        <field name="name">MD/CEO - Goods</field>
+        <field name="authority">md_ceo</field>
+        <field name="category">goods</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">10000000</field>
+    </record>
+    <record id="threshold_goods_ptb" model="nbet.approval.threshold">
+        <field name="name">PTB - Goods</field>
+        <field name="authority">ptb</field>
+        <field name="category">goods</field>
+        <field name="min_amount">10000000</field>
+        <field name="max_amount">100000000</field>
+    </record>
+    <record id="threshold_goods_mtb" model="nbet.approval.threshold">
+        <field name="name">MTB - Goods</field>
+        <field name="authority">mtb</field>
+        <field name="category">goods</field>
+        <field name="min_amount">20000000</field>
+        <field name="max_amount">300000000</field>
+    </record>
+    <record id="threshold_goods_fec" model="nbet.approval.threshold">
+        <field name="name">FEC/BPP - Goods</field>
+        <field name="authority">fec_bpp</field>
+        <field name="category">goods</field>
+        <field name="min_amount">300000000</field>
+        <field name="max_amount">0</field>
+    </record>
+
+    <!-- Works Thresholds -->
+    <record id="threshold_works_md" model="nbet.approval.threshold">
+        <field name="name">MD/CEO - Works</field>
+        <field name="authority">md_ceo</field>
+        <field name="category">works</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">20000000</field>
+    </record>
+    <record id="threshold_works_ptb" model="nbet.approval.threshold">
+        <field name="name">PTB - Works</field>
+        <field name="authority">ptb</field>
+        <field name="category">works</field>
+        <field name="min_amount">20000000</field>
+        <field name="max_amount">500000000</field>
+    </record>
+    <record id="threshold_works_mtb" model="nbet.approval.threshold">
+        <field name="name">MTB - Works</field>
+        <field name="authority">mtb</field>
+        <field name="category">works</field>
+        <field name="min_amount">30000000</field>
+        <field name="max_amount">1500000000</field>
+    </record>
+    <record id="threshold_works_fec" model="nbet.approval.threshold">
+        <field name="name">FEC/BPP - Works</field>
+        <field name="authority">fec_bpp</field>
+        <field name="category">works</field>
+        <field name="min_amount">1500000000</field>
+        <field name="max_amount">0</field>
+    </record>
+
+    <!-- Non-Consultant Thresholds -->
+    <record id="threshold_ncs_md" model="nbet.approval.threshold">
+        <field name="name">MD/CEO - Non-Consultant</field>
+        <field name="authority">md_ceo</field>
+        <field name="category">non_consultant</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">10000000</field>
+    </record>
+    <record id="threshold_ncs_ptb" model="nbet.approval.threshold">
+        <field name="name">PTB - Non-Consultant</field>
+        <field name="authority">ptb</field>
+        <field name="category">non_consultant</field>
+        <field name="min_amount">10000000</field>
+        <field name="max_amount">100000000</field>
+    </record>
+    <record id="threshold_ncs_mtb" model="nbet.approval.threshold">
+        <field name="name">MTB - Non-Consultant</field>
+        <field name="authority">mtb</field>
+        <field name="category">non_consultant</field>
+        <field name="min_amount">20000000</field>
+        <field name="max_amount">300000000</field>
+    </record>
+    <record id="threshold_ncs_fec" model="nbet.approval.threshold">
+        <field name="name">FEC/BPP - Non-Consultant</field>
+        <field name="authority">fec_bpp</field>
+        <field name="category">non_consultant</field>
+        <field name="min_amount">300000000</field>
+        <field name="max_amount">0</field>
+    </record>
+
+    <!-- Consultant Thresholds -->
+    <record id="threshold_cs_md" model="nbet.approval.threshold">
+        <field name="name">MD/CEO - Consultant</field>
+        <field name="authority">md_ceo</field>
+        <field name="category">consultant</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">10000000</field>
+    </record>
+    <record id="threshold_cs_ptb" model="nbet.approval.threshold">
+        <field name="name">PTB - Consultant</field>
+        <field name="authority">ptb</field>
+        <field name="category">consultant</field>
+        <field name="min_amount">10000000</field>
+        <field name="max_amount">100000000</field>
+    </record>
+    <record id="threshold_cs_mtb" model="nbet.approval.threshold">
+        <field name="name">MTB - Consultant</field>
+        <field name="authority">mtb</field>
+        <field name="category">consultant</field>
+        <field name="min_amount">20000000</field>
+        <field name="max_amount">300000000</field>
+    </record>
+    <record id="threshold_cs_fec" model="nbet.approval.threshold">
+        <field name="name">FEC/BPP - Consultant</field>
+        <field name="authority">fec_bpp</field>
+        <field name="category">consultant</field>
+        <field name="min_amount">300000000</field>
+        <field name="max_amount">0</field>
+    </record>
+
+</odoo>

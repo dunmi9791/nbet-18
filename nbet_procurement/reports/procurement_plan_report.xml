@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Procurement Plan Report Action -->
+    <record id="action_report_procurement_plan" model="ir.actions.report">
+        <field name="name">Procurement Plan Report</field>
+        <field name="model">nbet.procurement.plan</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">nbet_procurement.report_procurement_plan</field>
+        <field name="report_file">procurement_plan_report</field>
+        <field name="print_report_name">'NBET Procurement Plan - %s - %s' % (object.fiscal_year, object.name)</field>
+        <field name="binding_model_id" ref="model_nbet_procurement_plan"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Report Template -->
+    <template id="report_procurement_plan_document">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <h2 class="text-center">NIGERIAN BULK ELECTRICITY TRADING PLC (NBET)</h2>
+                <h3 class="text-center">PROCUREMENT PLAN - <t t-out="doc.fiscal_year"/> FISCAL YEAR</h3>
+                <h4 class="text-center">Reference: <t t-out="doc.name"/></h4>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td><strong>Date:</strong></td>
+                                <td><span t-field="doc.date"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td><span t-field="doc.state"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>NOCOPO Ref:</strong></td>
+                                <td><span t-field="doc.nocopo_reference"/></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td><strong>PPC Chair:</strong></td>
+                                <td><span t-field="doc.ppc_chair_id.name"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PPC Secretary:</strong></td>
+                                <td><span t-field="doc.ppc_secretary_id.name"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PPC Date:</strong></td>
+                                <td><span t-field="doc.ppc_date"/></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <t t-if="doc.line_ids">
+                    <table class="table table-bordered table-sm mt-4">
+                        <thead>
+                            <tr style="background-color: #003366; color: white;">
+                                <th>S/N</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Qty</th>
+                                <th class="text-end">Est. Amount (NGN)</th>
+                                <th>Method</th>
+                                <th>Authority</th>
+                                <th>Quarter</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="counter" t-value="0"/>
+                            <tr t-foreach="doc.line_ids" t-as="line">
+                                <t t-set="counter" t-value="counter + 1"/>
+                                <td><t t-out="counter"/></td>
+                                <td><span t-field="line.description"/></td>
+                                <td><span t-field="line.category"/></td>
+                                <td class="text-end"><span t-field="line.quantity"/></td>
+                                <td class="text-end"><span t-field="line.estimated_amount" t-options="{'widget': 'monetary'}"/></td>
+                                <td><span t-field="line.procurement_method_id.name"/></td>
+                                <td><span t-field="line.approval_authority"/></td>
+                                <td><span t-field="line.target_quarter"/></td>
+                                <td><span t-field="line.status"/></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight: bold;">
+                                <td colspan="4" class="text-end">Total:</td>
+                                <td class="text-end"><span t-field="doc.total_budget" t-options="{'widget': 'monetary'}"/></td>
+                                <td colspan="4"/>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </t>
+
+                <div class="row mt-5">
+                    <div class="col-4 text-center">
+                        <p>_________________________</p>
+                        <p><strong>Head, Procurement Unit</strong></p>
+                        <p>(PPC Secretary)</p>
+                    </div>
+                    <div class="col-4 text-center">
+                        <p>_________________________</p>
+                        <p><strong>PTB Chairperson</strong></p>
+                    </div>
+                    <div class="col-4 text-center">
+                        <p>_________________________</p>
+                        <p><strong>MD/CEO</strong></p>
+                        <p>(PPC Chairperson)</p>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_procurement_plan">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="nbet_procurement.report_procurement_plan_document"/>
+            </t>
+        </t>
+    </template>
+
+</odoo>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_submit_approval_wizard_form" model="ir.ui.view">
+        <field name="name">nbet.submit.approval.wizard.form</field>
+        <field name="model">nbet.submit.approval.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Submit for NBET Approval">
+                <group>
+                    <field name="purchase_order_id" readonly="1"/>
+                    <field name="amount_total"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="procurement_category"/>
+                    <field name="approval_authority"/>
+                </group>
+                <group>
+                    <field name="justification" placeholder="Enter justification for this procurement..."/>
+                </group>
+                <footer>
+                    <button string="Submit for Approval" name="action_submit" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_submit_approval_wizard" model="ir.actions.act_window">
+        <field name="name">Submit for NBET Approval</field>
+        <field name="res_model">nbet.submit.approval.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_submit_approval_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

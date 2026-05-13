@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Bid Evaluation Form -->
+    <record id="view_bid_evaluation_form" model="ir.ui.view">
+        <field name="name">nbet.bid.evaluation.form</field>
+        <field name="model">nbet.bid.evaluation</field>
+        <field name="arch" type="xml">
+            <form string="Bid Evaluation">
+                <header>
+                    <button name="action_advertise" string="Advertise" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_start_receiving" string="Start Receiving Bids" type="object"
+                            class="btn-primary" invisible="state != 'advertised'"/>
+                    <button name="action_start_evaluation" string="Start TEC Evaluation" type="object"
+                            class="btn-primary" invisible="state != 'receiving'"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_submit_report" string="Submit Report" type="object"
+                            class="btn-primary" invisible="state != 'tec_evaluation'"/>
+                    <button name="action_approve" string="Approve" type="object"
+                            class="btn-primary" invisible="state != 'report_submitted'"
+                            groups="nbet_procurement.group_procurement_approver"/>
+                    <button name="action_reject" string="Reject" type="object"
+                            class="btn-danger" invisible="state not in ('report_submitted',)"
+                            groups="nbet_procurement.group_procurement_approver"/>
+                    <button name="action_create_contract_award" string="Create Contract Award" type="object"
+                            class="btn-success" invisible="state != 'approved'"/>
+                    <button name="action_reset_draft" string="Reset to Draft" type="object"
+                            invisible="state not in ('rejected',)"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,advertised,receiving,tec_evaluation,report_submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="description"/>
+                            <field name="category"/>
+                            <field name="procurement_method_id"/>
+                            <field name="plan_line_id"/>
+                        </group>
+                        <group>
+                            <field name="approval_authority"/>
+                            <field name="advertisement_date"/>
+                            <field name="bid_deadline"/>
+                            <field name="bid_opening_date"/>
+                        </group>
+                    </group>
+                    <group string="Advertisement Details"
+                           invisible="state == 'draft'">
+                        <field name="advertisement_newspapers" placeholder="List at least two national dailies..."/>
+                    </group>
+                    <notebook>
+                        <page string="Evaluation Committee (TEC)" name="tec">
+                            <group>
+                                <group>
+                                    <field name="tec_chair_id"/>
+                                    <field name="actu_observer_id"/>
+                                </group>
+                                <group>
+                                    <field name="tec_member_ids" widget="many2many_tags"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Bids Received" name="bids">
+                            <field name="bid_line_ids">
+                                <list editable="bottom">
+                                    <field name="vendor_id"/>
+                                    <field name="bid_date"/>
+                                    <field name="bid_amount" widget="monetary"/>
+                                    <field name="is_responsive"/>
+                                    <field name="technical_score"/>
+                                    <field name="financial_score"/>
+                                    <field name="total_score"/>
+                                    <field name="is_recommended"/>
+                                    <field name="disqualification_reason" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Evaluation Report" name="report">
+                            <group>
+                                <field name="evaluation_criteria" placeholder="Define evaluation criteria..."/>
+                            </group>
+                            <group>
+                                <field name="evaluation_report" placeholder="Enter evaluation findings..."/>
+                            </group>
+                            <group>
+                                <group>
+                                    <field name="recommended_vendor_id"/>
+                                    <field name="recommended_amount" widget="monetary"/>
+                                </group>
+                                <group>
+                                    <field name="approved_by"/>
+                                    <field name="approval_date"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Bid Evaluation List -->
+    <record id="view_bid_evaluation_list" model="ir.ui.view">
+        <field name="name">nbet.bid.evaluation.list</field>
+        <field name="model">nbet.bid.evaluation</field>
+        <field name="arch" type="xml">
+            <list string="Bid Evaluations"
+                  decoration-info="state == 'draft'"
+                  decoration-warning="state in ('advertised', 'receiving', 'tec_evaluation')"
+                  decoration-success="state == 'approved'"
+                  decoration-danger="state == 'rejected'">
+                <field name="name"/>
+                <field name="description"/>
+                <field name="category"/>
+                <field name="procurement_method_id"/>
+                <field name="bid_deadline"/>
+                <field name="recommended_vendor_id"/>
+                <field name="recommended_amount" widget="monetary"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state in ('advertised', 'receiving', 'tec_evaluation', 'report_submitted')"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Bid Evaluation Search -->
+    <record id="view_bid_evaluation_search" model="ir.ui.view">
+        <field name="name">nbet.bid.evaluation.search</field>
+        <field name="model">nbet.bid.evaluation</field>
+        <field name="arch" type="xml">
+            <search string="Search Bid Evaluations">
+                <field name="name"/>
+                <field name="description"/>
+                <field name="recommended_vendor_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="in_progress" string="In Progress"
+                        domain="[('state', 'in', ('advertised', 'receiving', 'tec_evaluation', 'report_submitted'))]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_method" string="Procurement Method" context="{'group_by': 'procurement_method_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Bid Evaluation Action -->
+    <record id="action_bid_evaluation" model="ir.actions.act_window">
+        <field name="name">Bid Evaluations</field>
+        <field name="res_model">nbet.bid.evaluation</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a Bid Evaluation</p>
+            <p>Track bid advertisements, submissions, TEC evaluation and approvals.</p>
+        </field>
+    </record>
+
+</odoo>
