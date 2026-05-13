@@ -17,7 +17,8 @@ class NeedsAssessment(models.Model):
         copy=False,
     )
     fiscal_year = fields.Char(required=True, tracking=True)
-    department = fields.Char(
+    department_id = fields.Many2one(
+        'hr.department',
         string='Requesting Department/Unit',
         tracking=True,
     )

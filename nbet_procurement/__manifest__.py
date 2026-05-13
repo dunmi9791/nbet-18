@@ -25,6 +25,7 @@ Works and Services, including:
     'depends': [
         'base',
         'mail',
+        'hr',
         'purchase',
         'product',
     ],
