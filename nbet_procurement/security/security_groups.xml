@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="module_category_nbet_procurement" model="ir.module.category">
+        <field name="name">NBET Procurement</field>
+        <field name="description">NBET Procurement Management</field>
+        <field name="sequence">25</field>
+    </record>
+
+    <record id="group_procurement_user" model="res.groups">
+        <field name="name">Procurement Officer</field>
+        <field name="category_id" ref="module_category_nbet_procurement"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Can create and manage procurement plans, needs assessments, and bid evaluations.</field>
+    </record>
+
+    <record id="group_procurement_head" model="res.groups">
+        <field name="name">Head of Procurement</field>
+        <field name="category_id" ref="module_category_nbet_procurement"/>
+        <field name="implied_ids" eval="[(4, ref('group_procurement_user'))]"/>
+        <field name="comment">PPC Secretary. Can approve plans and manage all procurement activities.</field>
+    </record>
+
+    <record id="group_procurement_approver" model="res.groups">
+        <field name="name">Procurement Approver (MD/PTB)</field>
+        <field name="category_id" ref="module_category_nbet_procurement"/>
+        <field name="implied_ids" eval="[(4, ref('group_procurement_head'))]"/>
+        <field name="comment">MD/CEO or PTB member. Can approve procurement plans and contract awards.</field>
+    </record>
+
+    <!-- Sequences -->
+    <record id="seq_needs_assessment" model="ir.sequence">
+        <field name="name">Needs Assessment</field>
+        <field name="code">nbet.needs.assessment</field>
+        <field name="prefix">NA/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
+    <record id="seq_procurement_plan" model="ir.sequence">
+        <field name="name">Procurement Plan</field>
+        <field name="code">nbet.procurement.plan</field>
+        <field name="prefix">PP/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
+    <record id="seq_bid_evaluation" model="ir.sequence">
+        <field name="name">Bid Evaluation</field>
+        <field name="code">nbet.bid.evaluation</field>
+        <field name="prefix">BID/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
+    <record id="seq_contract_award" model="ir.sequence">
+        <field name="name">Contract Award</field>
+        <field name="code">nbet.contract.award</field>
+        <field name="prefix">CA/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
+</odoo>
