@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Procurement Plan Form -->
+    <record id="view_procurement_plan_form" model="ir.ui.view">
+        <field name="name">nbet.procurement.plan.form</field>
+        <field name="model">nbet.procurement.plan</field>
+        <field name="arch" type="xml">
+            <form string="Procurement Plan">
+                <header>
+                    <button name="action_submit_ppc" string="Submit to PPC" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_ppc_approve" string="PPC Approve" type="object"
+                            class="btn-primary" invisible="state != 'ppc_review'"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_md_approve" string="MD/CEO Approve" type="object"
+                            class="btn-primary" invisible="state != 'md_approval'"
+                            groups="nbet_procurement.group_procurement_approver"/>
+                    <button name="action_ptb_approve" string="PTB Approve" type="object"
+                            class="btn-primary" invisible="state != 'ptb_approval'"
+                            groups="nbet_procurement.group_procurement_approver"/>
+                    <button name="action_upload_nocopo" string="Upload to NOCOPO" type="object"
+                            class="btn-primary" invisible="state != 'approved'"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_start_implementation" string="Start Implementation" type="object"
+                            invisible="state != 'uploaded'"/>
+                    <button name="action_close" string="Close" type="object"
+                            invisible="state != 'implementing'"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_reset_draft" string="Reset to Draft" type="object"
+                            invisible="state not in ('ppc_review',)"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,ppc_review,md_approval,approved,uploaded,implementing"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fiscal_year"/>
+                            <field name="date"/>
+                            <field name="total_items"/>
+                            <field name="total_budget" widget="monetary"/>
+                        </group>
+                        <group>
+                            <field name="ppc_chair_id"/>
+                            <field name="ppc_secretary_id"/>
+                            <field name="ppc_date"/>
+                        </group>
+                    </group>
+                    <group invisible="state not in ('approved', 'uploaded', 'implementing', 'closed')">
+                        <group>
+                            <field name="ptb_date"/>
+                        </group>
+                        <group>
+                            <field name="nocopo_upload_date"/>
+                            <field name="nocopo_reference"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Plan Items" name="lines">
+                            <group>
+                                <field name="assessment_ids" widget="many2many_tags"
+                                       domain="[('state', '=', 'approved')]"/>
+                                <button name="action_populate_from_assessments"
+                                        string="Populate from Assessments" type="object"
+                                        class="btn-secondary"
+                                        invisible="state != 'draft'"/>
+                            </group>
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="description"/>
+                                    <field name="product_id" optional="show"/>
+                                    <field name="category"/>
+                                    <field name="quantity"/>
+                                    <field name="estimated_amount" widget="monetary"/>
+                                    <field name="procurement_method_id"/>
+                                    <field name="approval_authority"/>
+                                    <field name="target_quarter"/>
+                                    <field name="status" widget="badge"/>
+                                    <field name="purchase_order_id" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="PPC Minutes" name="ppc_minutes">
+                            <field name="ppc_minutes"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Procurement Plan List -->
+    <record id="view_procurement_plan_list" model="ir.ui.view">
+        <field name="name">nbet.procurement.plan.list</field>
+        <field name="model">nbet.procurement.plan</field>
+        <field name="arch" type="xml">
+            <list string="Procurement Plans"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state in ('approved', 'uploaded', 'implementing')"
+                  decoration-muted="state == 'closed'">
+                <field name="name"/>
+                <field name="fiscal_year"/>
+                <field name="date"/>
+                <field name="total_items"/>
+                <field name="total_budget" widget="monetary"/>
+                <field name="nocopo_reference" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state in ('ppc_review', 'md_approval', 'ptb_approval')"
+                       decoration-success="state in ('approved', 'uploaded', 'implementing')"
+                       decoration-muted="state == 'closed'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Procurement Plan Search -->
+    <record id="view_procurement_plan_search" model="ir.ui.view">
+        <field name="name">nbet.procurement.plan.search</field>
+        <field name="model">nbet.procurement.plan</field>
+        <field name="arch" type="xml">
+            <search string="Search Procurement Plans">
+                <field name="name"/>
+                <field name="fiscal_year"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="pending_approval" string="Pending Approval"
+                        domain="[('state', 'in', ('ppc_review', 'md_approval', 'ptb_approval'))]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="implementing" string="Implementing" domain="[('state', '=', 'implementing')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_fiscal_year" string="Fiscal Year" context="{'group_by': 'fiscal_year'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Procurement Plan Action -->
+    <record id="action_procurement_plan" model="ir.actions.act_window">
+        <field name="name">Procurement Plans</field>
+        <field name="res_model">nbet.procurement.plan</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create your first Procurement Plan</p>
+            <p>Prepare annual procurement plans for PPC/PTB/MD approval and NOCOPO upload.</p>
+        </field>
+    </record>
+
+</odoo>

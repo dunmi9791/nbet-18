@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Goods Methods -->
+    <record id="method_goods_shopping" model="nbet.procurement.method">
+        <field name="name">Shopping (Market Survey) - Goods</field>
+        <field name="code">SHOP_G</field>
+        <field name="category">goods</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">5000000</field>
+    </record>
+    <record id="method_goods_single_source" model="nbet.procurement.method">
+        <field name="name">Single Source/Direct Contracting - Goods</field>
+        <field name="code">SS_G</field>
+        <field name="category">goods</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">1000000</field>
+    </record>
+    <record id="method_goods_rfq" model="nbet.procurement.method">
+        <field name="name">Request for Quotation - Goods</field>
+        <field name="code">RFQ_G</field>
+        <field name="category">goods</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">20000000</field>
+    </record>
+    <record id="method_goods_ncb" model="nbet.procurement.method">
+        <field name="name">National Competitive Bidding - Goods</field>
+        <field name="code">NCB_G</field>
+        <field name="category">goods</field>
+        <field name="min_amount">20000000</field>
+        <field name="max_amount">300000000</field>
+        <field name="requires_advertisement" eval="True"/>
+    </record>
+    <record id="method_goods_icb" model="nbet.procurement.method">
+        <field name="name">International/National Competitive Bidding - Goods</field>
+        <field name="code">ICB_G</field>
+        <field name="category">goods</field>
+        <field name="min_amount">300000000</field>
+        <field name="max_amount">0</field>
+        <field name="requires_advertisement" eval="True"/>
+        <field name="requires_prequalification" eval="True"/>
+    </record>
+
+    <!-- Works Methods -->
+    <record id="method_works_shopping" model="nbet.procurement.method">
+        <field name="name">Shopping (Market Survey) - Works</field>
+        <field name="code">SHOP_W</field>
+        <field name="category">works</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">5000000</field>
+    </record>
+    <record id="method_works_single_source" model="nbet.procurement.method">
+        <field name="name">Single Source/Direct Contracting - Works</field>
+        <field name="code">SS_W</field>
+        <field name="category">works</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">1000000</field>
+    </record>
+    <record id="method_works_rfq" model="nbet.procurement.method">
+        <field name="name">Request for Quotation - Works</field>
+        <field name="code">RFQ_W</field>
+        <field name="category">works</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">30000000</field>
+    </record>
+    <record id="method_works_ncb" model="nbet.procurement.method">
+        <field name="name">National Competitive Bidding - Works</field>
+        <field name="code">NCB_W</field>
+        <field name="category">works</field>
+        <field name="min_amount">30000000</field>
+        <field name="max_amount">1500000000</field>
+        <field name="requires_advertisement" eval="True"/>
+    </record>
+    <record id="method_works_icb" model="nbet.procurement.method">
+        <field name="name">International/National Competitive Bidding - Works</field>
+        <field name="code">ICB_W</field>
+        <field name="category">works</field>
+        <field name="min_amount">1500000000</field>
+        <field name="max_amount">0</field>
+        <field name="requires_advertisement" eval="True"/>
+        <field name="requires_prequalification" eval="True"/>
+    </record>
+
+    <!-- Non-Consultant Services Methods -->
+    <record id="method_ncs_shopping" model="nbet.procurement.method">
+        <field name="name">Shopping (Market Survey) - Non-Consultant</field>
+        <field name="code">SHOP_NCS</field>
+        <field name="category">non_consultant</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">5000000</field>
+    </record>
+    <record id="method_ncs_rfq" model="nbet.procurement.method">
+        <field name="name">Request for Quotation - Non-Consultant</field>
+        <field name="code">RFQ_NCS</field>
+        <field name="category">non_consultant</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">20000000</field>
+    </record>
+    <record id="method_ncs_ncb" model="nbet.procurement.method">
+        <field name="name">National Competitive Bidding - Non-Consultant</field>
+        <field name="code">NCB_NCS</field>
+        <field name="category">non_consultant</field>
+        <field name="min_amount">20000000</field>
+        <field name="max_amount">300000000</field>
+        <field name="requires_advertisement" eval="True"/>
+    </record>
+    <record id="method_ncs_icb" model="nbet.procurement.method">
+        <field name="name">International/National Competitive Bidding - Non-Consultant</field>
+        <field name="code">ICB_NCS</field>
+        <field name="category">non_consultant</field>
+        <field name="min_amount">300000000</field>
+        <field name="max_amount">0</field>
+        <field name="requires_advertisement" eval="True"/>
+        <field name="requires_prequalification" eval="True"/>
+    </record>
+
+    <!-- Consultant Services Methods -->
+    <record id="method_cs_qcbs" model="nbet.procurement.method">
+        <field name="name">Quality and Cost Based Selection</field>
+        <field name="code">QCBS</field>
+        <field name="category">consultant</field>
+        <field name="min_amount">50000000</field>
+        <field name="max_amount">0</field>
+        <field name="requires_advertisement" eval="True"/>
+    </record>
+    <record id="method_cs_cqs" model="nbet.procurement.method">
+        <field name="name">Consultant Qualifications</field>
+        <field name="code">CQS</field>
+        <field name="category">consultant</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">50000000</field>
+    </record>
+    <record id="method_cs_least_cost" model="nbet.procurement.method">
+        <field name="name">Least Cost Selection</field>
+        <field name="code">LCS</field>
+        <field name="category">consultant</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">50000000</field>
+    </record>
+    <record id="method_cs_single_source" model="nbet.procurement.method">
+        <field name="name">Single Source - Consultant</field>
+        <field name="code">SS_CS</field>
+        <field name="category">consultant</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">1000000</field>
+    </record>
+
+</odoo>
