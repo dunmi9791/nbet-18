@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ══════════════════════════════════════════════════════════
+             CSV/Excel Upload Wizard — Form View
+        ══════════════════════════════════════════════════════════ -->
+        <record id="view_nbet_csv_upload_wizard_form" model="ir.ui.view">
+            <field name="name">nbet.csv.upload.wizard.form</field>
+            <field name="model">nbet.csv.upload.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Upload Billing Data (CSV / Excel)">
+                    <field name="state" invisible="1"/>
+                    <field name="batch_id" invisible="1"/>
+
+                    <!-- ── Step 1: Upload ── -->
+                    <group invisible="state != 'upload'">
+                        <group string="Step 1 — Select Data Type &amp; File">
+                            <field name="billing_cycle_id" options="{'no_create': True}"/>
+                            <field name="data_type"/>
+                            <field name="upload_file" widget="binary" filename="upload_filename"/>
+                            <field name="upload_filename" invisible="1"/>
+                        </group>
+                        <group string="Template">
+                            <div colspan="2">
+                                <p class="text-muted">
+                                    Download the CSV template for the selected data type,
+                                    fill it in, then upload it above.
+                                </p>
+                                <button name="action_download_template"
+                                        string="Download Template"
+                                        type="object"
+                                        class="btn-secondary"
+                                        icon="fa-download"/>
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- ── Step 2: Preview ── -->
+                    <group invisible="state != 'preview'">
+                        <group string="Step 2 — Review Staged Data">
+                            <field name="billing_cycle_id" readonly="1" options="{'no_create': True}"/>
+                            <field name="data_type" readonly="1"/>
+                            <field name="upload_filename" readonly="1"/>
+                            <field name="row_count"/>
+                            <field name="error_count" decoration-danger="error_count > 0"/>
+                        </group>
+                    </group>
+                    <field name="preview_html" widget="html"
+                           invisible="state != 'preview'"
+                           readonly="1"
+                           string="Preview (first 100 rows)"/>
+
+                    <!-- ── Step 3: Done ── -->
+                    <group invisible="state != 'done'">
+                        <group string="Import Complete">
+                            <field name="billing_cycle_id" readonly="1" options="{'no_create': True}"/>
+                            <field name="data_type" readonly="1"/>
+                            <field name="batch_id" readonly="1" widget="many2one"/>
+                        </group>
+                    </group>
+
+                    <footer>
+                        <!-- Upload step -->
+                        <button name="action_preview"
+                                string="Preview Import"
+                                type="object"
+                                class="btn-primary"
+                                icon="fa-eye"
+                                invisible="state != 'upload'"/>
+                        <button name="action_download_template"
+                                string="Download Template"
+                                type="object"
+                                class="btn-secondary"
+                                icon="fa-download"
+                                invisible="state != 'upload'"/>
+                        <!-- Preview step -->
+                        <button name="action_confirm_import"
+                                string="Confirm &amp; Import"
+                                type="object"
+                                class="btn-primary"
+                                icon="fa-check"
+                                invisible="state != 'preview'"
+                                confirm="This will import data into the billing cycle. Existing records will be updated. Continue?"/>
+                        <button name="action_reset"
+                                string="Back / Re-upload"
+                                type="object"
+                                icon="fa-arrow-left"
+                                invisible="state == 'upload'"/>
+                        <button string="Close" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- ══════════════════════════════════════════════════════════
+             Wizard Launch Action — standalone menu
+        ══════════════════════════════════════════════════════════ -->
+        <record id="action_nbet_csv_upload_wizard" model="ir.actions.act_window">
+            <field name="name">Upload Billing Data (CSV / Excel)</field>
+            <field name="res_model">nbet.csv.upload.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_nbet_csv_upload_wizard_form"/>
+            <field name="target">new</field>
+        </record>
+
+        <!-- ══════════════════════════════════════════════════════════
+             Wizard Launch Action — from Billing Cycle form
+        ══════════════════════════════════════════════════════════ -->
+        <record id="action_nbet_csv_upload_wizard_from_cycle" model="ir.actions.act_window">
+            <field name="name">Upload Data (CSV / Excel)</field>
+            <field name="res_model">nbet.csv.upload.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_nbet_csv_upload_wizard_form"/>
+            <field name="target">new</field>
+            <field name="context">{'default_billing_cycle_id': active_id}</field>
+            <field name="binding_model_id" ref="nbet_power_billing.model_nbet_billing_cycle"/>
+            <field name="binding_type">action</field>
+        </record>
+
+    </data>
+</odoo>

@@ -81,6 +81,7 @@ class NbetImportBatchLine(models.Model):
         selection=[
             ('cycle_input', 'Cycle Input'),
             ('genco_data', 'GENCO Operational Data'),
+            ('disco_data', 'DISCO Data'),
             ('rate_data', 'Rate Data'),
             ('other', 'Other'),
         ],

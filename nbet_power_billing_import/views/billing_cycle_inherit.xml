@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ── Add CSV/Excel upload button to Billing Cycle form header ── -->
+        <record id="view_nbet_billing_cycle_form_import_button" model="ir.ui.view">
+            <field name="name">nbet.billing.cycle.form.import.button</field>
+            <field name="model">nbet.billing.cycle</field>
+            <field name="inherit_id" ref="nbet_power_billing.view_nbet_billing_cycle_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header/button[@name='action_load_inputs']" position="before">
+                    <button string="Import Data (CSV / Excel)"
+                            name="%(action_nbet_csv_upload_wizard_from_cycle)d"
+                            type="action"
+                            class="btn-secondary"
+                            icon="fa-upload"
+                            invisible="state not in ('draft', 'input_loaded')"
+                            groups="nbet_power_billing.group_nbet_billing_officer"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -2,12 +2,15 @@
 {
     'name': 'NBET Power Billing – Excel Import',
     'version': '18.0.1.0.0',
-    'summary': 'Excel import wizard for NBET monthly billing cycle inputs',
+    'summary': 'Excel and CSV import wizards for NBET monthly billing cycle data',
     'description': """
-        Provides an openpyxl-based Excel import wizard that reads the legacy
-        NBET billing workbook (Inputs sheet + Rates sheet), stages the data
-        into a reviewable batch, and commits it into the core billing models
-        on confirmation.
+        Provides two import wizards for NBET billing data:
+        1. Legacy Excel Workbook Import — parses the full NBET billing workbook
+           (Inputs + Rates sheets) via openpyxl with fuzzy header matching.
+        2. CSV/Excel Upload — structured upload using downloadable templates
+           for three data categories: Billing Cycle Inputs, GENCO Operational
+           Data, and DISCO Data.
+        Both wizards stage data into a reviewable batch before committing.
     """,
     'author': 'NBET IT',
     'category': 'Accounting/Localization',
@@ -19,7 +22,9 @@
     'data': [
         'security/ir.model.access.csv',
         'wizard/excel_import_wizard_views.xml',
+        'wizard/csv_upload_wizard_views.xml',
         'views/import_batch_views.xml',
+        'views/billing_cycle_inherit.xml',
         'views/menus.xml',
     ],
     'demo': [],
