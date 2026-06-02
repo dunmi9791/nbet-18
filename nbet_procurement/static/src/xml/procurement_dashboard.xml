@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="nbet_procurement.ProcurementDashboard">
+        <div class="o_action">
+            <div class="container-fluid py-4">
+                <div class="row mb-4">
+                    <div class="col">
+                        <h2 class="mb-0">NBET Procurement Dashboard</h2>
+                        <small class="text-muted">Overview of procurement activities</small>
+                    </div>
+                </div>
+
+                <!-- Summary Cards Row -->
+                <div class="row g-3 mb-4">
+                    <!-- Needs Assessments Card -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card shadow-sm h-100" style="cursor: pointer;"
+                             t-on-click="() => this.openAction('assessments', 'Needs Assessments')">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle text-muted mb-2">Needs Assessments</h6>
+                                        <h2 class="card-title mb-0" t-esc="state.assessments.total"/>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill fs-5 p-2">
+                                        <i class="fa fa-clipboard"/>
+                                    </span>
+                                </div>
+                                <div class="mt-3 d-flex gap-2 flex-wrap">
+                                    <span class="badge bg-secondary" t-on-click.stop="() => this.openFiltered('nbet.needs.assessment', 'Draft Assessments', [['state', '=', 'draft']])">
+                                        <t t-esc="state.assessments.draft"/> Draft
+                                    </span>
+                                    <span class="badge bg-warning text-dark" t-on-click.stop="() => this.openFiltered('nbet.needs.assessment', 'Submitted Assessments', [['state', '=', 'submitted']])">
+                                        <t t-esc="state.assessments.submitted"/> Submitted
+                                    </span>
+                                    <span class="badge bg-success" t-on-click.stop="() => this.openFiltered('nbet.needs.assessment', 'Approved Assessments', [['state', '=', 'approved']])">
+                                        <t t-esc="state.assessments.approved"/> Approved
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Procurement Plans Card -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card shadow-sm h-100" style="cursor: pointer;"
+                             t-on-click="() => this.openAction('plans', 'Procurement Plans')">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle text-muted mb-2">Procurement Plans</h6>
+                                        <h2 class="card-title mb-0" t-esc="state.plans.total"/>
+                                    </div>
+                                    <span class="badge bg-info rounded-pill fs-5 p-2">
+                                        <i class="fa fa-sitemap"/>
+                                    </span>
+                                </div>
+                                <div class="mt-3 d-flex gap-2 flex-wrap">
+                                    <span class="badge bg-secondary" t-on-click.stop="() => this.openFiltered('nbet.procurement.plan', 'Draft Plans', [['state', '=', 'draft']])">
+                                        <t t-esc="state.plans.draft"/> Draft
+                                    </span>
+                                    <span class="badge bg-warning text-dark" t-on-click.stop="() => this.openFiltered('nbet.procurement.plan', 'PPC Review', [['state', '=', 'ppc_review']])">
+                                        <t t-esc="state.plans.ppc_review"/> PPC Review
+                                    </span>
+                                    <span class="badge bg-success" t-on-click.stop="() => this.openFiltered('nbet.procurement.plan', 'Approved Plans', [['state', '=', 'approved']])">
+                                        <t t-esc="state.plans.approved"/> Approved
+                                    </span>
+                                    <span class="badge bg-primary" t-on-click.stop="() => this.openFiltered('nbet.procurement.plan', 'Implementing Plans', [['state', '=', 'implementing']])">
+                                        <t t-esc="state.plans.implementing"/> Active
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bid Evaluations Card -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card shadow-sm h-100" style="cursor: pointer;"
+                             t-on-click="() => this.openAction('bids', 'Bid Evaluations')">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle text-muted mb-2">Bid Evaluations</h6>
+                                        <h2 class="card-title mb-0" t-esc="state.bids.total"/>
+                                    </div>
+                                    <span class="badge bg-warning text-dark rounded-pill fs-5 p-2">
+                                        <i class="fa fa-gavel"/>
+                                    </span>
+                                </div>
+                                <div class="mt-3 d-flex gap-2 flex-wrap">
+                                    <span class="badge bg-info" t-on-click.stop="() => this.openFiltered('nbet.bid.evaluation', 'Advertised Bids', [['state', '=', 'advertised']])">
+                                        <t t-esc="state.bids.advertised"/> Advertised
+                                    </span>
+                                    <span class="badge bg-warning text-dark" t-on-click.stop="() => this.openFiltered('nbet.bid.evaluation', 'TEC Evaluation', [['state', '=', 'tec_evaluation']])">
+                                        <t t-esc="state.bids.tec_evaluation"/> TEC Review
+                                    </span>
+                                    <span class="badge bg-success" t-on-click.stop="() => this.openFiltered('nbet.bid.evaluation', 'Approved Bids', [['state', '=', 'approved']])">
+                                        <t t-esc="state.bids.approved"/> Approved
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contract Awards Card -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card shadow-sm h-100" style="cursor: pointer;"
+                             t-on-click="() => this.openAction('contracts', 'Contract Awards')">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle text-muted mb-2">Contract Awards</h6>
+                                        <h2 class="card-title mb-0" t-esc="state.contracts.total"/>
+                                    </div>
+                                    <span class="badge bg-success rounded-pill fs-5 p-2">
+                                        <i class="fa fa-handshake-o"/>
+                                    </span>
+                                </div>
+                                <div class="mt-3 d-flex gap-2 flex-wrap">
+                                    <span class="badge bg-secondary" t-on-click.stop="() => this.openFiltered('nbet.contract.award', 'Draft Contracts', [['state', '=', 'draft']])">
+                                        <t t-esc="state.contracts.draft"/> Draft
+                                    </span>
+                                    <span class="badge bg-primary" t-on-click.stop="() => this.openFiltered('nbet.contract.award', 'Active Contracts', [['state', '=', 'in_execution']])">
+                                        <t t-esc="state.contracts.in_execution"/> Active
+                                    </span>
+                                    <span class="badge bg-success" t-on-click.stop="() => this.openFiltered('nbet.contract.award', 'Completed Contracts', [['state', '=', 'completed']])">
+                                        <t t-esc="state.contracts.completed"/> Completed
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Row -->
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-2">
+                                    <div class="col-auto">
+                                        <button class="btn btn-primary" t-on-click="() => this.openFiltered('nbet.needs.assessment', 'New Needs Assessment', [])">
+                                            <i class="fa fa-plus me-1"/> New Assessment
+                                        </button>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-outline-primary" t-on-click="() => this.openFiltered('nbet.procurement.plan', 'New Procurement Plan', [])">
+                                            <i class="fa fa-plus me-1"/> New Plan
+                                        </button>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-outline-primary" t-on-click="() => this.openFiltered('nbet.bid.evaluation', 'New Bid Evaluation', [])">
+                                            <i class="fa fa-plus me-1"/> New Bid Evaluation
+                                        </button>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-outline-primary" t-on-click="() => this.openFiltered('nbet.contract.award', 'New Contract Award', [])">
+                                            <i class="fa fa-plus me-1"/> New Contract Award
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>

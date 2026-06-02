@@ -40,10 +40,17 @@ Works and Services, including:
         'views/bid_evaluation_views.xml',
         'views/contract_award_views.xml',
         'views/purchase_order_views.xml',
+        'views/dashboard_views.xml',
         'views/menus.xml',
         'reports/procurement_plan_report.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'nbet_procurement/static/src/js/procurement_dashboard.js',
+            'nbet_procurement/static/src/xml/procurement_dashboard.xml',
+        ],
+    },
     'installable': True,
-    'application': False,
+    'application': True,
     'auto_install': False,
 }

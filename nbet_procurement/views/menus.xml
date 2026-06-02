@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Root menu under Purchase -->
+    <!-- Standalone root menu (top-level app) -->
     <menuitem id="menu_nbet_procurement_root"
-              name="NBET Procurement"
-              parent="purchase.menu_purchase_root"
-              sequence="5"/>
+              name="Procurement"
+              action="action_procurement_dashboard"
+              web_icon="nbet_procurement,static/description/icon.png"
+              sequence="45"/>
+
+    <!-- Dashboard -->
+    <menuitem id="menu_procurement_dashboard"
+              name="Dashboard"
+              parent="menu_nbet_procurement_root"
+              action="action_procurement_dashboard"
+              sequence="1"/>
 
     <!-- Procurement Process -->
     <menuitem id="menu_procurement_process"
@@ -37,7 +45,7 @@
               action="action_contract_award"
               sequence="40"/>
 
-    <!-- Configuration Actions (must be defined before menuitems that reference them) -->
+    <!-- Configuration Actions -->
     <record id="action_procurement_method" model="ir.actions.act_window">
         <field name="name">Procurement Methods</field>
         <field name="res_model">nbet.procurement.method</field>
