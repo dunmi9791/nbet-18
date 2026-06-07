@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Add Payment Schedule smart button to Payment Request form -->
+    <record id="view_payment_request_form_inherit_treasury" model="ir.ui.view">
+        <field name="name">nbet.payment.request.form.inherit.treasury</field>
+        <field name="model">nbet.payment.request</field>
+        <field name="inherit_id" ref="nbet_procurement.view_payment_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_payment_schedule" type="object"
+                        class="oe_stat_button" icon="fa-calendar"
+                        invisible="not payment_schedule_id">
+                    <field name="payment_schedule_id" widget="statinfo" string="Payment Schedule"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

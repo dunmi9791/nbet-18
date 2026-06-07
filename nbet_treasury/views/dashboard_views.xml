@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_treasury_dashboard" model="ir.actions.client">
+        <field name="name">Treasury Dashboard</field>
+        <field name="tag">nbet_treasury_dashboard</field>
+    </record>
+
+</odoo>

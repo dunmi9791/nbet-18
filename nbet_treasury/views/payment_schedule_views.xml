@@ -10,20 +10,26 @@
                 <header>
                     <button name="action_schedule" string="Schedule Payment" type="object"
                             class="btn-primary" invisible="state != 'pending'"/>
-                    <button name="action_process" string="Process Payment" type="object"
+                    <button name="action_review" string="Review" type="object"
                             class="btn-primary" invisible="state != 'scheduled'"
+                            groups="nbet_treasury.group_treasury_user"/>
+                    <button name="action_verify" string="Verify" type="object"
+                            class="btn-primary" invisible="state != 'reviewed'"
+                            groups="nbet_treasury.group_treasury_manager"/>
+                    <button name="action_approve" string="Approve" type="object"
+                            class="btn-primary" invisible="state != 'verified'"
                             groups="nbet_treasury.group_treasury_manager"/>
                     <button name="action_mark_paid" string="Mark as Paid" type="object"
-                            class="btn-success" invisible="state != 'processing'"
+                            class="btn-success" invisible="state != 'approved'"
                             groups="nbet_treasury.group_treasury_manager"/>
                     <button name="action_hold" string="Put on Hold" type="object"
-                            class="btn-warning" invisible="state not in ('pending', 'scheduled')"/>
+                            class="btn-warning" invisible="state not in ('pending', 'scheduled', 'reviewed')"/>
                     <button name="action_resume" string="Resume" type="object"
                             class="btn-primary" invisible="state != 'on_hold'"/>
                     <button name="action_cancel" string="Cancel" type="object"
                             class="btn-danger" invisible="state in ('paid', 'cancelled')"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="pending,scheduled,processing,paid"/>
+                           statusbar_visible="pending,scheduled,reviewed,verified,approved,paid"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -39,21 +45,52 @@
                             <field name="currency_id" invisible="1"/>
                             <field name="priority" widget="priority"/>
                         </group>
-                        <group string="Schedule">
+                        <group string="Schedule &amp; Payment">
                             <field name="scheduled_date"/>
                             <field name="payment_method"/>
                             <field name="bank_account"/>
                             <field name="payment_reference"/>
                             <field name="payment_date"/>
-                        </group>
-                    </group>
-                    <group>
-                        <group>
                             <field name="treasury_officer_id"/>
-                            <field name="approved_by"/>
                         </group>
                     </group>
                     <notebook>
+                        <page string="Review" name="review"
+                              invisible="state in ('pending', 'scheduled')">
+                            <group>
+                                <group>
+                                    <field name="reviewed_by"/>
+                                    <field name="review_date"/>
+                                </group>
+                                <group>
+                                    <field name="review_notes"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Verification" name="verification"
+                              invisible="state in ('pending', 'scheduled', 'reviewed')">
+                            <group>
+                                <group>
+                                    <field name="verified_by"/>
+                                    <field name="verification_date"/>
+                                </group>
+                                <group>
+                                    <field name="verification_notes"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Approval" name="approval"
+                              invisible="state in ('pending', 'scheduled', 'reviewed', 'verified')">
+                            <group>
+                                <group>
+                                    <field name="approved_by"/>
+                                    <field name="approval_date"/>
+                                </group>
+                                <group>
+                                    <field name="approval_notes"/>
+                                </group>
+                            </group>
+                        </page>
                         <page string="Hold Info" name="hold"
                               invisible="state != 'on_hold'">
                             <group>
@@ -77,8 +114,8 @@
         <field name="arch" type="xml">
             <list string="Payment Schedule"
                   decoration-info="state == 'pending'"
-                  decoration-warning="state in ('scheduled', 'processing')"
-                  decoration-success="state == 'paid'"
+                  decoration-warning="state in ('scheduled', 'reviewed', 'verified')"
+                  decoration-success="state in ('approved', 'paid')"
                   decoration-muted="state in ('on_hold', 'cancelled')">
                 <field name="name"/>
                 <field name="payment_request_id"/>
@@ -90,8 +127,8 @@
                 <field name="priority" widget="priority"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'pending'"
-                       decoration-warning="state in ('scheduled', 'processing')"
-                       decoration-success="state == 'paid'"
+                       decoration-warning="state in ('scheduled', 'reviewed', 'verified')"
+                       decoration-success="state in ('approved', 'paid')"
                        decoration-danger="state == 'cancelled'"/>
             </list>
         </field>
@@ -108,17 +145,16 @@
                 <field name="payment_request_id"/>
                 <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
                 <filter name="scheduled" string="Scheduled" domain="[('state', '=', 'scheduled')]"/>
-                <filter name="processing" string="Processing" domain="[('state', '=', 'processing')]"/>
+                <filter name="reviewed" string="Reviewed" domain="[('state', '=', 'reviewed')]"/>
+                <filter name="verified" string="Verified" domain="[('state', '=', 'verified')]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
                 <filter name="paid" string="Paid" domain="[('state', '=', 'paid')]"/>
                 <filter name="on_hold" string="On Hold" domain="[('state', '=', 'on_hold')]"/>
                 <separator/>
-                <filter name="today" string="Due Today"
-                        domain="[('scheduled_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
-                <filter name="this_week" string="Due This Week"
-                        domain="[('scheduled_date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
-                                 ('scheduled_date', '&lt;=', (context_today() + datetime.timedelta(days=6-context_today().weekday())).strftime('%Y-%m-%d'))]"/>
+                <filter name="pending_action" string="Needs Action"
+                        domain="[('state', 'in', ('pending', 'scheduled', 'reviewed', 'verified', 'approved'))]"/>
                 <filter name="overdue" string="Overdue"
-                        domain="[('scheduled_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ('pending', 'scheduled'))]"/>
+                        domain="[('scheduled_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ('pending', 'scheduled', 'reviewed', 'verified'))]"/>
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
@@ -135,7 +171,7 @@
         <field name="name">Payment Schedule</field>
         <field name="res_model">nbet.payment.schedule</field>
         <field name="view_mode">list,form</field>
-        <field name="context">{'search_default_pending': 1, 'search_default_scheduled': 1}</field>
+        <field name="context">{'search_default_pending_action': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No payments to schedule</p>
             <p>Payment schedules are created automatically when approved payment requests are forwarded from Procurement.</p>

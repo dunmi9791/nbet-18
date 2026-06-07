@@ -50,7 +50,9 @@ class PaymentSchedule(models.Model):
     state = fields.Selection([
         ('pending', 'Pending'),
         ('scheduled', 'Scheduled'),
-        ('processing', 'Processing'),
+        ('reviewed', 'Reviewed'),
+        ('verified', 'Verified'),
+        ('approved', 'Approved'),
         ('paid', 'Paid'),
         ('on_hold', 'On Hold'),
         ('cancelled', 'Cancelled'),
@@ -73,7 +75,18 @@ class PaymentSchedule(models.Model):
     bank_account = fields.Char(string='Beneficiary Bank Account')
 
     treasury_officer_id = fields.Many2one('res.users', string='Treasury Officer', tracking=True)
+
+    reviewed_by = fields.Many2one('res.users', string='Reviewed By', tracking=True)
+    review_date = fields.Date(string='Review Date')
+    review_notes = fields.Text(string='Review Notes')
+
+    verified_by = fields.Many2one('res.users', string='Verified By', tracking=True)
+    verification_date = fields.Date(string='Verification Date')
+    verification_notes = fields.Text(string='Verification Notes')
+
     approved_by = fields.Many2one('res.users', string='Approved By', tracking=True)
+    approval_date = fields.Date(string='Approval Date')
+    approval_notes = fields.Text(string='Approval Notes')
 
     hold_reason = fields.Text(string='Hold Reason')
     notes = fields.Html()
@@ -96,8 +109,26 @@ class PaymentSchedule(models.Model):
             'treasury_officer_id': self.env.user.id,
         })
 
-    def action_process(self):
-        self.write({'state': 'processing'})
+    def action_review(self):
+        self.write({
+            'state': 'reviewed',
+            'reviewed_by': self.env.user.id,
+            'review_date': fields.Date.context_today(self),
+        })
+
+    def action_verify(self):
+        self.write({
+            'state': 'verified',
+            'verified_by': self.env.user.id,
+            'verification_date': fields.Date.context_today(self),
+        })
+
+    def action_approve(self):
+        self.write({
+            'state': 'approved',
+            'approved_by': self.env.user.id,
+            'approval_date': fields.Date.context_today(self),
+        })
 
     def action_mark_paid(self):
         for rec in self:
@@ -106,10 +137,14 @@ class PaymentSchedule(models.Model):
         self.write({
             'state': 'paid',
             'payment_date': fields.Date.context_today(self),
-            'approved_by': self.env.user.id,
         })
         for rec in self:
-            rec.payment_request_id.action_mark_paid()
+            rec.payment_request_id.write({'state': 'paid'})
+            rec.payment_request_id.contract_award_id.write({
+                'state': 'completed',
+                'payment_date': fields.Date.context_today(self),
+                'payment_reference': rec.payment_reference,
+            })
 
     def action_hold(self):
         self.write({'state': 'on_hold'})

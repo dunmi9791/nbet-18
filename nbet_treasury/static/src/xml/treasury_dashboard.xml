@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="nbet_treasury.TreasuryDashboard">
+        <div class="o_action">
+            <div class="container-fluid py-4">
+                <div class="row mb-4">
+                    <div class="col">
+                        <h2 class="mb-0">Treasury Dashboard</h2>
+                        <small class="text-muted">Payment scheduling and processing overview</small>
+                    </div>
+                </div>
+
+                <!-- KPI Summary Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card shadow-sm h-100 border-start border-4 border-warning"
+                             style="cursor: pointer;"
+                             t-on-click="() => this.openFiltered('Pending Payments', [['state', '=', 'pending']])">
+                            <div class="card-body">
+                                <h6 class="card-subtitle text-muted mb-2">Pending</h6>
+                                <h2 class="card-title mb-1" t-esc="state.counts.pending"/>
+                                <p class="text-muted mb-0 small" t-esc="formatCurrency(state.totals.pending_amount)"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card shadow-sm h-100 border-start border-4 border-info"
+                             style="cursor: pointer;"
+                             t-on-click="() => this.openFiltered('In Pipeline', [['state', 'in', ['scheduled', 'reviewed', 'verified', 'approved']]])">
+                            <div class="card-body">
+                                <h6 class="card-subtitle text-muted mb-2">In Pipeline</h6>
+                                <h2 class="card-title mb-1" t-esc="state.counts.scheduled + state.counts.reviewed + state.counts.verified + state.counts.approved"/>
+                                <p class="text-muted mb-0 small" t-esc="formatCurrency(state.totals.pipeline_amount - state.totals.pending_amount)"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card shadow-sm h-100 border-start border-4 border-success"
+                             style="cursor: pointer;"
+                             t-on-click="() => this.openFiltered('Paid', [['state', '=', 'paid']])">
+                            <div class="card-body">
+                                <h6 class="card-subtitle text-muted mb-2">Paid</h6>
+                                <h2 class="card-title mb-1" t-esc="state.counts.paid"/>
+                                <p class="text-muted mb-0 small" t-esc="formatCurrency(state.totals.paid_amount)"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card shadow-sm h-100 border-start border-4 border-danger"
+                             style="cursor: pointer;"
+                             t-on-click="() => this.openFiltered('Overdue Payments', [['scheduled_date', '&lt;', new Date().toISOString().split('T')[0]], ['state', 'in', ['pending', 'scheduled', 'reviewed', 'verified']]])">
+                            <div class="card-body">
+                                <h6 class="card-subtitle text-muted mb-2">Overdue</h6>
+                                <h2 class="card-title mb-1 text-danger" t-esc="state.counts.overdue"/>
+                                <p class="text-muted mb-0 small">Past scheduled date</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workflow Pipeline -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Payment Pipeline</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col" style="cursor: pointer;"
+                                         t-on-click="() => this.openFiltered('Pending', [['state', '=', 'pending']])">
+                                        <div class="border rounded p-3 h-100 bg-light">
+                                            <i class="fa fa-inbox fa-2x text-secondary mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.pending"/>
+                                            <small class="text-muted">Pending</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto d-flex align-items-center">
+                                        <i class="fa fa-chevron-right text-muted"/>
+                                    </div>
+                                    <div class="col" style="cursor: pointer;"
+                                         t-on-click="() => this.openFiltered('Scheduled', [['state', '=', 'scheduled']])">
+                                        <div class="border rounded p-3 h-100" style="background-color: #fff3cd;">
+                                            <i class="fa fa-calendar fa-2x text-warning mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.scheduled"/>
+                                            <small class="text-muted">Scheduled</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto d-flex align-items-center">
+                                        <i class="fa fa-chevron-right text-muted"/>
+                                    </div>
+                                    <div class="col" style="cursor: pointer;"
+                                         t-on-click="() => this.openFiltered('Reviewed', [['state', '=', 'reviewed']])">
+                                        <div class="border rounded p-3 h-100" style="background-color: #d1ecf1;">
+                                            <i class="fa fa-eye fa-2x text-info mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.reviewed"/>
+                                            <small class="text-muted">Reviewed</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto d-flex align-items-center">
+                                        <i class="fa fa-chevron-right text-muted"/>
+                                    </div>
+                                    <div class="col" style="cursor: pointer;"
+                                         t-on-click="() => this.openFiltered('Verified', [['state', '=', 'verified']])">
+                                        <div class="border rounded p-3 h-100" style="background-color: #cce5ff;">
+                                            <i class="fa fa-check-circle fa-2x text-primary mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.verified"/>
+                                            <small class="text-muted">Verified</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto d-flex align-items-center">
+                                        <i class="fa fa-chevron-right text-muted"/>
+                                    </div>
+                                    <div class="col" style="cursor: pointer;"
+                                         t-on-click="() => this.openFiltered('Approved', [['state', '=', 'approved']])">
+                                        <div class="border rounded p-3 h-100" style="background-color: #d4edda;">
+                                            <i class="fa fa-thumbs-up fa-2x text-success mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.approved"/>
+                                            <small class="text-muted">Approved</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto d-flex align-items-center">
+                                        <i class="fa fa-chevron-right text-muted"/>
+                                    </div>
+                                    <div class="col" style="cursor: pointer;"
+                                         t-on-click="() => this.openFiltered('Paid', [['state', '=', 'paid']])">
+                                        <div class="border rounded p-3 h-100 bg-success bg-opacity-25">
+                                            <i class="fa fa-money fa-2x text-success mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.paid"/>
+                                            <small class="text-muted">Paid</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: On Hold + Recent Payments -->
+                <div class="row g-3">
+                    <div class="col-lg-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">On Hold</h5>
+                                <span class="badge bg-warning text-dark" t-esc="state.counts.on_hold"/>
+                            </div>
+                            <div class="card-body">
+                                <t t-if="state.counts.on_hold > 0">
+                                    <button class="btn btn-outline-warning w-100"
+                                            t-on-click="() => this.openFiltered('On Hold Payments', [['state', '=', 'on_hold']])">
+                                        <i class="fa fa-pause-circle me-1"/>
+                                        View <t t-esc="state.counts.on_hold"/> held payment(s)
+                                    </button>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted text-center mb-0">No payments on hold</p>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Recent Payments</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <t t-if="state.recent_paid.length > 0">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Reference</th>
+                                                <th>Vendor</th>
+                                                <th>Date</th>
+                                                <th class="text-end">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="state.recent_paid" t-as="payment" t-key="payment.id">
+                                                <tr>
+                                                    <td><t t-esc="payment.name"/></td>
+                                                    <td><t t-esc="payment.vendor_id ? payment.vendor_id[1] : ''"/></td>
+                                                    <td><t t-esc="payment.payment_date || '-'"/></td>
+                                                    <td class="text-end"><t t-esc="formatCurrency(payment.amount)"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted text-center py-3 mb-0">No completed payments yet</p>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>
