@@ -170,6 +170,15 @@ class PaymentRequest(models.Model):
             'rejection_date': fields.Date.context_today(self),
         })
 
+    def action_view_payment_schedule(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'nbet.payment.schedule',
+            'res_id': self.payment_schedule_id.id,
+            'view_mode': 'form',
+        }
+
     def action_reset_draft(self):
         self.write({
             'state': 'draft',

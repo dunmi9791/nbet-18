@@ -49,7 +49,7 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(nbet_treasury.action_payment_schedule)d" type="action"
+                        <button name="action_view_payment_schedule" type="object"
                                 class="oe_stat_button" icon="fa-calendar"
                                 invisible="not payment_schedule_id">
                             <field name="payment_schedule_id" widget="statinfo" string="Payment Schedule"/>
