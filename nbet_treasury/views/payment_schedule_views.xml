@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Payment Schedule Form -->
+    <record id="view_payment_schedule_form" model="ir.ui.view">
+        <field name="name">nbet.payment.schedule.form</field>
+        <field name="model">nbet.payment.schedule</field>
+        <field name="arch" type="xml">
+            <form string="Payment Schedule">
+                <header>
+                    <button name="action_schedule" string="Schedule Payment" type="object"
+                            class="btn-primary" invisible="state != 'pending'"/>
+                    <button name="action_process" string="Process Payment" type="object"
+                            class="btn-primary" invisible="state != 'scheduled'"
+                            groups="nbet_treasury.group_treasury_manager"/>
+                    <button name="action_mark_paid" string="Mark as Paid" type="object"
+                            class="btn-success" invisible="state != 'processing'"
+                            groups="nbet_treasury.group_treasury_manager"/>
+                    <button name="action_hold" string="Put on Hold" type="object"
+                            class="btn-warning" invisible="state not in ('pending', 'scheduled')"/>
+                    <button name="action_resume" string="Resume" type="object"
+                            class="btn-primary" invisible="state != 'on_hold'"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            class="btn-danger" invisible="state in ('paid', 'cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pending,scheduled,processing,paid"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Payment Details">
+                            <field name="payment_request_id"/>
+                            <field name="contract_award_id"/>
+                            <field name="vendor_id"/>
+                            <field name="description"/>
+                            <field name="amount" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="priority" widget="priority"/>
+                        </group>
+                        <group string="Schedule">
+                            <field name="scheduled_date"/>
+                            <field name="payment_method"/>
+                            <field name="bank_account"/>
+                            <field name="payment_reference"/>
+                            <field name="payment_date"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="treasury_officer_id"/>
+                            <field name="approved_by"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Hold Info" name="hold"
+                              invisible="state != 'on_hold'">
+                            <group>
+                                <field name="hold_reason"/>
+                            </group>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Payment Schedule List -->
+    <record id="view_payment_schedule_list" model="ir.ui.view">
+        <field name="name">nbet.payment.schedule.list</field>
+        <field name="model">nbet.payment.schedule</field>
+        <field name="arch" type="xml">
+            <list string="Payment Schedule"
+                  decoration-info="state == 'pending'"
+                  decoration-warning="state in ('scheduled', 'processing')"
+                  decoration-success="state == 'paid'"
+                  decoration-muted="state in ('on_hold', 'cancelled')">
+                <field name="name"/>
+                <field name="payment_request_id"/>
+                <field name="vendor_id"/>
+                <field name="description"/>
+                <field name="amount" widget="monetary" sum="Total"/>
+                <field name="scheduled_date"/>
+                <field name="payment_method"/>
+                <field name="priority" widget="priority"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'pending'"
+                       decoration-warning="state in ('scheduled', 'processing')"
+                       decoration-success="state == 'paid'"
+                       decoration-danger="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Payment Schedule Search -->
+    <record id="view_payment_schedule_search" model="ir.ui.view">
+        <field name="name">nbet.payment.schedule.search</field>
+        <field name="model">nbet.payment.schedule</field>
+        <field name="arch" type="xml">
+            <search string="Search Payment Schedule">
+                <field name="name"/>
+                <field name="vendor_id"/>
+                <field name="payment_request_id"/>
+                <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+                <filter name="scheduled" string="Scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter name="processing" string="Processing" domain="[('state', '=', 'processing')]"/>
+                <filter name="paid" string="Paid" domain="[('state', '=', 'paid')]"/>
+                <filter name="on_hold" string="On Hold" domain="[('state', '=', 'on_hold')]"/>
+                <separator/>
+                <filter name="today" string="Due Today"
+                        domain="[('scheduled_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="this_week" string="Due This Week"
+                        domain="[('scheduled_date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
+                                 ('scheduled_date', '&lt;=', (context_today() + datetime.timedelta(days=6-context_today().weekday())).strftime('%Y-%m-%d'))]"/>
+                <filter name="overdue" string="Overdue"
+                        domain="[('scheduled_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ('pending', 'scheduled'))]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_scheduled" string="Scheduled Date" context="{'group_by': 'scheduled_date:month'}"/>
+                    <filter name="group_method" string="Payment Method" context="{'group_by': 'payment_method'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Payment Schedule Action -->
+    <record id="action_payment_schedule" model="ir.actions.act_window">
+        <field name="name">Payment Schedule</field>
+        <field name="res_model">nbet.payment.schedule</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_pending': 1, 'search_default_scheduled': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No payments to schedule</p>
+            <p>Payment schedules are created automatically when approved payment requests are forwarded from Procurement.</p>
+        </field>
+    </record>
+
+</odoo>

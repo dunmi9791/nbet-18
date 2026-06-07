@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Payment Request Form -->
+    <record id="view_payment_request_form" model="ir.ui.view">
+        <field name="name">nbet.payment.request.form</field>
+        <field name="model">nbet.payment.request</field>
+        <field name="arch" type="xml">
+            <form string="Payment Request">
+                <header>
+                    <!-- Draft → Submit to MD (Procurement Officer) -->
+                    <button name="action_submit_to_md" string="Submit to MD" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+
+                    <!-- MD Reviews and forwards to User Dept -->
+                    <button name="action_md_review" string="Review &amp; Acknowledge" type="object"
+                            class="btn-primary" invisible="state != 'submitted_to_md'"
+                            groups="nbet_procurement.group_procurement_approver"/>
+                    <button name="action_send_to_user_dept" string="Forward to User Dept" type="object"
+                            class="btn-primary" invisible="state != 'md_reviewed'"
+                            groups="nbet_procurement.group_procurement_approver"/>
+
+                    <!-- User Department Approves -->
+                    <button name="action_user_dept_approve" string="Approve (User Dept)" type="object"
+                            class="btn-primary" invisible="state != 'user_dept_review'"/>
+
+                    <!-- MD Final Approval -->
+                    <button name="action_md_final_approve" string="Final Approval (MD)" type="object"
+                            class="btn-primary" invisible="state != 'user_dept_approved'"
+                            groups="nbet_procurement.group_procurement_approver"/>
+
+                    <!-- Send to Treasury -->
+                    <button name="action_send_to_treasury" string="Send to Treasury" type="object"
+                            class="btn-success" invisible="state != 'approved'"
+                            groups="nbet_procurement.group_procurement_approver"/>
+
+                    <!-- Reject (available at any approval stage) -->
+                    <button name="action_reject" string="Reject" type="object"
+                            class="btn-danger"
+                            invisible="state not in ('submitted_to_md', 'md_reviewed', 'user_dept_review', 'user_dept_approved')"
+                            groups="nbet_procurement.group_procurement_approver"/>
+
+                    <!-- Reset to Draft -->
+                    <button name="action_reset_draft" string="Reset to Draft" type="object"
+                            invisible="state != 'rejected'"/>
+
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted_to_md,user_dept_review,approved,sent_to_treasury,paid"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(nbet_treasury.action_payment_schedule)d" type="action"
+                                class="oe_stat_button" icon="fa-calendar"
+                                invisible="not payment_schedule_id">
+                            <field name="payment_schedule_id" widget="statinfo" string="Payment Schedule"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Request Details">
+                            <field name="contract_award_id"/>
+                            <field name="vendor_id"/>
+                            <field name="description"/>
+                            <field name="category"/>
+                            <field name="department_id"/>
+                        </group>
+                        <group string="Amount">
+                            <field name="contract_amount" widget="monetary"/>
+                            <field name="requested_amount" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="request_date"/>
+                            <field name="requested_by"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Attachments" name="attachments">
+                            <group>
+                                <group>
+                                    <field name="delivery_certificate" filename="delivery_certificate_filename"/>
+                                    <field name="delivery_certificate_filename" invisible="1"/>
+                                </group>
+                                <group>
+                                    <field name="invoice_attachment" filename="invoice_attachment_filename"/>
+                                    <field name="invoice_attachment_filename" invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="MD Review" name="md_review"
+                              invisible="state in ('draft',)">
+                            <group>
+                                <group>
+                                    <field name="md_reviewer_id"/>
+                                    <field name="md_review_date"/>
+                                </group>
+                                <group>
+                                    <field name="md_review_notes"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="User Dept Review" name="dept_review"
+                              invisible="state in ('draft', 'submitted_to_md', 'md_reviewed')">
+                            <group>
+                                <group>
+                                    <field name="dept_reviewer_id"/>
+                                    <field name="dept_review_date"/>
+                                </group>
+                                <group>
+                                    <field name="dept_review_notes"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="MD Final Approval" name="md_final"
+                              invisible="state in ('draft', 'submitted_to_md', 'md_reviewed', 'user_dept_review')">
+                            <group>
+                                <group>
+                                    <field name="md_final_approver_id"/>
+                                    <field name="md_final_approval_date"/>
+                                </group>
+                                <group>
+                                    <field name="md_final_approval_notes"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Rejection" name="rejection"
+                              invisible="state != 'rejected'">
+                            <group>
+                                <group>
+                                    <field name="rejected_by"/>
+                                    <field name="rejection_date"/>
+                                </group>
+                                <group>
+                                    <field name="rejection_reason"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Payment Request List -->
+    <record id="view_payment_request_list" model="ir.ui.view">
+        <field name="name">nbet.payment.request.list</field>
+        <field name="model">nbet.payment.request</field>
+        <field name="arch" type="xml">
+            <list string="Payment Requests"
+                  decoration-info="state == 'draft'"
+                  decoration-warning="state in ('submitted_to_md', 'md_reviewed', 'user_dept_review', 'user_dept_approved')"
+                  decoration-success="state in ('approved', 'sent_to_treasury', 'paid')"
+                  decoration-danger="state == 'rejected'">
+                <field name="name"/>
+                <field name="contract_award_id"/>
+                <field name="vendor_id"/>
+                <field name="description"/>
+                <field name="requested_amount" widget="monetary"/>
+                <field name="department_id"/>
+                <field name="request_date"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state in ('submitted_to_md', 'md_reviewed', 'user_dept_review', 'user_dept_approved')"
+                       decoration-success="state in ('approved', 'sent_to_treasury', 'paid')"
+                       decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Payment Request Search -->
+    <record id="view_payment_request_search" model="ir.ui.view">
+        <field name="name">nbet.payment.request.search</field>
+        <field name="model">nbet.payment.request</field>
+        <field name="arch" type="xml">
+            <search string="Search Payment Requests">
+                <field name="name"/>
+                <field name="vendor_id"/>
+                <field name="contract_award_id"/>
+                <field name="department_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="pending_approval" string="Pending Approval"
+                        domain="[('state', 'in', ('submitted_to_md', 'md_reviewed', 'user_dept_review', 'user_dept_approved'))]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="sent_treasury" string="Sent to Treasury" domain="[('state', '=', 'sent_to_treasury')]"/>
+                <filter name="paid" string="Paid" domain="[('state', '=', 'paid')]"/>
+                <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
+                    <filter name="group_dept" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Payment Request Action -->
+    <record id="action_payment_request" model="ir.actions.act_window">
+        <field name="name">Payment Requests</field>
+        <field name="res_model">nbet.payment.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a Payment Request</p>
+            <p>Submit payment requests after contractor delivery for MD and User Department approval before forwarding to Treasury.</p>
+        </field>
+    </record>
+
+</odoo>

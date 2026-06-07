@@ -21,7 +21,7 @@
                             class="btn-primary" invisible="state != 'in_execution'"/>
                     <button name="action_verify" string="Complete Verification" type="object"
                             class="btn-primary" invisible="state != 'delivered'"/>
-                    <button name="action_process_payment" string="Process Payment" type="object"
+                    <button name="action_create_payment_request" string="Create Payment Request" type="object"
                             class="btn-primary" invisible="state != 'verified'"/>
                     <button name="action_complete" string="Complete" type="object"
                             class="btn-success" invisible="state != 'payment_processing'"/>
@@ -35,6 +35,13 @@
                            statusbar_visible="draft,letter_sent,agreement_signed,in_execution,delivered,verified,payment_processing,completed"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_payment_requests" type="object"
+                                class="oe_stat_button" icon="fa-money"
+                                invisible="payment_request_count == 0">
+                            <field name="payment_request_count" widget="statinfo" string="Payment Requests"/>
+                        </button>
+                    </div>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                     </div>

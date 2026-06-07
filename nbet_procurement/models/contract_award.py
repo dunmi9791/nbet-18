@@ -59,8 +59,20 @@ class ContractAward(models.Model):
     payment_date = fields.Date()
     payment_reference = fields.Char()
 
+    payment_request_ids = fields.One2many(
+        'nbet.payment.request', 'contract_award_id', string='Payment Requests',
+    )
+    payment_request_count = fields.Integer(
+        compute='_compute_payment_request_count',
+    )
+
     terms_of_contract = fields.Html()
     notes = fields.Html()
+
+    @api.depends('payment_request_ids')
+    def _compute_payment_request_count(self):
+        for rec in self:
+            rec.payment_request_count = len(rec.payment_request_ids)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -118,6 +130,28 @@ class ContractAward(models.Model):
 
     def action_reset_draft(self):
         self.write({'state': 'draft'})
+
+    def action_create_payment_request(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'nbet.payment.request',
+            'view_mode': 'form',
+            'context': {
+                'default_contract_award_id': self.id,
+                'default_requested_amount': self.award_amount,
+            },
+        }
+
+    def action_view_payment_requests(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'nbet.payment.request',
+            'view_mode': 'list,form',
+            'domain': [('contract_award_id', '=', self.id)],
+            'context': {'default_contract_award_id': self.id},
+        }
 
     def action_create_purchase_order(self):
         self.ensure_one()

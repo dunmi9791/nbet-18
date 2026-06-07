@@ -57,4 +57,11 @@
         <field name="padding">4</field>
     </record>
 
+    <record id="seq_payment_request" model="ir.sequence">
+        <field name="name">Payment Request</field>
+        <field name="code">nbet.payment.request</field>
+        <field name="prefix">PR/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
 </odoo>

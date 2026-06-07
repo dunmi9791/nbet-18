@@ -40,6 +40,7 @@ Works and Services, including:
         'views/bid_evaluation_views.xml',
         'views/contract_award_views.xml',
         'views/purchase_order_views.xml',
+        'views/payment_request_views.xml',
         'views/dashboard_views.xml',
         'views/menus.xml',
         'reports/procurement_plan_report.xml',

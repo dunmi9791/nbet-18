@@ -6,3 +6,4 @@ from . import procurement_plan
 from . import bid_evaluation
 from . import contract_award
 from . import purchase_order
+from . import payment_request

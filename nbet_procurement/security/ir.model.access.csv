@@ -18,3 +18,5 @@ access_bid_evaluation_line_head,nbet.bid.evaluation.line.head,model_nbet_bid_eva
 access_contract_award_user,nbet.contract.award.user,model_nbet_contract_award,group_procurement_user,1,1,1,0
 access_contract_award_head,nbet.contract.award.head,model_nbet_contract_award,group_procurement_head,1,1,1,1
 access_submit_approval_wizard,nbet.submit.approval.wizard,model_nbet_submit_approval_wizard,group_procurement_user,1,1,1,0
+access_payment_request_user,nbet.payment.request.user,model_nbet_payment_request,group_procurement_user,1,1,1,0
+access_payment_request_head,nbet.payment.request.head,model_nbet_payment_request,group_procurement_head,1,1,1,1

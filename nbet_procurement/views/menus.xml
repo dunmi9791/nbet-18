@@ -45,6 +45,12 @@
               action="action_contract_award"
               sequence="40"/>
 
+    <menuitem id="menu_payment_request"
+              name="Payment Requests"
+              parent="menu_procurement_process"
+              action="action_payment_request"
+              sequence="50"/>
+
     <!-- Configuration Actions -->
     <record id="action_procurement_method" model="ir.actions.act_window">
         <field name="name">Procurement Methods</field>
