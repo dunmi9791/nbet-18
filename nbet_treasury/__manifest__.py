@@ -27,6 +27,7 @@ from the Procurement module, including:
         'security/security_groups.xml',
         'security/ir.model.access.csv',
         'views/payment_schedule_views.xml',
+        'views/payment_request_inherit_views.xml',
         'views/menus.xml',
     ],
     'installable': True,

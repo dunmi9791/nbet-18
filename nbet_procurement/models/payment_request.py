@@ -94,12 +94,6 @@ class PaymentRequest(models.Model):
     invoice_attachment = fields.Binary(string='Vendor Invoice', attachment=True)
     invoice_attachment_filename = fields.Char()
 
-    payment_schedule_id = fields.Many2one(
-        'nbet.payment.schedule',
-        string='Payment Schedule',
-        readonly=True,
-    )
-
     notes = fields.Html()
 
     @api.model_create_multi
@@ -149,13 +143,7 @@ class PaymentRequest(models.Model):
 
     def action_send_to_treasury(self):
         for rec in self:
-            schedule = self.env['nbet.payment.schedule'].create({
-                'payment_request_id': rec.id,
-            })
-            rec.write({
-                'state': 'sent_to_treasury',
-                'payment_schedule_id': schedule.id,
-            })
+            rec.write({'state': 'sent_to_treasury'})
             rec.contract_award_id.write({'state': 'payment_processing'})
 
     def action_mark_paid(self):
@@ -169,15 +157,6 @@ class PaymentRequest(models.Model):
             'rejected_by': self.env.user.id,
             'rejection_date': fields.Date.context_today(self),
         })
-
-    def action_view_payment_schedule(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'nbet.payment.schedule',
-            'res_id': self.payment_schedule_id.id,
-            'view_mode': 'form',
-        }
 
     def action_reset_draft(self):
         self.write({

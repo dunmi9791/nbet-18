@@ -48,13 +48,7 @@
                            statusbar_visible="draft,submitted_to_md,user_dept_review,approved,sent_to_treasury,paid"/>
                 </header>
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="action_view_payment_schedule" type="object"
-                                class="oe_stat_button" icon="fa-calendar"
-                                invisible="not payment_schedule_id">
-                            <field name="payment_schedule_id" widget="statinfo" string="Payment Schedule"/>
-                        </button>
-                    </div>
+                    <div class="oe_button_box" name="button_box"/>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
