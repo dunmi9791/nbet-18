@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Top-level menu under Employees app -->
+    <menuitem id="menu_hr_grade_root"
+              name="Grade &amp; Step"
+              parent="hr.menu_hr_root"
+              sequence="25"/>
+
+    <menuitem id="menu_hr_grade"
+              name="Salary Grades"
+              parent="menu_hr_grade_root"
+              action="action_hr_grade"
+              sequence="10"/>
+
+    <menuitem id="menu_hr_grade_step"
+              name="All Steps"
+              parent="menu_hr_grade_root"
+              action="action_hr_grade_step"
+              sequence="20"/>
+
+</odoo>

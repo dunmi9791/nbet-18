@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ Grade Step Form ============ -->
+    <record id="hr_grade_step_form" model="ir.ui.view">
+        <field name="name">hr.grade.step.form</field>
+        <field name="model">hr.grade.step</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="grade_id"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="active"/>
+                            <field name="employee_count"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ Grade Step List ============ -->
+    <record id="hr_grade_step_list" model="ir.ui.view">
+        <field name="name">hr.grade.step.list</field>
+        <field name="model">hr.grade.step</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="grade_id"/>
+                <field name="amount"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="employee_count"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============ Grade Form ============ -->
+    <record id="hr_grade_form" model="ir.ui.view">
+        <field name="name">hr.grade.form</field>
+        <field name="model">hr.grade</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_employees" type="object"
+                                class="oe_stat_button" icon="fa-users">
+                            <field name="employee_count" widget="statinfo" string="Employees"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Grade Level 10"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code" placeholder="e.g. GL-10"/>
+                            <field name="sequence"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="min_salary"/>
+                            <field name="max_salary"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Steps / Ranks" name="steps">
+                            <field name="step_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="amount"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="employee_count"/>
+                                    <field name="active" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="description" placeholder="Additional notes about this grade..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ Grade List ============ -->
+    <record id="hr_grade_list" model="ir.ui.view">
+        <field name="name">hr.grade.list</field>
+        <field name="model">hr.grade</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="step_count"/>
+                <field name="min_salary"/>
+                <field name="max_salary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="employee_count"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============ Grade Search ============ -->
+    <record id="hr_grade_search" model="ir.ui.view">
+        <field name="name">hr.grade.search</field>
+        <field name="model">hr.grade</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_active" string="Active" context="{'group_by': 'active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============ Actions ============ -->
+    <record id="action_hr_grade" model="ir.actions.act_window">
+        <field name="name">Salary Grades</field>
+        <field name="res_model">hr.grade</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first salary grade
+            </p>
+            <p>
+                Define salary grades and their steps to manage employee compensation.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_hr_grade_step" model="ir.actions.act_window">
+        <field name="name">Grade Steps</field>
+        <field name="res_model">hr.grade.step</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

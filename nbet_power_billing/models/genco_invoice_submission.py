@@ -35,6 +35,8 @@ class NbetGencoInvoiceSubmission(models.Model):
             ('under_review', 'Under Review'),
             ('matched', 'Matched'),
             ('variance', 'Variance Flagged'),
+            ('query_sent', 'Query Sent to GenCo'),
+            ('resubmitted', 'Resubmitted'),
             ('approved', 'Approved'),
             ('rejected', 'Rejected'),
             ('posted', 'Posted'),
@@ -72,6 +74,42 @@ class NbetGencoInvoiceSubmission(models.Model):
         default=lambda self: self.env.user,
         tracking=True,
     )
+
+    # ── Variance Query & Resubmission ───────────────────────────────────────
+    query_date = fields.Date(string='Query Sent Date', tracking=True)
+    query_sent_by = fields.Many2one('res.users', string='Query Sent By', tracking=True)
+    query_notes = fields.Text(
+        string='Query Details',
+        help='Description of the variance issue communicated to the GenCo.',
+    )
+    query_deadline = fields.Date(
+        string='Response Deadline',
+        help='Date by which the GenCo is expected to respond or reissue.',
+    )
+    original_submission_id = fields.Many2one(
+        'nbet.genco.invoice.submission', string='Original Submission',
+        help='If this is a resubmission, link to the original invoice that had a variance.',
+        index=True,
+    )
+    resubmission_ids = fields.One2many(
+        'nbet.genco.invoice.submission', 'original_submission_id',
+        string='Resubmissions',
+    )
+    resubmission_count = fields.Integer(
+        string='Resubmission Count', compute='_compute_resubmission_count',
+    )
+    is_resubmission = fields.Boolean(
+        string='Is Resubmission', compute='_compute_is_resubmission', store=True,
+    )
+
+    @api.depends('original_submission_id')
+    def _compute_is_resubmission(self):
+        for rec in self:
+            rec.is_resubmission = bool(rec.original_submission_id)
+
+    def _compute_resubmission_count(self):
+        for rec in self:
+            rec.resubmission_count = len(rec.resubmission_ids)
 
     # ── Submitted Breakdown ──────────────────────────────────────────────────
     submitted_energy_kwh = fields.Float(
@@ -209,6 +247,91 @@ class NbetGencoInvoiceSubmission(models.Model):
 
     def action_under_review(self):
         self.write({'state': 'under_review'})
+
+    def action_send_query(self):
+        """Send a variance query to the GenCo requesting clarification or reissuance."""
+        for rec in self:
+            if rec.state not in ('variance', 'under_review'):
+                raise UserError('Queries can only be sent for invoices with flagged variances or under review.')
+            if not rec.query_notes:
+                raise UserError('Please fill in the query details before sending.')
+            rec.write({
+                'state': 'query_sent',
+                'query_date': fields.Date.today(),
+                'query_sent_by': self.env.user.id,
+            })
+            rec.message_post(
+                body=f'Variance query sent to {rec.participant_id.name} by {self.env.user.name}.<br/>'
+                     f'<strong>Query:</strong> {rec.query_notes}<br/>'
+                     f'<strong>Deadline:</strong> {rec.query_deadline or "Not set"}'
+            )
+
+    def action_receive_resubmission(self):
+        """Create a new submission record for the reissued invoice from the GenCo."""
+        self.ensure_one()
+        if self.state != 'query_sent':
+            raise UserError('Can only receive resubmissions for invoices with an outstanding query.')
+        new_submission = self.copy({
+            'state': 'draft',
+            'original_submission_id': self.id,
+            'invoice_number': False,
+            'invoice_date': False,
+            'receipt_date': fields.Date.today(),
+            'receipt_datetime': fields.Datetime.now(),
+            'received_by': self.env.user.id,
+            'submitted_amount': 0,
+            'submitted_energy_charge': 0,
+            'submitted_capacity_charge': 0,
+            'submitted_energy_kwh': 0,
+            'submitted_capacity_mw': 0,
+            'submitted_startup_cost': 0,
+            'submitted_other_charges': 0,
+            'query_date': False,
+            'query_sent_by': False,
+            'query_notes': False,
+            'query_deadline': False,
+            'review_notes': False,
+            'reviewed_by': False,
+            'reviewed_date': False,
+            'comparison_line_ids': False,
+            'vendor_bill_id': False,
+            'attachment_ids': False,
+        })
+        self.write({'state': 'resubmitted'})
+        self.message_post(
+            body=f'GenCo reissued invoice received. New submission: '
+                 f'<a href="/web#id={new_submission.id}&model=nbet.genco.invoice.submission">'
+                 f'{new_submission.invoice_number or "Draft"}</a>'
+        )
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'nbet.genco.invoice.submission',
+            'res_id': new_submission.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_view_resubmissions(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'nbet.genco.invoice.submission',
+            'name': f'Resubmissions for {self.invoice_number or self.id}',
+            'view_mode': 'list,form',
+            'domain': [('original_submission_id', '=', self.id)],
+        }
+
+    def action_view_original(self):
+        self.ensure_one()
+        if not self.original_submission_id:
+            return
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'nbet.genco.invoice.submission',
+            'res_id': self.original_submission_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_post(self):
         """Create a vendor bill from this approved submission via the accounting service."""

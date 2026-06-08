@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="hr_employee_view_form_inherit_grade" model="ir.ui.view">
+        <field name="name">hr.employee.form.grade</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='department_group']" position="after">
+                <group string="Grade &amp; Step" name="grade_group">
+                    <field name="grade_id"/>
+                    <field name="grade_step_id"/>
+                    <field name="grade_salary"/>
+                    <field name="grade_currency_id" invisible="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

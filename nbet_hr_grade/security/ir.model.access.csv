@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_grade_user,hr.grade.user,model_hr_grade,group_hr_grade_user,1,0,0,0
+access_hr_grade_manager,hr.grade.manager,model_hr_grade,group_hr_grade_manager,1,1,1,1
+access_hr_grade_step_user,hr.grade.step.user,model_hr_grade_step,group_hr_grade_user,1,0,0,0
+access_hr_grade_step_manager,hr.grade.step.manager,model_hr_grade_step,group_hr_grade_manager,1,1,1,1
