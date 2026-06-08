@@ -6,13 +6,11 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='department_group']" position="after">
-                <group string="Grade &amp; Step" name="grade_group">
-                    <field name="grade_id"/>
-                    <field name="grade_step_id"/>
-                    <field name="grade_salary"/>
-                    <field name="grade_currency_id" invisible="1"/>
-                </group>
+            <xpath expr="//field[@name='job_id']" position="after">
+                <field name="grade_id"/>
+                <field name="grade_step_id"/>
+                <field name="grade_salary"/>
+                <field name="grade_currency_id" invisible="1"/>
             </xpath>
         </field>
     </record>
