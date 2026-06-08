@@ -28,11 +28,36 @@
                   action="action_nbet_genco_expected_bill"
                   sequence="10"/>
 
-        <menuitem id="menu_nbet_submissions"
-                  name="GENCO Invoice Submissions"
+        <!-- GenCo Invoice Workflow -->
+        <menuitem id="menu_nbet_genco_invoices"
+                  name="GenCo Invoices"
                   parent="menu_nbet_settlement"
-                  action="action_nbet_genco_invoice_submission"
                   sequence="20"/>
+
+        <menuitem id="menu_nbet_receive_invoice"
+                  name="Receive Invoice"
+                  parent="menu_nbet_genco_invoices"
+                  action="action_nbet_receive_genco_invoice"
+                  sequence="10"/>
+
+        <menuitem id="menu_nbet_review_invoices"
+                  name="Review Invoices"
+                  parent="menu_nbet_genco_invoices"
+                  action="action_nbet_review_genco_invoices"
+                  sequence="20"/>
+
+        <menuitem id="menu_nbet_post_invoices"
+                  name="Post to Journal"
+                  parent="menu_nbet_genco_invoices"
+                  action="action_nbet_post_genco_invoices"
+                  sequence="30"
+                  groups="nbet_power_billing.group_nbet_settlement_manager"/>
+
+        <menuitem id="menu_nbet_submissions"
+                  name="All Submissions"
+                  parent="menu_nbet_genco_invoices"
+                  action="action_nbet_genco_invoice_submission"
+                  sequence="40"/>
 
         <menuitem id="menu_nbet_disco_bills"
                   name="DISCO Bills"

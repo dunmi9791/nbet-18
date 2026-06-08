@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+
+        <!-- ══ List View ═══════════════════════════════════════════════════ -->
+
         <record id="view_nbet_genco_invoice_submission_list" model="ir.ui.view">
             <field name="name">nbet.genco.invoice.submission.list</field>
             <field name="model">nbet.genco.invoice.submission</field>
@@ -12,18 +15,24 @@
                     <field name="participant_id"/>
                     <field name="invoice_number" optional="show"/>
                     <field name="invoice_date" optional="show"/>
-                    <field name="submitted_amount" string="Submitted"/>
-                    <field name="variance_amount" string="Variance"/>
-                    <field name="variance_percent" string="Var. %" widget="percentage"/>
-                    <field name="is_within_tolerance" string="OK?" widget="boolean"/>
+                    <field name="receipt_date" optional="show"/>
+                    <field name="delivery_method" optional="show"/>
+                    <field name="received_by" optional="hide"/>
+                    <field name="submitted_amount" string="Submitted (₦)"/>
+                    <field name="variance_amount" string="Variance" optional="show"/>
+                    <field name="variance_percent" string="Var. %" widget="percentage" optional="show"/>
+                    <field name="is_within_tolerance" string="OK?" widget="boolean" optional="hide"/>
                     <field name="state" widget="badge"
                            decoration-success="state in ('matched','approved','posted')"
-                           decoration-danger="state == 'variance'"
-                           decoration-warning="state == 'under_review'"/>
+                           decoration-danger="state in ('variance','rejected')"
+                           decoration-warning="state == 'under_review'"
+                           decoration-info="state == 'submitted'"/>
                     <field name="currency_id" column_invisible="1"/>
                 </list>
             </field>
         </record>
+
+        <!-- ══ Form View ═══════════════════════════════════════════════════ -->
 
         <record id="view_nbet_genco_invoice_submission_form" model="ir.ui.view">
             <field name="name">nbet.genco.invoice.submission.form</field>
@@ -33,10 +42,10 @@
                     <header>
                         <button name="action_submit" type="object" string="Submit for Review"
                                 invisible="state != 'draft'" class="btn-primary"/>
-                        <button name="action_compare" type="object" string="Compare vs Expected Bill"
-                                invisible="state not in ('submitted','under_review')"/>
                         <button name="action_under_review" type="object" string="Mark Under Review"
                                 invisible="state != 'submitted'"/>
+                        <button name="action_compare" type="object" string="Compare vs Expected Bill"
+                                invisible="state not in ('submitted','under_review')"/>
                         <button name="action_approve" type="object" string="Approve"
                                 invisible="state not in ('matched','variance','under_review')"
                                 class="btn-primary"
@@ -44,10 +53,23 @@
                         <button name="action_reject" type="object" string="Reject"
                                 invisible="state in ('draft','rejected','posted')"
                                 groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <button name="action_post" type="object" string="Post to Journal"
+                                invisible="state != 'approved'"
+                                class="btn-primary"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
                         <field name="state" widget="statusbar"
-                               statusbar_visible="draft,submitted,under_review,matched,approved"/>
+                               statusbar_visible="draft,submitted,under_review,matched,approved,posted"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_vendor_bill" type="object"
+                                    class="oe_stat_button" icon="fa-file-text-o"
+                                    invisible="not vendor_bill_id">
+                                <field name="vendor_bill_id" widget="statinfo" string="Vendor Bill"/>
+                            </button>
+                        </div>
+
+                        <!-- ── Alerts (only after comparison) ──────────── -->
                         <div class="alert alert-danger" role="alert"
                              invisible="is_within_tolerance or state not in ('variance','matched')">
                             <strong>Variance Flagged:</strong>
@@ -59,25 +81,83 @@
                              invisible="not is_within_tolerance or state not in ('matched',)">
                             <strong>Matched:</strong> Variance is within the configured tolerance.
                         </div>
-                        <group>
-                            <group string="Invoice Details">
-                                <field name="billing_cycle_id"/>
-                                <field name="participant_id"/>
+
+                        <!-- ══════════════════════════════════════════════ -->
+                        <!-- SECTION 1: RECEIPT — the first thing to fill  -->
+                        <!-- ══════════════════════════════════════════════ -->
+                        <group string="Invoice Receipt">
+                            <group>
+                                <field name="participant_id" string="GenCo"/>
                                 <field name="invoice_number"/>
                                 <field name="invoice_date"/>
-                                <field name="submitted_amount"/>
-                                <field name="tolerance_percent" string="Tolerance (%)"/>
+                                <field name="billing_cycle_id"/>
                             </group>
-                            <group string="Comparison">
-                                <field name="expected_bill_id"/>
-                                <field name="variance_amount" readonly="1"/>
-                                <field name="variance_percent" readonly="1" widget="percentage"/>
-                                <field name="is_within_tolerance" readonly="1"/>
+                            <group>
+                                <field name="receipt_date"/>
+                                <field name="receipt_datetime" widget="datetime"/>
+                                <field name="delivery_method"/>
+                                <field name="delivery_details"
+                                       placeholder="Sender email, courier name, tracking #"/>
+                                <field name="received_by"/>
+                            </group>
+                        </group>
+
+                        <!-- ══════════════════════════════════════════════ -->
+                        <!-- SECTION 2: WHAT THE GENCO IS CLAIMING        -->
+                        <!-- ══════════════════════════════════════════════ -->
+                        <group string="Submitted Invoice Amounts">
+                            <group>
+                                <field name="submitted_energy_kwh" string="Energy (kWh)"/>
+                                <field name="submitted_capacity_mw" string="Capacity (MW)"/>
+                            </group>
+                            <group>
+                                <field name="submitted_energy_charge" string="Energy Charge (₦)"/>
+                                <field name="submitted_capacity_charge" string="Capacity Charge (₦)"/>
+                                <field name="submitted_startup_cost" string="Startup Cost (₦)"/>
+                                <field name="submitted_other_charges" string="Other Charges (₦)"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="submitted_amount" string="Total Invoice Amount (₦)"/>
                                 <field name="currency_id" invisible="1"/>
                             </group>
                         </group>
-                        <notebook>
-                            <page string="Comparison Lines" name="comparison">
+
+                        <!-- ══════════════════════════════════════════════ -->
+                        <!-- SECTION 3: ATTACHMENTS — scan / email copy    -->
+                        <!-- ══════════════════════════════════════════════ -->
+                        <group string="Scanned Copy / Email Attachment">
+                            <field name="attachment_ids" widget="many2many_binary" nolabel="1"/>
+                        </group>
+
+                        <!-- ══════════════════════════════════════════════ -->
+                        <!-- NOTEBOOK: Review, Comparison, Journal         -->
+                        <!-- (appears after submission — the review stage) -->
+                        <!-- ══════════════════════════════════════════════ -->
+                        <notebook invisible="state == 'draft'">
+                            <page string="Review" name="review">
+                                <group>
+                                    <group>
+                                        <field name="reviewed_by" readonly="1"/>
+                                        <field name="reviewed_date" readonly="1"/>
+                                    </group>
+                                </group>
+                                <field name="review_notes"
+                                       placeholder="Review notes, variance explanations, queries to GenCo..."/>
+                            </page>
+                            <page string="Comparison vs Expected Bill" name="comparison">
+                                <group>
+                                    <group>
+                                        <field name="expected_bill_id"/>
+                                        <field name="tolerance_percent" string="Tolerance (%)"/>
+                                    </group>
+                                    <group>
+                                        <field name="variance_amount" readonly="1"/>
+                                        <field name="variance_percent" readonly="1" widget="percentage"/>
+                                        <field name="is_within_tolerance" readonly="1"/>
+                                    </group>
+                                </group>
                                 <field name="comparison_line_ids">
                                     <list decoration-danger="status in ('missing','over')"
                                           decoration-warning="status == 'under'"
@@ -92,21 +172,93 @@
                                     </list>
                                 </field>
                             </page>
-                            <page string="Attachments" name="attachments">
-                                <field name="attachment_ids" widget="many2many_binary"/>
-                            </page>
                         </notebook>
-                        <field name="review_notes" placeholder="Review notes, variance explanations..."/>
                     </sheet>
                     <chatter/>
                 </form>
             </field>
         </record>
 
+        <!-- ══ Search View ═════════════════════════════════════════════════ -->
+
+        <record id="view_nbet_genco_invoice_submission_search" model="ir.ui.view">
+            <field name="name">nbet.genco.invoice.submission.search</field>
+            <field name="model">nbet.genco.invoice.submission</field>
+            <field name="arch" type="xml">
+                <search string="Search GENCO Invoice Submissions">
+                    <field name="participant_id"/>
+                    <field name="billing_cycle_id"/>
+                    <field name="invoice_number"/>
+                    <field name="delivery_method"/>
+                    <separator/>
+                    <filter name="filter_draft" string="Draft (Receiving)"
+                            domain="[('state','=','draft')]"/>
+                    <filter name="filter_pending_review" string="Pending Review"
+                            domain="[('state','in',['submitted','under_review'])]"/>
+                    <filter name="filter_variance" string="Variance Flagged"
+                            domain="[('state','=','variance')]"/>
+                    <filter name="filter_approved" string="Approved"
+                            domain="[('state','=','approved')]"/>
+                    <filter name="filter_posted" string="Posted"
+                            domain="[('state','=','posted')]"/>
+                    <separator/>
+                    <filter name="filter_email" string="Received via Email"
+                            domain="[('delivery_method','=','email')]"/>
+                    <filter name="filter_physical" string="Received Physically"
+                            domain="[('delivery_method','=','physical')]"/>
+                    <separator/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_cycle" string="Billing Cycle"
+                                context="{'group_by': 'billing_cycle_id'}"/>
+                        <filter name="group_genco" string="GENCO"
+                                context="{'group_by': 'participant_id'}"/>
+                        <filter name="group_state" string="Status"
+                                context="{'group_by': 'state'}"/>
+                        <filter name="group_delivery" string="Delivery Method"
+                                context="{'group_by': 'delivery_method'}"/>
+                        <filter name="group_receipt_date" string="Receipt Date"
+                                context="{'group_by': 'receipt_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- ══ Actions ═════════════════════════════════════════════════════ -->
+
+        <!-- Full list (all states) -->
         <record id="action_nbet_genco_invoice_submission" model="ir.actions.act_window">
             <field name="name">GENCO Invoice Submissions</field>
             <field name="res_model">nbet.genco.invoice.submission</field>
             <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_nbet_genco_invoice_submission_search"/>
         </record>
+
+        <!-- Receive: opens directly into a new form -->
+        <record id="action_nbet_receive_genco_invoice" model="ir.actions.act_window">
+            <field name="name">Receive GenCo Invoice</field>
+            <field name="res_model">nbet.genco.invoice.submission</field>
+            <field name="view_mode">form,list</field>
+            <field name="search_view_id" ref="view_nbet_genco_invoice_submission_search"/>
+            <field name="context">{'default_receipt_date': context_today().strftime('%Y-%m-%d')}</field>
+        </record>
+
+        <!-- Review queue: list filtered to submitted / under_review -->
+        <record id="action_nbet_review_genco_invoices" model="ir.actions.act_window">
+            <field name="name">Review GenCo Invoices</field>
+            <field name="res_model">nbet.genco.invoice.submission</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_nbet_genco_invoice_submission_search"/>
+            <field name="domain">[('state','in',['submitted','under_review','matched','variance'])]</field>
+        </record>
+
+        <!-- Post queue: list filtered to approved -->
+        <record id="action_nbet_post_genco_invoices" model="ir.actions.act_window">
+            <field name="name">Post GenCo Invoices to Journal</field>
+            <field name="res_model">nbet.genco.invoice.submission</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_nbet_genco_invoice_submission_search"/>
+            <field name="domain">[('state','=','approved')]</field>
+        </record>
+
     </data>
 </odoo>
