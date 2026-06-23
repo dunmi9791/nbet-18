@@ -96,6 +96,15 @@ class ContractAward(models.Model):
             'state': 'agreement_signed',
             'agreement_date': fields.Date.context_today(self),
         })
+        # Automatically create and confirm PO
+        for rec in self:
+            if not rec.purchase_order_id:
+                rec.action_create_purchase_order()
+            if rec.purchase_order_id and rec.purchase_order_id.state == 'draft':
+                # Bypass NBET approval if not already approved
+                if rec.purchase_order_id.nbet_approval_state != 'approved':
+                    rec.purchase_order_id.action_nbet_approve()
+                rec.purchase_order_id.button_confirm()
 
     def action_start_execution(self):
         self.write({'state': 'in_execution'})
@@ -157,13 +166,38 @@ class ContractAward(models.Model):
         self.ensure_one()
         if not self.vendor_id:
             raise UserError("Please set a vendor before creating a purchase order.")
-        po = self.env['purchase.order'].create({
+        
+        # Determine procurement method and product from evaluation if available
+        procurement_method = False
+        product_id = False
+        if self.evaluation_id:
+            if self.evaluation_id.procurement_method_id:
+                method_code = self.evaluation_id.procurement_method_id.code
+                selection_values = [v[0] for v in self.env['purchase.order']._fields['nbet_procurement_method'].selection]
+                if method_code in selection_values:
+                    procurement_method = method_code
+            
+            # Try to find a product from the procurement plan item
+            if self.evaluation_id.plan_line_id and self.evaluation_id.plan_line_id.product_id:
+                product_id = self.evaluation_id.plan_line_id.product_id.id
+
+        po_vals = {
             'partner_id': self.vendor_id.id,
             'nbet_contract_award_id': self.id,
             'nbet_procurement_category': self.category,
+            'nbet_procurement_method': procurement_method,
+            'nbet_bid_evaluation_id': self.evaluation_id.id,
             'origin': self.name,
             'notes': self.terms_of_contract,
-        })
+            'order_line': [(0, 0, {
+                'name': self.description,
+                'product_id': product_id,
+                'product_qty': 1.0,
+                'price_unit': self.award_amount,
+                'date_planned': fields.Datetime.now(),
+            })],
+        }
+        po = self.env['purchase.order'].create(po_vals)
         self.purchase_order_id = po.id
         return {
             'type': 'ir.actions.act_window',
