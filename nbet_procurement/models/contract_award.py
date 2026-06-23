@@ -58,6 +58,7 @@ class ContractAward(models.Model):
     purchase_order_id = fields.Many2one('purchase.order', string='Purchase Order')
     payment_date = fields.Date()
     payment_reference = fields.Char()
+    invoice_ids = fields.One2many('account.move', 'nbet_contract_award_id', string='Vendor Bills', readonly=True)
 
     payment_request_ids = fields.One2many(
         'nbet.payment.request', 'contract_award_id', string='Payment Requests',

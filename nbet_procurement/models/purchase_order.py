@@ -92,3 +92,12 @@ class PurchaseOrder(models.Model):
             'nbet_inspection_done': True,
             'nbet_inspection_date': fields.Date.context_today(self),
         })
+
+
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+
+    nbet_contract_award_id = fields.Many2one(
+        'nbet.contract.award',
+        string='Contract Award',
+    )

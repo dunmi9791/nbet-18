@@ -88,6 +88,16 @@
                                     <field name="payment_reference"/>
                                 </group>
                             </group>
+                            <separator string="Vendor Bills"/>
+                            <field name="invoice_ids" context="{'create': False, 'delete': False}">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="invoice_date"/>
+                                    <field name="invoice_date_due"/>
+                                    <field name="amount_total_signed" string="Total" sum="Total"/>
+                                    <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'"/>
+                                </list>
+                            </field>
                         </page>
                         <page string="Contract Terms" name="terms">
                             <field name="terms_of_contract"/>

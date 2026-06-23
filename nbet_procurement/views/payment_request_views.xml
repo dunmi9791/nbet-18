@@ -66,6 +66,7 @@
                             <field name="currency_id" invisible="1"/>
                             <field name="request_date"/>
                             <field name="requested_by"/>
+                            <field name="invoice_id" invisible="not invoice_id"/>
                         </group>
                     </group>
                     <notebook>

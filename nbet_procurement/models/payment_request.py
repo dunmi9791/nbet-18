@@ -95,6 +95,7 @@ class PaymentRequest(models.Model):
     invoice_attachment_filename = fields.Char()
 
     notes = fields.Html()
+    invoice_id = fields.Many2one('account.move', string='Vendor Bill', readonly=True)
 
     @api.model_create_multi
     def create(self, vals_list):
