@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import http, fields
 from odoo.http import request
 from odoo.exceptions import UserError, ValidationError, AccessError
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
+
+_logger = logging.getLogger(__name__)
 
 
 # Human readable labels for the hr.leave workflow states.
@@ -36,9 +40,17 @@ class LeavePortal(CustomerPortal):
             [('user_id', '=', user.id)], limit=1)
 
     def _get_leave_types(self, employee):
-        """Active leave types evaluated in the context of this employee."""
+        """Active leave types evaluated in the context of this employee.
+
+        Restrict to the employee's company (plus company-shared types) so the
+        allocation computation is not evaluated against unrelated-company
+        records.
+        """
+        company = employee.company_id
+        domain = ['|', ('company_id', '=', False),
+                  ('company_id', '=', company.id)] if company else []
         return request.env['hr.leave.type'].sudo().with_context(
-            employee_id=employee.id).search([])
+            employee_id=employee.id).search(domain)
 
     def _leave_domain(self, employee):
         return [('employee_id', '=', employee.id)]
@@ -115,15 +127,29 @@ class LeavePortal(CustomerPortal):
 
         allocation_data = []
         for leave_type in self._get_leave_types(employee):
-            if leave_type.requires_allocation != 'yes':
+            # Computing the allocation figures relies on hr.leave.type's
+            # computed fields (``_compute_leaves``), which evaluate the
+            # current employee context and can raise for an individual type
+            # (e.g. accruals, multi-company data).  Guard each type so one
+            # bad record degrades gracefully instead of returning a blank
+            # 500 for the whole page, and log the real traceback so the root
+            # cause stays visible in the server log.
+            try:
+                if leave_type.requires_allocation != 'yes':
+                    continue
+                allocation_data.append({
+                    'name': leave_type.display_name,
+                    'allocated': leave_type.max_leaves,
+                    'taken': leave_type.leaves_taken,
+                    'remaining': leave_type.remaining_leaves,
+                    'virtual_remaining': leave_type.virtual_remaining_leaves,
+                })
+            except Exception:
+                _logger.exception(
+                    "Could not compute leave allocation for leave type %s "
+                    "and employee %s on the portal allocations page",
+                    leave_type.id, employee.id)
                 continue
-            allocation_data.append({
-                'name': leave_type.display_name,
-                'allocated': leave_type.max_leaves,
-                'taken': leave_type.leaves_taken,
-                'remaining': leave_type.remaining_leaves,
-                'virtual_remaining': leave_type.virtual_remaining_leaves,
-            })
 
         values = {
             'employee': employee,
