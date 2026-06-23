@@ -2,3 +2,6 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_payment_schedule_user,nbet.payment.schedule.user,model_nbet_payment_schedule,group_treasury_user,1,1,1,0
 access_payment_schedule_manager,nbet.payment.schedule.manager,model_nbet_payment_schedule,group_treasury_manager,1,1,1,1
 access_payment_schedule_procurement,nbet.payment.schedule.procurement,model_nbet_payment_schedule,nbet_procurement.group_procurement_user,1,0,0,0
+access_payment_schedule_cfo,nbet.payment.schedule.cfo,model_nbet_payment_schedule,group_cfo,1,1,0,0
+access_payment_schedule_finance_manager,nbet.payment.schedule.finance.manager,model_nbet_payment_schedule,group_finance_manager,1,1,0,0
+access_payment_schedule_auditor,nbet.payment.schedule.auditor,model_nbet_payment_schedule,group_auditor,1,1,0,0

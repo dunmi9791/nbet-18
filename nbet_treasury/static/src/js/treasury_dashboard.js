@@ -15,9 +15,9 @@ class TreasuryDashboard extends Component {
             counts: {
                 pending: 0,
                 scheduled: 0,
-                reviewed: 0,
-                verified: 0,
-                approved: 0,
+                cfo_approved: 0,
+                fm_approved: 0,
+                audited: 0,
                 paid: 0,
                 on_hold: 0,
                 total: 0,
@@ -25,7 +25,7 @@ class TreasuryDashboard extends Component {
             },
             totals: {
                 pending_amount: 0,
-                approved_amount: 0,
+                audited_amount: 0,
                 paid_amount: 0,
                 pipeline_amount: 0,
             },
@@ -47,11 +47,11 @@ class TreasuryDashboard extends Component {
         const today = new Date().toISOString().split("T")[0];
 
         const counts = {
-            pending: 0, scheduled: 0, reviewed: 0, verified: 0,
-            approved: 0, paid: 0, on_hold: 0, total: records.length, overdue: 0,
+            pending: 0, scheduled: 0, cfo_approved: 0, fm_approved: 0,
+            audited: 0, paid: 0, on_hold: 0, total: records.length, overdue: 0,
         };
         const totals = {
-            pending_amount: 0, approved_amount: 0, paid_amount: 0, pipeline_amount: 0,
+            pending_amount: 0, audited_amount: 0, paid_amount: 0, pipeline_amount: 0,
         };
 
         for (const rec of records) {
@@ -61,17 +61,17 @@ class TreasuryDashboard extends Component {
             if (rec.state === "pending") {
                 totals.pending_amount += rec.amount;
             }
-            if (["pending", "scheduled", "reviewed", "verified", "approved"].includes(rec.state)) {
+            if (["pending", "scheduled", "cfo_approved", "fm_approved", "audited"].includes(rec.state)) {
                 totals.pipeline_amount += rec.amount;
             }
-            if (rec.state === "approved") {
-                totals.approved_amount += rec.amount;
+            if (rec.state === "audited") {
+                totals.audited_amount += rec.amount;
             }
             if (rec.state === "paid") {
                 totals.paid_amount += rec.amount;
             }
             if (
-                ["pending", "scheduled", "reviewed", "verified"].includes(rec.state) &&
+                ["pending", "scheduled", "cfo_approved", "fm_approved"].includes(rec.state) &&
                 rec.scheduled_date && rec.scheduled_date < today
             ) {
                 counts.overdue++;

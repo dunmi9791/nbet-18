@@ -11,7 +11,9 @@ Manages payment scheduling and processing for approved payment requests
 from the Procurement module, including:
 
 - Dashboard with payment pipeline visualization and KPIs
-- Multi-step approval workflow (Scheduled → Reviewed → Verified → Approved → Paid)
+- Segregated approval workflow (Scheduled → CFO → Finance Manager → Auditor → Paid)
+- Dedicated CFO, Finance Manager and Auditor approval authorities
+- Segregation-of-duties enforcement across approval stages
 - Payment method tracking (Bank Transfer, Cheque, Bank Draft)
 - Hold/resume capability for scheduled payments
 - Automatic status update on source documents when paid

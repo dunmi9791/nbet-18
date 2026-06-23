@@ -28,12 +28,12 @@
               action="action_payment_schedule"
               sequence="10"/>
 
-    <!-- Approved / Ready to Pay -->
+    <!-- Audited / Ready to Pay -->
     <record id="action_payment_schedule_approved" model="ir.actions.act_window">
         <field name="name">Ready to Pay</field>
         <field name="res_model">nbet.payment.schedule</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('state', '=', 'approved')]</field>
+        <field name="domain">[('state', '=', 'audited')]</field>
     </record>
 
     <menuitem id="menu_payment_schedule_approved"

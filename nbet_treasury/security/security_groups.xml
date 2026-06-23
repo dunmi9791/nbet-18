@@ -18,7 +18,29 @@
         <field name="name">Treasury Manager</field>
         <field name="category_id" ref="module_category_nbet_treasury"/>
         <field name="implied_ids" eval="[(4, ref('group_treasury_user'))]"/>
-        <field name="comment">Can approve and process payments, manage all treasury operations.</field>
+        <field name="comment">Can process audited payments and manage all treasury operations.</field>
+    </record>
+
+    <!-- Payment approval authorities (segregation of duties) -->
+    <record id="group_cfo" model="res.groups">
+        <field name="name">Chief Financial Officer (CFO)</field>
+        <field name="category_id" ref="module_category_nbet_treasury"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">First approval authority in the payment approval chain.</field>
+    </record>
+
+    <record id="group_finance_manager" model="res.groups">
+        <field name="name">Finance Manager</field>
+        <field name="category_id" ref="module_category_nbet_treasury"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Second approval authority; approves after the CFO.</field>
+    </record>
+
+    <record id="group_auditor" model="res.groups">
+        <field name="name">Auditor</field>
+        <field name="category_id" ref="module_category_nbet_treasury"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Final sign-off authority; audits before a payment is processed.</field>
     </record>
 
     <!-- Sequences -->

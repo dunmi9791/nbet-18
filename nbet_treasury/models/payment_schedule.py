@@ -50,9 +50,9 @@ class PaymentSchedule(models.Model):
     state = fields.Selection([
         ('pending', 'Pending'),
         ('scheduled', 'Scheduled'),
-        ('reviewed', 'Reviewed'),
-        ('verified', 'Verified'),
-        ('approved', 'Approved'),
+        ('cfo_approved', 'CFO Approved'),
+        ('fm_approved', 'Finance Manager Approved'),
+        ('audited', 'Audited'),
         ('paid', 'Paid'),
         ('on_hold', 'On Hold'),
         ('cancelled', 'Cancelled'),
@@ -76,17 +76,18 @@ class PaymentSchedule(models.Model):
 
     treasury_officer_id = fields.Many2one('res.users', string='Treasury Officer', tracking=True)
 
-    reviewed_by = fields.Many2one('res.users', string='Reviewed By', tracking=True)
-    review_date = fields.Date(string='Review Date')
-    review_notes = fields.Text(string='Review Notes')
+    # --- Approval chain: CFO -> Finance Manager -> Auditor ---
+    cfo_approved_by = fields.Many2one('res.users', string='CFO', tracking=True, copy=False)
+    cfo_approval_date = fields.Date(string='CFO Approval Date', copy=False)
+    cfo_notes = fields.Text(string='CFO Notes')
 
-    verified_by = fields.Many2one('res.users', string='Verified By', tracking=True)
-    verification_date = fields.Date(string='Verification Date')
-    verification_notes = fields.Text(string='Verification Notes')
+    fm_approved_by = fields.Many2one('res.users', string='Finance Manager', tracking=True, copy=False)
+    fm_approval_date = fields.Date(string='Finance Manager Approval Date', copy=False)
+    fm_notes = fields.Text(string='Finance Manager Notes')
 
-    approved_by = fields.Many2one('res.users', string='Approved By', tracking=True)
-    approval_date = fields.Date(string='Approval Date')
-    approval_notes = fields.Text(string='Approval Notes')
+    auditor_id = fields.Many2one('res.users', string='Auditor', tracking=True, copy=False)
+    audit_date = fields.Date(string='Audit Date', copy=False)
+    audit_notes = fields.Text(string='Audit Notes')
 
     hold_reason = fields.Text(string='Hold Reason')
     notes = fields.Html()
@@ -109,29 +110,50 @@ class PaymentSchedule(models.Model):
             'treasury_officer_id': self.env.user.id,
         })
 
-    def action_review(self):
+    def action_cfo_approve(self):
+        for rec in self:
+            if rec.state != 'scheduled':
+                raise UserError("Only scheduled payments can be approved by the CFO.")
         self.write({
-            'state': 'reviewed',
-            'reviewed_by': self.env.user.id,
-            'review_date': fields.Date.context_today(self),
+            'state': 'cfo_approved',
+            'cfo_approved_by': self.env.user.id,
+            'cfo_approval_date': fields.Date.context_today(self),
         })
 
-    def action_verify(self):
+    def action_fm_approve(self):
+        for rec in self:
+            if rec.state != 'cfo_approved':
+                raise UserError("Finance Manager approval requires prior CFO approval.")
+            if rec.cfo_approved_by == self.env.user:
+                raise UserError(
+                    "Segregation of duties: the Finance Manager approval must be "
+                    "performed by a different person than the CFO."
+                )
         self.write({
-            'state': 'verified',
-            'verified_by': self.env.user.id,
-            'verification_date': fields.Date.context_today(self),
+            'state': 'fm_approved',
+            'fm_approved_by': self.env.user.id,
+            'fm_approval_date': fields.Date.context_today(self),
         })
 
-    def action_approve(self):
+    def action_audit(self):
+        for rec in self:
+            if rec.state != 'fm_approved':
+                raise UserError("Audit sign-off requires prior Finance Manager approval.")
+            if self.env.user in (rec.cfo_approved_by | rec.fm_approved_by):
+                raise UserError(
+                    "Segregation of duties: the Auditor must be a different person "
+                    "than the CFO and the Finance Manager."
+                )
         self.write({
-            'state': 'approved',
-            'approved_by': self.env.user.id,
-            'approval_date': fields.Date.context_today(self),
+            'state': 'audited',
+            'auditor_id': self.env.user.id,
+            'audit_date': fields.Date.context_today(self),
         })
 
     def action_mark_paid(self):
         for rec in self:
+            if rec.state != 'audited':
+                raise UserError("Payment can only be processed after the Auditor's sign-off.")
             if not rec.payment_reference:
                 raise UserError("Please enter the payment reference before marking as paid.")
         self.write({
@@ -145,6 +167,25 @@ class PaymentSchedule(models.Model):
                 'payment_date': fields.Date.context_today(self),
                 'payment_reference': rec.payment_reference,
             })
+
+    def action_reject(self):
+        """Send the payment back to the treasury officer, clearing approval stamps."""
+        for rec in self:
+            if rec.state not in ('cfo_approved', 'fm_approved', 'audited'):
+                raise UserError("Only payments in the approval chain can be rejected.")
+            rec.message_post(
+                body="Payment rejected by %s and returned to the treasury officer for review."
+                     % self.env.user.display_name
+            )
+        self.write({
+            'state': 'scheduled',
+            'cfo_approved_by': False,
+            'cfo_approval_date': False,
+            'fm_approved_by': False,
+            'fm_approval_date': False,
+            'auditor_id': False,
+            'audit_date': False,
+        })
 
     def action_hold(self):
         self.write({'state': 'on_hold'})

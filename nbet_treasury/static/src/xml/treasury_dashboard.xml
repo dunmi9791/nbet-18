@@ -27,10 +27,10 @@
                     <div class="col-lg-3 col-md-6">
                         <div class="card shadow-sm h-100 border-start border-4 border-info"
                              style="cursor: pointer;"
-                             t-on-click="() => this.openFiltered('In Pipeline', [['state', 'in', ['scheduled', 'reviewed', 'verified', 'approved']]])">
+                             t-on-click="() => this.openFiltered('In Pipeline', [['state', 'in', ['scheduled', 'cfo_approved', 'fm_approved', 'audited']]])">
                             <div class="card-body">
                                 <h6 class="card-subtitle text-muted mb-2">In Pipeline</h6>
-                                <h2 class="card-title mb-1" t-esc="state.counts.scheduled + state.counts.reviewed + state.counts.verified + state.counts.approved"/>
+                                <h2 class="card-title mb-1" t-esc="state.counts.scheduled + state.counts.cfo_approved + state.counts.fm_approved + state.counts.audited"/>
                                 <p class="text-muted mb-0 small" t-esc="formatCurrency(state.totals.pipeline_amount - state.totals.pending_amount)"/>
                             </div>
                         </div>
@@ -49,7 +49,7 @@
                     <div class="col-lg-3 col-md-6">
                         <div class="card shadow-sm h-100 border-start border-4 border-danger"
                              style="cursor: pointer;"
-                             t-on-click="() => this.openFiltered('Overdue Payments', [['scheduled_date', '&lt;', new Date().toISOString().split('T')[0]], ['state', 'in', ['pending', 'scheduled', 'reviewed', 'verified']]])">
+                             t-on-click="() => this.openFiltered('Overdue Payments', [['scheduled_date', '&lt;', new Date().toISOString().split('T')[0]], ['state', 'in', ['pending', 'scheduled', 'cfo_approved', 'fm_approved']]])">
                             <div class="card-body">
                                 <h6 class="card-subtitle text-muted mb-2">Overdue</h6>
                                 <h2 class="card-title mb-1 text-danger" t-esc="state.counts.overdue"/>
@@ -91,33 +91,33 @@
                                         <i class="fa fa-chevron-right text-muted"/>
                                     </div>
                                     <div class="col" style="cursor: pointer;"
-                                         t-on-click="() => this.openFiltered('Reviewed', [['state', '=', 'reviewed']])">
+                                         t-on-click="() => this.openFiltered('CFO Approved', [['state', '=', 'cfo_approved']])">
                                         <div class="border rounded p-3 h-100" style="background-color: #d1ecf1;">
-                                            <i class="fa fa-eye fa-2x text-info mb-2 d-block"/>
-                                            <h4 class="mb-0" t-esc="state.counts.reviewed"/>
-                                            <small class="text-muted">Reviewed</small>
+                                            <i class="fa fa-user-tie fa-2x text-info mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.cfo_approved"/>
+                                            <small class="text-muted">CFO Approved</small>
                                         </div>
                                     </div>
                                     <div class="col-auto d-flex align-items-center">
                                         <i class="fa fa-chevron-right text-muted"/>
                                     </div>
                                     <div class="col" style="cursor: pointer;"
-                                         t-on-click="() => this.openFiltered('Verified', [['state', '=', 'verified']])">
+                                         t-on-click="() => this.openFiltered('Finance Manager Approved', [['state', '=', 'fm_approved']])">
                                         <div class="border rounded p-3 h-100" style="background-color: #cce5ff;">
                                             <i class="fa fa-check-circle fa-2x text-primary mb-2 d-block"/>
-                                            <h4 class="mb-0" t-esc="state.counts.verified"/>
-                                            <small class="text-muted">Verified</small>
+                                            <h4 class="mb-0" t-esc="state.counts.fm_approved"/>
+                                            <small class="text-muted">Finance Mgr</small>
                                         </div>
                                     </div>
                                     <div class="col-auto d-flex align-items-center">
                                         <i class="fa fa-chevron-right text-muted"/>
                                     </div>
                                     <div class="col" style="cursor: pointer;"
-                                         t-on-click="() => this.openFiltered('Approved', [['state', '=', 'approved']])">
+                                         t-on-click="() => this.openFiltered('Audited', [['state', '=', 'audited']])">
                                         <div class="border rounded p-3 h-100" style="background-color: #d4edda;">
-                                            <i class="fa fa-thumbs-up fa-2x text-success mb-2 d-block"/>
-                                            <h4 class="mb-0" t-esc="state.counts.approved"/>
-                                            <small class="text-muted">Approved</small>
+                                            <i class="fa fa-gavel fa-2x text-success mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.audited"/>
+                                            <small class="text-muted">Audited</small>
                                         </div>
                                     </div>
                                     <div class="col-auto d-flex align-items-center">

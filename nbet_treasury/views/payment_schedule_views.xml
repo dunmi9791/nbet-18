@@ -9,27 +9,31 @@
             <form string="Payment Schedule">
                 <header>
                     <button name="action_schedule" string="Schedule Payment" type="object"
-                            class="btn-primary" invisible="state != 'pending'"/>
-                    <button name="action_review" string="Review" type="object"
-                            class="btn-primary" invisible="state != 'scheduled'"
+                            class="btn-primary" invisible="state != 'pending'"
                             groups="nbet_treasury.group_treasury_user"/>
-                    <button name="action_verify" string="Verify" type="object"
-                            class="btn-primary" invisible="state != 'reviewed'"
-                            groups="nbet_treasury.group_treasury_manager"/>
-                    <button name="action_approve" string="Approve" type="object"
-                            class="btn-primary" invisible="state != 'verified'"
-                            groups="nbet_treasury.group_treasury_manager"/>
+                    <button name="action_cfo_approve" string="CFO Approve" type="object"
+                            class="btn-primary" invisible="state != 'scheduled'"
+                            groups="nbet_treasury.group_cfo"/>
+                    <button name="action_fm_approve" string="Finance Manager Approve" type="object"
+                            class="btn-primary" invisible="state != 'cfo_approved'"
+                            groups="nbet_treasury.group_finance_manager"/>
+                    <button name="action_audit" string="Auditor Sign-off" type="object"
+                            class="btn-primary" invisible="state != 'fm_approved'"
+                            groups="nbet_treasury.group_auditor"/>
                     <button name="action_mark_paid" string="Mark as Paid" type="object"
-                            class="btn-success" invisible="state != 'approved'"
+                            class="btn-success" invisible="state != 'audited'"
                             groups="nbet_treasury.group_treasury_manager"/>
+                    <button name="action_reject" string="Reject" type="object"
+                            class="btn-warning" invisible="state not in ('cfo_approved', 'fm_approved', 'audited')"
+                            groups="nbet_treasury.group_cfo,nbet_treasury.group_finance_manager,nbet_treasury.group_auditor"/>
                     <button name="action_hold" string="Put on Hold" type="object"
-                            class="btn-warning" invisible="state not in ('pending', 'scheduled', 'reviewed')"/>
+                            class="btn-warning" invisible="state not in ('pending', 'scheduled')"/>
                     <button name="action_resume" string="Resume" type="object"
                             class="btn-primary" invisible="state != 'on_hold'"/>
                     <button name="action_cancel" string="Cancel" type="object"
                             class="btn-danger" invisible="state in ('paid', 'cancelled')"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="pending,scheduled,reviewed,verified,approved,paid"/>
+                           statusbar_visible="pending,scheduled,cfo_approved,fm_approved,audited,paid"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -55,39 +59,39 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Review" name="review"
+                        <page string="CFO Approval" name="cfo_approval"
+                              invisible="state == 'pending'">
+                            <group>
+                                <group>
+                                    <field name="cfo_approved_by"/>
+                                    <field name="cfo_approval_date"/>
+                                </group>
+                                <group>
+                                    <field name="cfo_notes"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Finance Manager Approval" name="fm_approval"
                               invisible="state in ('pending', 'scheduled')">
                             <group>
                                 <group>
-                                    <field name="reviewed_by"/>
-                                    <field name="review_date"/>
+                                    <field name="fm_approved_by"/>
+                                    <field name="fm_approval_date"/>
                                 </group>
                                 <group>
-                                    <field name="review_notes"/>
-                                </group>
-                            </group>
-                        </page>
-                        <page string="Verification" name="verification"
-                              invisible="state in ('pending', 'scheduled', 'reviewed')">
-                            <group>
-                                <group>
-                                    <field name="verified_by"/>
-                                    <field name="verification_date"/>
-                                </group>
-                                <group>
-                                    <field name="verification_notes"/>
+                                    <field name="fm_notes"/>
                                 </group>
                             </group>
                         </page>
-                        <page string="Approval" name="approval"
-                              invisible="state in ('pending', 'scheduled', 'reviewed', 'verified')">
+                        <page string="Audit Sign-off" name="audit"
+                              invisible="state in ('pending', 'scheduled', 'cfo_approved')">
                             <group>
                                 <group>
-                                    <field name="approved_by"/>
-                                    <field name="approval_date"/>
+                                    <field name="auditor_id"/>
+                                    <field name="audit_date"/>
                                 </group>
                                 <group>
-                                    <field name="approval_notes"/>
+                                    <field name="audit_notes"/>
                                 </group>
                             </group>
                         </page>
@@ -114,8 +118,8 @@
         <field name="arch" type="xml">
             <list string="Payment Schedule"
                   decoration-info="state == 'pending'"
-                  decoration-warning="state in ('scheduled', 'reviewed', 'verified')"
-                  decoration-success="state in ('approved', 'paid')"
+                  decoration-warning="state in ('scheduled', 'cfo_approved', 'fm_approved')"
+                  decoration-success="state in ('audited', 'paid')"
                   decoration-muted="state in ('on_hold', 'cancelled')">
                 <field name="name"/>
                 <field name="payment_request_id"/>
@@ -127,8 +131,8 @@
                 <field name="priority" widget="priority"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'pending'"
-                       decoration-warning="state in ('scheduled', 'reviewed', 'verified')"
-                       decoration-success="state in ('approved', 'paid')"
+                       decoration-warning="state in ('scheduled', 'cfo_approved', 'fm_approved')"
+                       decoration-success="state in ('audited', 'paid')"
                        decoration-danger="state == 'cancelled'"/>
             </list>
         </field>
@@ -145,16 +149,16 @@
                 <field name="payment_request_id"/>
                 <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
                 <filter name="scheduled" string="Scheduled" domain="[('state', '=', 'scheduled')]"/>
-                <filter name="reviewed" string="Reviewed" domain="[('state', '=', 'reviewed')]"/>
-                <filter name="verified" string="Verified" domain="[('state', '=', 'verified')]"/>
-                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="cfo_approved" string="CFO Approved" domain="[('state', '=', 'cfo_approved')]"/>
+                <filter name="fm_approved" string="Finance Manager Approved" domain="[('state', '=', 'fm_approved')]"/>
+                <filter name="audited" string="Audited" domain="[('state', '=', 'audited')]"/>
                 <filter name="paid" string="Paid" domain="[('state', '=', 'paid')]"/>
                 <filter name="on_hold" string="On Hold" domain="[('state', '=', 'on_hold')]"/>
                 <separator/>
                 <filter name="pending_action" string="Needs Action"
-                        domain="[('state', 'in', ('pending', 'scheduled', 'reviewed', 'verified', 'approved'))]"/>
+                        domain="[('state', 'in', ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'audited'))]"/>
                 <filter name="overdue" string="Overdue"
-                        domain="[('scheduled_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ('pending', 'scheduled', 'reviewed', 'verified'))]"/>
+                        domain="[('scheduled_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ('pending', 'scheduled', 'cfo_approved', 'fm_approved'))]"/>
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
