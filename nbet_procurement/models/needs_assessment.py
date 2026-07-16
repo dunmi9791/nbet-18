@@ -17,10 +17,18 @@ class NeedsAssessment(models.Model):
         copy=False,
     )
     fiscal_year = fields.Char(required=True, tracking=True)
+    call_id = fields.Many2one(
+        'nbet.needs.call',
+        string='Needs Call',
+        tracking=True,
+        ondelete='set null',
+        help='Annual call this submission responds to.',
+    )
     department_id = fields.Many2one(
         'hr.department',
         string='Requesting Department/Unit',
         tracking=True,
+        default=lambda self: self.env.user.employee_id.department_id,
     )
     requested_by = fields.Many2one(
         'res.users',
@@ -48,6 +56,11 @@ class NeedsAssessment(models.Model):
     def _compute_total_estimated(self):
         for rec in self:
             rec.total_estimated = sum(rec.line_ids.mapped('estimated_cost'))
+
+    @api.onchange('call_id')
+    def _onchange_call_id(self):
+        if self.call_id:
+            self.fiscal_year = self.call_id.fiscal_year
 
     @api.model_create_multi
     def create(self, vals_list):

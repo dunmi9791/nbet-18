@@ -2,6 +2,7 @@
 from . import procurement_method
 from . import approval_threshold
 from . import needs_assessment
+from . import needs_call
 from . import procurement_plan
 from . import bid_evaluation
 from . import contract_award

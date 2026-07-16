@@ -21,6 +21,12 @@
               parent="menu_nbet_procurement_root"
               sequence="10"/>
 
+    <menuitem id="menu_needs_call"
+              name="Needs Calls"
+              parent="menu_procurement_process"
+              action="action_needs_call"
+              sequence="5"/>
+
     <menuitem id="menu_needs_assessment"
               name="Needs Assessments"
               parent="menu_procurement_process"
@@ -50,6 +56,21 @@
               parent="menu_procurement_process"
               action="action_payment_request"
               sequence="50"/>
+
+    <!-- Department Submitter app (separate lightweight entry point) -->
+    <menuitem id="menu_submitter_root"
+              name="Procurement Needs"
+              action="action_my_department_needs"
+              web_icon="nbet_procurement,static/description/icon.png"
+              sequence="46"
+              groups="nbet_procurement.group_procurement_submitter"/>
+
+    <menuitem id="menu_my_department_needs"
+              name="My Department Needs"
+              parent="menu_submitter_root"
+              action="action_my_department_needs"
+              sequence="10"
+              groups="nbet_procurement.group_procurement_submitter"/>
 
     <!-- Configuration Actions -->
     <record id="action_procurement_method" model="ir.actions.act_window">

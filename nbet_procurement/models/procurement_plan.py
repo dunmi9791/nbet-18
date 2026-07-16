@@ -16,6 +16,13 @@ class ProcurementPlan(models.Model):
         copy=False,
     )
     fiscal_year = fields.Char(required=True, tracking=True)
+    call_id = fields.Many2one(
+        'nbet.needs.call',
+        string='Source Needs Call',
+        readonly=True,
+        copy=False,
+        help='Annual needs call this plan was consolidated from.',
+    )
     date = fields.Date(default=fields.Date.context_today, tracking=True)
     state = fields.Selection([
         ('draft', 'Draft'),

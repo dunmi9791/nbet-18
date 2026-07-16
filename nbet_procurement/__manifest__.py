@@ -35,6 +35,7 @@ Works and Services, including:
         'data/procurement_method_data.xml',
         'data/approval_threshold_data.xml',
         'wizard/submit_for_approval_views.xml',
+        'views/needs_call_views.xml',
         'views/needs_assessment_views.xml',
         'views/procurement_plan_views.xml',
         'views/bid_evaluation_views.xml',

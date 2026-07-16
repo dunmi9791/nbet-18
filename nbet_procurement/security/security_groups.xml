@@ -7,6 +7,13 @@
         <field name="sequence">25</field>
     </record>
 
+    <record id="group_procurement_submitter" model="res.groups">
+        <field name="name">Department Submitter</field>
+        <field name="category_id" ref="module_category_nbet_procurement"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Department head/focal person. Can submit and manage their own department's procurement needs against an open Needs Call.</field>
+    </record>
+
     <record id="group_procurement_user" model="res.groups">
         <field name="name">Procurement Officer</field>
         <field name="category_id" ref="module_category_nbet_procurement"/>
@@ -28,7 +35,37 @@
         <field name="comment">MD/CEO or PTB member. Can approve procurement plans and contract awards.</field>
     </record>
 
+    <!-- Record Rules: department submitters only see/edit their own department's needs -->
+    <record id="rule_needs_assessment_submitter" model="ir.rule">
+        <field name="name">Department Submitter: own department needs assessments</field>
+        <field name="model_id" ref="model_nbet_needs_assessment"/>
+        <field name="groups" eval="[(4, ref('group_procurement_submitter'))]"/>
+        <field name="domain_force">['|', ('department_id.manager_id.user_id', '=', user.id), ('department_id.member_ids.user_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_needs_assessment_line_submitter" model="ir.rule">
+        <field name="name">Department Submitter: own department needs lines</field>
+        <field name="model_id" ref="model_nbet_needs_assessment_line"/>
+        <field name="groups" eval="[(4, ref('group_procurement_submitter'))]"/>
+        <field name="domain_force">['|', ('assessment_id.department_id.manager_id.user_id', '=', user.id), ('assessment_id.department_id.member_ids.user_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
     <!-- Sequences -->
+    <record id="seq_needs_call" model="ir.sequence">
+        <field name="name">Needs Call</field>
+        <field name="code">nbet.needs.call</field>
+        <field name="prefix">NC/%(year)s/</field>
+        <field name="padding">3</field>
+    </record>
+
     <record id="seq_needs_assessment" model="ir.sequence">
         <field name="name">Needs Assessment</field>
         <field name="code">nbet.needs.assessment</field>

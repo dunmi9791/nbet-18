@@ -3,6 +3,13 @@ access_procurement_method_user,nbet.procurement.method.user,model_nbet_procureme
 access_procurement_method_head,nbet.procurement.method.head,model_nbet_procurement_method,group_procurement_head,1,1,1,1
 access_approval_threshold_user,nbet.approval.threshold.user,model_nbet_approval_threshold,group_procurement_user,1,0,0,0
 access_approval_threshold_head,nbet.approval.threshold.head,model_nbet_approval_threshold,group_procurement_head,1,1,1,1
+access_needs_call_submitter,nbet.needs.call.submitter,model_nbet_needs_call,group_procurement_submitter,1,0,0,0
+access_needs_assessment_submitter,nbet.needs.assessment.submitter,model_nbet_needs_assessment,group_procurement_submitter,1,1,1,0
+access_needs_assessment_line_submitter,nbet.needs.assessment.line.submitter,model_nbet_needs_assessment_line,group_procurement_submitter,1,1,1,1
+access_needs_call_user,nbet.needs.call.user,model_nbet_needs_call,group_procurement_user,1,1,1,0
+access_needs_call_head,nbet.needs.call.head,model_nbet_needs_call,group_procurement_head,1,1,1,1
+access_needs_call_department_user,nbet.needs.call.department.user,model_nbet_needs_call_department,group_procurement_user,1,1,1,0
+access_needs_call_department_head,nbet.needs.call.department.head,model_nbet_needs_call_department,group_procurement_head,1,1,1,1
 access_needs_assessment_user,nbet.needs.assessment.user,model_nbet_needs_assessment,group_procurement_user,1,1,1,0
 access_needs_assessment_head,nbet.needs.assessment.head,model_nbet_needs_assessment,group_procurement_head,1,1,1,1
 access_needs_assessment_line_user,nbet.needs.assessment.line.user,model_nbet_needs_assessment_line,group_procurement_user,1,1,1,0

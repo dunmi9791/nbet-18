@@ -39,6 +39,7 @@
                     <group>
                         <group>
                             <field name="fiscal_year"/>
+                            <field name="call_id"/>
                             <field name="date"/>
                             <field name="total_items"/>
                             <field name="total_budget" widget="monetary"/>
