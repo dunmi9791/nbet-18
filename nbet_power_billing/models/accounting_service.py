@@ -108,6 +108,9 @@ class NbetAccountingService(models.TransientModel):
             'company_id': cycle.company_id.id,
             'currency_id': expected_bill.currency_id.id,
             'invoice_line_ids': [(0, 0, line) for line in invoice_lines],
+            'nbet_billing_cycle_id': cycle.id,
+            'nbet_participant_id': expected_bill.participant_id.id,
+            'nbet_settlement_role': 'genco',
         }
         return self.env['account.move'].create(move_vals)
 
@@ -203,6 +206,9 @@ class NbetAccountingService(models.TransientModel):
             'company_id': cycle.company_id.id,
             'currency_id': disco_bill.currency_id.id,
             'invoice_line_ids': [(0, 0, line) for line in lines],
+            'nbet_billing_cycle_id': cycle.id,
+            'nbet_participant_id': disco_bill.participant_id.id,
+            'nbet_settlement_role': 'disco',
         }
         return self.env['account.move'].create(move_vals)
 
@@ -226,6 +232,9 @@ class NbetAccountingService(models.TransientModel):
             'company_id': cycle.company_id.id,
             'currency_id': disco_bill.currency_id.id,
             'invoice_line_ids': [(0, 0, line) for line in lines],
+            'nbet_billing_cycle_id': cycle.id,
+            'nbet_participant_id': disco_bill.participant_id.id,
+            'nbet_settlement_role': 'disco',
         }
         return self.env['account.move'].create(move_vals)
 
@@ -255,6 +264,9 @@ class NbetAccountingService(models.TransientModel):
                 'price_unit': disco_bill.subsidy_amount,
                 'account_id': account.id,
             })],
+            'nbet_billing_cycle_id': cycle.id,
+            'nbet_participant_id': disco_bill.participant_id.id,
+            'nbet_settlement_role': 'subsidy',
         }
         return self.env['account.move'].create(move_vals)
 
@@ -297,6 +309,9 @@ class NbetAccountingService(models.TransientModel):
                     'credit': disco_bill.subsidy_amount,
                 }),
             ],
+            'nbet_billing_cycle_id': cycle.id,
+            'nbet_participant_id': disco_bill.participant_id.id,
+            'nbet_settlement_role': 'subsidy',
         }
         return self.env['account.move'].create(move_vals)
 
@@ -368,6 +383,9 @@ class NbetAccountingService(models.TransientModel):
                     'credit': amount if adjustment.adjustment_type == 'debit' else 0.0,
                 }),
             ],
+            'nbet_billing_cycle_id': cycle.id,
+            'nbet_participant_id': adjustment.participant_id.id if adjustment.participant_id else False,
+            'nbet_settlement_role': 'adjustment',
         }
         return self.env['account.move'].create(move_vals)
 

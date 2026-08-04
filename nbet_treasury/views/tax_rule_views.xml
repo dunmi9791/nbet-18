@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tax Rule Form -->
+    <record id="view_tax_rule_form" model="ir.ui.view">
+        <field name="name">nbet.tax.rule.form</field>
+        <field name="model">nbet.tax.rule</field>
+        <field name="arch" type="xml">
+            <form string="Statutory Deduction Rule">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. VAT 7.5%"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="tax_type"/>
+                            <field name="rate"/>
+                            <field name="tax_body_id"/>
+                            <field name="tax_payable_account_id"/>
+                        </group>
+                        <group>
+                            <field name="category"
+                                   placeholder="All contract categories"/>
+                            <field name="sequence"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Notes">
+                        <field name="note" nolabel="1" placeholder="When this deduction applies..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tax Rule List -->
+    <record id="view_tax_rule_list" model="ir.ui.view">
+        <field name="name">nbet.tax.rule.list</field>
+        <field name="model">nbet.tax.rule</field>
+        <field name="arch" type="xml">
+            <list string="Statutory Deduction Rules" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="tax_type"/>
+                <field name="rate"/>
+                <field name="tax_body_id"/>
+                <field name="tax_payable_account_id"/>
+                <field name="category" placeholder="All categories"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Tax Rule Search -->
+    <record id="view_tax_rule_search" model="ir.ui.view">
+        <field name="name">nbet.tax.rule.search</field>
+        <field name="model">nbet.tax.rule</field>
+        <field name="arch" type="xml">
+            <search string="Search Deduction Rules">
+                <field name="name"/>
+                <field name="tax_body_id"/>
+                <filter name="vat" string="VAT" domain="[('tax_type', '=', 'vat')]"/>
+                <filter name="wht" string="Withholding Tax" domain="[('tax_type', '=', 'wht')]"/>
+                <separator/>
+                <filter name="all_categories" string="Applies to All Categories"
+                        domain="[('category', '=', False)]"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_type" string="Deduction Type" context="{'group_by': 'tax_type'}"/>
+                    <filter name="group_category" string="Contract Category" context="{'group_by': 'category'}"/>
+                    <filter name="group_body" string="Tax Body" context="{'group_by': 'tax_body_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_tax_rule" model="ir.actions.act_window">
+        <field name="name">Tax Rules</field>
+        <field name="res_model">nbet.tax.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Set up a statutory deduction rule</p>
+            <p>Rules pre-fill the deductions on new payment schedules. Leave the contract
+               category empty to apply a rule to every category, or set one to apply it
+               only to that category (e.g. a lower WHT rate on Works).</p>
+        </field>
+    </record>
+
+</odoo>

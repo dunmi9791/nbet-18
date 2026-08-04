@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Receipt Form -->
+    <record id="view_niso_receipt_form" model="ir.ui.view">
+        <field name="name">nbet.niso.receipt.form</field>
+        <field name="model">nbet.niso.receipt</field>
+        <field name="arch" type="xml">
+            <form string="NISO Receipt">
+                <header>
+                    <button name="action_post" string="Post Receipt" type="object"
+                            class="btn-primary" invisible="state != 'draft'"
+                            groups="nbet_niso.group_niso_manager"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            class="btn-danger" invisible="state != 'draft'"
+                            groups="nbet_niso.group_niso_manager"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object"
+                            invisible="state != 'cancelled'"
+                            groups="nbet_niso.group_niso_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_payment" type="object"
+                                class="oe_stat_button" icon="fa-money"
+                                invisible="not payment_id">
+                            <field name="payment_id" widget="statinfo" string="Payment"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Posted" bg_color="text-bg-success"
+                            invisible="state != 'posted'"/>
+                    <widget name="web_ribbon" title="Cancelled" bg_color="text-bg-danger"
+                            invisible="state != 'cancelled'"/>
+                    <div class="oe_title">
+                        <label for="name" string="Receipt Number"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Drawn Down From">
+                            <field name="advice_id" readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+                            <field name="period_name"/>
+                            <field name="partner_id"/>
+                            <field name="advice_outstanding" widget="monetary"
+                                   invisible="state != 'draft'"/>
+                        </group>
+                        <group string="Receipt">
+                            <field name="amount" widget="monetary" readonly="state != 'draft'"/>
+                            <field name="receipt_date" readonly="state != 'draft'"/>
+                            <field name="journal_id" readonly="state != 'draft'"/>
+                            <field name="payment_reference" readonly="state != 'draft'"
+                                   placeholder="Bank credit reference"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Notes">
+                        <field name="note" nolabel="1" placeholder="Remarks on this receipt..."/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Receipt List -->
+    <record id="view_niso_receipt_list" model="ir.ui.view">
+        <field name="name">nbet.niso.receipt.list</field>
+        <field name="model">nbet.niso.receipt</field>
+        <field name="arch" type="xml">
+            <list string="NISO Receipts" decoration-muted="state == 'cancelled'"
+                  decoration-success="state == 'posted'">
+                <field name="name"/>
+                <field name="receipt_date"/>
+                <field name="advice_id"/>
+                <field name="period_name"/>
+                <field name="partner_id" optional="hide"/>
+                <field name="payment_reference"/>
+                <field name="journal_id" optional="show"/>
+                <field name="amount" widget="monetary" sum="Received"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'posted'"
+                       decoration-info="state == 'draft'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Receipt Search -->
+    <record id="view_niso_receipt_search" model="ir.ui.view">
+        <field name="name">nbet.niso.receipt.search</field>
+        <field name="model">nbet.niso.receipt</field>
+        <field name="arch" type="xml">
+            <search string="Search NISO Receipts">
+                <field name="name"/>
+                <field name="advice_id"/>
+                <field name="payment_reference"/>
+                <field name="period_name"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="posted" string="Posted" domain="[('state', '=', 'posted')]"/>
+                <separator/>
+                <filter name="this_month" string="Received This Month"
+                        domain="[('receipt_date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_advice" string="Advice" context="{'group_by': 'advice_id'}"/>
+                    <filter name="group_period" string="Period" context="{'group_by': 'period_name'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_date" string="Receipt Date"
+                            context="{'group_by': 'receipt_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_niso_receipt" model="ir.actions.act_window">
+        <field name="name">NISO Receipts</field>
+        <field name="res_model">nbet.niso.receipt</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_niso_receipt_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Record a receipt from NISO</p>
+            <p>A receipt draws its amount down from the advice it is recorded against and
+               reconciles against that advice's receivable in accounting.</p>
+        </field>
+    </record>
+
+</odoo>

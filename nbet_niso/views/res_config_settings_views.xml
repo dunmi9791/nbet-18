@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_niso" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.nbet.niso</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='analytic']" position="after">
+                <block title="NBET NISO" id="nbet_niso_settings"
+                       groups="nbet_niso.group_niso_manager">
+                    <setting id="nbet_niso_partner"
+                             string="NISO Partner"
+                             help="Defaulted onto new advices and used as the debtor on the receivable raised.">
+                        <field name="nbet_niso_partner_id" options="{'no_create': True}"/>
+                    </setting>
+                    <setting id="nbet_niso_income_account"
+                             string="Admin Charge Income Account"
+                             help="Revenue account credited when a NISO advice is confirmed.">
+                        <field name="nbet_niso_income_account_id"/>
+                    </setting>
+                    <setting id="nbet_niso_sale_journal"
+                             string="Admin Charge Sales Journal"
+                             help="Journal the receivable invoice is raised in. Falls back to the company's first sales journal.">
+                        <field name="nbet_niso_sale_journal_id"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

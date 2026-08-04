@@ -18,3 +18,4 @@ from . import disco_bill
 from . import billing_adjustment
 from . import billing_config
 from . import accounting_service
+from . import account_move

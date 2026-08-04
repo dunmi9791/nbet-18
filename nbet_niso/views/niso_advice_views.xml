@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Advice Form -->
+    <record id="view_niso_advice_form" model="ir.ui.view">
+        <field name="name">nbet.niso.advice.form</field>
+        <field name="model">nbet.niso.advice</field>
+        <field name="arch" type="xml">
+            <form string="NISO Admin Charge Advice">
+                <header>
+                    <button name="action_confirm" string="Confirm &amp; Raise Receivable"
+                            type="object" class="btn-primary" invisible="state != 'draft'"
+                            groups="nbet_niso.group_niso_manager"/>
+                    <button name="action_register_receipt" string="Register Receipt"
+                            type="object" class="btn-success"
+                            invisible="state not in ('confirmed', 'partial')"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            class="btn-danger" invisible="state in ('received', 'cancelled')"
+                            groups="nbet_niso.group_niso_manager"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object"
+                            invisible="state != 'cancelled'"
+                            groups="nbet_niso.group_niso_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,confirmed,partial,received"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_receipts" type="object"
+                                class="oe_stat_button" icon="fa-money"
+                                invisible="receipt_count == 0">
+                            <field name="receipt_count" widget="statinfo" string="Receipts"/>
+                        </button>
+                        <button name="action_view_invoice" type="object"
+                                class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="not move_id">
+                            <field name="move_id" widget="statinfo" string="Receivable"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Fully Received" bg_color="text-bg-success"
+                            invisible="state != 'received'"/>
+                    <widget name="web_ribbon" title="Cancelled" bg_color="text-bg-danger"
+                            invisible="state != 'cancelled'"/>
+                    <div class="oe_title">
+                        <label for="name" string="Advice Number"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Advice">
+                            <field name="partner_id" readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+                            <field name="period_month" readonly="state != 'draft'"/>
+                            <field name="period_year" readonly="state != 'draft'"/>
+                            <field name="advice_date" readonly="state != 'draft'"/>
+                            <field name="niso_reference" readonly="state != 'draft'"
+                                   placeholder="e.g. NISO/ADM/2026/07"/>
+                            <field name="period_name" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Draw-down">
+                            <field name="amount_advised" widget="monetary"
+                                   readonly="state != 'draft'"/>
+                            <field name="amount_received" widget="monetary"/>
+                            <field name="amount_outstanding" widget="monetary"
+                                   class="oe_subtotal_footer_separator"/>
+                            <field name="move_residual" widget="monetary"
+                                   invisible="not move_id"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Receipts" name="receipts">
+                            <field name="receipt_ids" readonly="1">
+                                <list string="Receipts" decoration-muted="state == 'cancelled'"
+                                      decoration-success="state == 'posted'">
+                                    <field name="name"/>
+                                    <field name="receipt_date"/>
+                                    <field name="payment_reference"/>
+                                    <field name="journal_id"/>
+                                    <field name="amount" widget="monetary" sum="Received"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'posted'"
+                                           decoration-info="state == 'draft'"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="note" nolabel="1"
+                                   placeholder="Basis of the advice, correspondence, queries..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Advice List -->
+    <record id="view_niso_advice_list" model="ir.ui.view">
+        <field name="name">nbet.niso.advice.list</field>
+        <field name="model">nbet.niso.advice</field>
+        <field name="arch" type="xml">
+            <list string="NISO Advices" decoration-muted="state == 'cancelled'"
+                  decoration-success="state == 'received'"
+                  decoration-warning="state == 'partial'">
+                <field name="name"/>
+                <field name="period_name"/>
+                <field name="advice_date"/>
+                <field name="partner_id"/>
+                <field name="niso_reference" optional="show"/>
+                <field name="amount_advised" widget="monetary" sum="Advised"/>
+                <field name="amount_received" widget="monetary" sum="Received"/>
+                <field name="amount_outstanding" widget="monetary" sum="Outstanding"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'received'"
+                       decoration-warning="state == 'partial'"
+                       decoration-info="state == 'confirmed'"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Advice Search -->
+    <record id="view_niso_advice_search" model="ir.ui.view">
+        <field name="name">nbet.niso.advice.search</field>
+        <field name="model">nbet.niso.advice</field>
+        <field name="arch" type="xml">
+            <search string="Search NISO Advices">
+                <field name="name"/>
+                <field name="period_name"/>
+                <field name="niso_reference"/>
+                <field name="partner_id"/>
+                <filter name="outstanding" string="Outstanding"
+                        domain="[('state', 'in', ('confirmed', 'partial'))]"/>
+                <filter name="partial" string="Partially Received"
+                        domain="[('state', '=', 'partial')]"/>
+                <filter name="received" string="Fully Received"
+                        domain="[('state', '=', 'received')]"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <separator/>
+                <filter name="this_year" string="This Year"
+                        domain="[('period_year', '=', context_today().year)]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_year" string="Year" context="{'group_by': 'period_year'}"/>
+                    <filter name="group_month" string="Month" context="{'group_by': 'period_month'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_partner" string="NISO" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_niso_advice" model="ir.actions.act_window">
+        <field name="name">NISO Advices</field>
+        <field name="res_model">nbet.niso.advice</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_niso_advice_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Record a NISO advice</p>
+            <p>NISO advises the administrative charge due to NBET each month. Confirming an
+               advice raises the receivable against NISO, and receipts recorded against it
+               draw the balance down until it is fully received.</p>
+        </field>
+    </record>
+
+    <record id="action_niso_advice_outstanding" model="ir.actions.act_window">
+        <field name="name">Outstanding Advices</field>
+        <field name="res_model">nbet.niso.advice</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', 'in', ('confirmed', 'partial'))]</field>
+        <field name="search_view_id" ref="view_niso_advice_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing outstanding from NISO</p>
+            <p>Confirmed advices appear here until the receipts drawn down against them
+               settle the full amount advised.</p>
+        </field>
+    </record>
+
+</odoo>

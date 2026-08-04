@@ -4,6 +4,13 @@ import { registry } from "@web/core/registry";
 import { Component, onWillStart, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
+// Approval stages a payment moves through before it is paid.
+const UNPAID_STATES = [
+    "pending", "scheduled", "cfo_approved", "fm_approved",
+    "voucher_generated", "audit_pending", "audit_reviewed",
+];
+const PIPELINE_STATES = [...UNPAID_STATES, "audited"];
+
 class TreasuryDashboard extends Component {
     static template = "nbet_treasury.TreasuryDashboard";
     static props = ["*"];
@@ -48,6 +55,7 @@ class TreasuryDashboard extends Component {
 
         const counts = {
             pending: 0, scheduled: 0, cfo_approved: 0, fm_approved: 0,
+            voucher_generated: 0, audit_pending: 0, audit_reviewed: 0,
             audited: 0, paid: 0, on_hold: 0, total: records.length, overdue: 0,
         };
         const totals = {
@@ -61,7 +69,7 @@ class TreasuryDashboard extends Component {
             if (rec.state === "pending") {
                 totals.pending_amount += rec.amount;
             }
-            if (["pending", "scheduled", "cfo_approved", "fm_approved", "audited"].includes(rec.state)) {
+            if (PIPELINE_STATES.includes(rec.state)) {
                 totals.pipeline_amount += rec.amount;
             }
             if (rec.state === "audited") {
@@ -71,7 +79,7 @@ class TreasuryDashboard extends Component {
                 totals.paid_amount += rec.amount;
             }
             if (
-                ["pending", "scheduled", "cfo_approved", "fm_approved"].includes(rec.state) &&
+                UNPAID_STATES.includes(rec.state) &&
                 rec.scheduled_date && rec.scheduled_date < today
             ) {
                 counts.overdue++;

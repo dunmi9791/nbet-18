@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class PaymentRequestInherit(models.Model):
@@ -10,6 +10,47 @@ class PaymentRequestInherit(models.Model):
         string='Payment Schedule',
         readonly=True,
     )
+
+    # --- Audit sign-off, driven from the payment schedule ---
+    audit_state = fields.Selection([
+        ('not_audited', 'Not Audited'),
+        ('under_review', 'Under Audit Review'),
+        ('audited', 'Audited'),
+    ], string='Audit Status', default='not_audited', readonly=True, copy=False, tracking=True)
+    audit_reviewer_id = fields.Many2one(
+        'res.users', string='Audit Reviewer', readonly=True, copy=False,
+    )
+    auditor_id = fields.Many2one(
+        'res.users', string='Audit Approver', readonly=True, copy=False,
+    )
+    audit_date = fields.Datetime(string='Audited On', readonly=True, copy=False)
+
+    voucher_ids = fields.One2many(
+        'nbet.payment.voucher',
+        'payment_request_id',
+        string='Payment Vouchers',
+        readonly=True,
+    )
+    voucher_count = fields.Integer(compute='_compute_voucher_count')
+
+    @api.depends('voucher_ids')
+    def _compute_voucher_count(self):
+        data = self.env['nbet.payment.voucher']._read_group(
+            [('payment_request_id', 'in', self.ids)], ['payment_request_id'], ['__count'],
+        )
+        counts = {request.id: count for request, count in data}
+        for rec in self:
+            rec.voucher_count = counts.get(rec.id, 0)
+
+    def action_view_vouchers(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Payment Vouchers',
+            'res_model': 'nbet.payment.voucher',
+            'view_mode': 'list,form',
+            'domain': [('payment_request_id', '=', self.id)],
+        }
 
     def action_send_to_treasury(self):
         for rec in self:

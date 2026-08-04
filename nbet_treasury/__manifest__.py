@@ -11,8 +11,16 @@ Manages payment scheduling and processing for approved payment requests
 from the Procurement module, including:
 
 - Dashboard with payment pipeline visualization and KPIs
-- Segregated approval workflow (Scheduled → CFO → Finance Manager → Auditor → Paid)
+- Segregated approval workflow (Scheduled → CFO → Finance Manager → Vouchers →
+  Audit Review → Audit Approval → Paid)
 - Dedicated CFO, Finance Manager and Auditor approval authorities
+- Payment vouchers raised by the assigned finance officer, carrying the voucher
+  number, transaction reference, payee details, amount, full approval history and
+  HMAC digital authentication records with date/time stamps
+- Automatic tax remittance vouchers (VAT, WHT) to the relevant tax body
+- Configurable statutory deduction rules (per contract category) that pre-fill
+  the deductions on new payment schedules
+- Two-person audit: one auditor reviews, a different auditor approves
 - Segregation-of-duties enforcement across approval stages
 - Payment method tracking (Bank Transfer, Cheque, Bank Draft)
 - Hold/resume capability for scheduled payments
@@ -24,18 +32,23 @@ from the Procurement module, including:
     'depends': [
         'base',
         'mail',
+        'account',
         'nbet_procurement',
     ],
     'data': [
         'security/security_groups.xml',
         'security/ir.model.access.csv',
+        'reports/payment_voucher_report.xml',
+        'views/tax_rule_views.xml',
         'views/payment_schedule_views.xml',
+        'views/payment_voucher_views.xml',
         'views/payment_request_inherit_views.xml',
         'views/dashboard_views.xml',
         'views/menus.xml',
     ],
     'assets': {
         'web.assets_backend': [
+            'nbet_treasury/static/src/scss/treasury.scss',
             'nbet_treasury/static/src/js/treasury_dashboard.js',
             'nbet_treasury/static/src/xml/treasury_dashboard.xml',
         ],

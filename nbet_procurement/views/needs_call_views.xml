@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Needs Call Form -->
+    <record id="view_needs_call_form" model="ir.ui.view">
+        <field name="name">nbet.needs.call.form</field>
+        <field name="model">nbet.needs.call</field>
+        <field name="arch" type="xml">
+            <form string="Needs Call">
+                <header>
+                    <button name="action_open" string="Open for Submissions" type="object"
+                            class="btn-primary" invisible="state != 'draft'"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_sync_departments" string="Refresh Departments" type="object"
+                            invisible="state != 'open'"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_close" string="Close Call" type="object"
+                            class="btn-primary" invisible="state != 'open'"
+                            confirm="Close the call for submissions? Departments will no longer be expected to submit."
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_reopen" string="Reopen" type="object"
+                            invisible="state != 'closed'"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_generate_plan" string="Generate Procurement Plan" type="object"
+                            class="btn-primary" invisible="state != 'closed' or procurement_plan_id"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_reset_draft" string="Reset to Draft" type="object"
+                            invisible="state not in ('cancelled',)"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('consolidated', 'cancelled')"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,open,closed,consolidated"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_submissions" type="object"
+                                class="oe_stat_button" icon="fa-file-text-o">
+                            <field name="assessment_count" widget="statinfo" string="Submissions"/>
+                        </button>
+                        <button name="action_view_plan" type="object"
+                                class="oe_stat_button" icon="fa-list-alt"
+                                invisible="not procurement_plan_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Procurement</span>
+                                <span class="o_stat_text">Plan</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fiscal_year"/>
+                            <field name="date_open" readonly="state == 'draft'"/>
+                            <field name="submission_deadline"/>
+                        </group>
+                        <group>
+                            <field name="total_departments"/>
+                            <field name="submitted_count"/>
+                            <field name="pending_count"/>
+                            <field name="approved_count"/>
+                            <field name="submission_rate" widget="percentage"/>
+                            <field name="total_estimated" widget="monetary"/>
+                            <field name="procurement_plan_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Department Submissions" name="departments">
+                            <field name="department_line_ids">
+                                <list decoration-danger="status == 'pending'"
+                                      decoration-warning="status == 'submitted'"
+                                      decoration-info="status == 'reviewed'"
+                                      decoration-success="status == 'approved'"
+                                      create="false">
+                                    <field name="department_id"/>
+                                    <field name="manager_id"/>
+                                    <field name="line_count"/>
+                                    <field name="total_estimated" widget="monetary"/>
+                                    <field name="status" widget="badge"
+                                           decoration-danger="status == 'pending'"
+                                           decoration-warning="status == 'submitted'"
+                                           decoration-info="status == 'reviewed'"
+                                           decoration-success="status == 'approved'"/>
+                                    <button name="action_open_assessment" type="object"
+                                            string="Open Submission" icon="fa-arrow-right"
+                                            invisible="status == 'pending'"/>
+                                    <button name="action_open_assessment" type="object"
+                                            string="Start Submission" class="btn-link"
+                                            invisible="status != 'pending'"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Instructions" name="instructions">
+                            <field name="instructions"
+                                   placeholder="Guidance to departments on submitting their needs..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Needs Call List -->
+    <record id="view_needs_call_list" model="ir.ui.view">
+        <field name="name">nbet.needs.call.list</field>
+        <field name="model">nbet.needs.call</field>
+        <field name="arch" type="xml">
+            <list string="Needs Calls"
+                  decoration-muted="state in ('cancelled',)"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state == 'consolidated'">
+                <field name="name"/>
+                <field name="fiscal_year"/>
+                <field name="date_open"/>
+                <field name="submission_deadline"/>
+                <field name="total_departments"/>
+                <field name="submitted_count"/>
+                <field name="pending_count"/>
+                <field name="submission_rate" widget="percentage"/>
+                <field name="total_estimated" widget="monetary"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'consolidated'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Needs Call Search -->
+    <record id="view_needs_call_search" model="ir.ui.view">
+        <field name="name">nbet.needs.call.search</field>
+        <field name="model">nbet.needs.call</field>
+        <field name="arch" type="xml">
+            <search string="Search Needs Calls">
+                <field name="name"/>
+                <field name="fiscal_year"/>
+                <filter name="open" string="Open" domain="[('state', '=', 'open')]"/>
+                <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
+                <filter name="consolidated" string="Consolidated" domain="[('state', '=', 'consolidated')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_fiscal_year" string="Fiscal Year" context="{'group_by': 'fiscal_year'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Needs Call Action -->
+    <record id="action_needs_call" model="ir.actions.act_window">
+        <field name="name">Needs Calls</field>
+        <field name="res_model">nbet.needs.call</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Open an annual Needs Call</p>
+            <p>Invite every department to submit its procurement needs for the
+               fiscal year, track who has responded, and consolidate the approved
+               submissions into the Procurement Plan.</p>
+        </field>
+    </record>
+
+</odoo>

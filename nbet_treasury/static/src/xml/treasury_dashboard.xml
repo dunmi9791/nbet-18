@@ -30,7 +30,7 @@
                              t-on-click="() => this.openFiltered('In Pipeline', [['state', 'in', ['scheduled', 'cfo_approved', 'fm_approved', 'audited']]])">
                             <div class="card-body">
                                 <h6 class="card-subtitle text-muted mb-2">In Pipeline</h6>
-                                <h2 class="card-title mb-1" t-esc="state.counts.scheduled + state.counts.cfo_approved + state.counts.fm_approved + state.counts.audited"/>
+                                <h2 class="card-title mb-1" t-esc="state.counts.scheduled + state.counts.cfo_approved + state.counts.fm_approved + state.counts.voucher_generated + state.counts.audit_pending + state.counts.audit_reviewed + state.counts.audited"/>
                                 <p class="text-muted mb-0 small" t-esc="formatCurrency(state.totals.pipeline_amount - state.totals.pending_amount)"/>
                             </div>
                         </div>
@@ -107,6 +107,28 @@
                                             <i class="fa fa-check-circle fa-2x text-primary mb-2 d-block"/>
                                             <h4 class="mb-0" t-esc="state.counts.fm_approved"/>
                                             <small class="text-muted">Finance Mgr</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto d-flex align-items-center">
+                                        <i class="fa fa-chevron-right text-muted"/>
+                                    </div>
+                                    <div class="col" style="cursor: pointer;"
+                                         t-on-click="() => this.openFiltered('Vouchers Generated', [['state', '=', 'voucher_generated']])">
+                                        <div class="border rounded p-3 h-100" style="background-color: #e2d9f3;">
+                                            <i class="fa fa-file-text-o fa-2x text-primary mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.voucher_generated"/>
+                                            <small class="text-muted">Vouchers</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto d-flex align-items-center">
+                                        <i class="fa fa-chevron-right text-muted"/>
+                                    </div>
+                                    <div class="col" style="cursor: pointer;"
+                                         t-on-click="() => this.openFiltered('In Audit', [['state', 'in', ['audit_pending', 'audit_reviewed']]])">
+                                        <div class="border rounded p-3 h-100" style="background-color: #fde2e4;">
+                                            <i class="fa fa-search fa-2x text-danger mb-2 d-block"/>
+                                            <h4 class="mb-0" t-esc="state.counts.audit_pending + state.counts.audit_reviewed"/>
+                                            <small class="text-muted">In Audit</small>
                                         </div>
                                     </div>
                                     <div class="col-auto d-flex align-items-center">

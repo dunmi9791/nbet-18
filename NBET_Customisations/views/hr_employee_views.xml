@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_inherit_next_of_kin" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.next.of.kin</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Next of Kin" name="next_of_kin">
+                    <group>
+                        <group string="Next of Kin Details">
+                            <field name="next_of_kin_name"/>
+                            <field name="next_of_kin_relationship"/>
+                            <field name="next_of_kin_mobile"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+            <xpath expr="//field[@name='work_email']" position="after">
+                <field name="entry_date"/>
+                <field name="years_of_service"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

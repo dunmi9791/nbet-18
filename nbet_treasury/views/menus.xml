@@ -28,6 +28,64 @@
               action="action_payment_schedule"
               sequence="10"/>
 
+    <!-- Payment Vouchers -->
+    <menuitem id="menu_payment_voucher"
+              name="Payment Vouchers"
+              parent="menu_treasury_operations"
+              action="action_payment_voucher"
+              sequence="15"/>
+
+    <!-- Audit -->
+    <menuitem id="menu_treasury_audit"
+              name="Audit"
+              parent="menu_nbet_treasury_root"
+              groups="nbet_treasury.group_auditor"
+              sequence="20"/>
+
+    <record id="action_payment_schedule_audit" model="ir.actions.act_window">
+        <field name="name">Payments for Audit</field>
+        <field name="res_model">nbet.payment.schedule</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', 'in', ('audit_pending', 'audit_reviewed'))]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing awaiting audit</p>
+            <p>Payment requests appear here once the assigned finance officer has
+               generated the vouchers and forwarded them to audit.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_payment_schedule_audit"
+              name="Payments for Audit"
+              parent="menu_treasury_audit"
+              action="action_payment_schedule_audit"
+              sequence="10"/>
+
+    <menuitem id="menu_payment_voucher_audit"
+              name="Vouchers for Audit"
+              parent="menu_treasury_audit"
+              action="action_payment_voucher_audit"
+              sequence="20"/>
+
+    <menuitem id="menu_payment_voucher_to_pay"
+              name="Vouchers to Pay"
+              parent="menu_treasury_operations"
+              action="action_payment_voucher_to_pay"
+              groups="nbet_treasury.group_treasury_manager"
+              sequence="18"/>
+
+    <!-- Configuration -->
+    <menuitem id="menu_treasury_configuration"
+              name="Configuration"
+              parent="menu_nbet_treasury_root"
+              groups="nbet_treasury.group_treasury_manager"
+              sequence="90"/>
+
+    <menuitem id="menu_tax_rule"
+              name="Tax Rules"
+              parent="menu_treasury_configuration"
+              action="action_tax_rule"
+              sequence="10"/>
+
     <!-- Audited / Ready to Pay -->
     <record id="action_payment_schedule_approved" model="ir.actions.act_window">
         <field name="name">Ready to Pay</field>

@@ -23,6 +23,9 @@
                     <field name="total_expected_genco_amount" string="GENCO Expected (₦)" optional="show"/>
                     <field name="total_disco_dro_payable" string="DISCO Payable (₦)" optional="show"/>
                     <field name="total_subsidy_grant_exposure" string="Subsidy/Grant (₦)" optional="show"/>
+                    <field name="total_payment_received" string="Received (₦)" optional="show"/>
+                    <field name="total_payment_made" string="Paid (₦)" optional="show"/>
+                    <field name="net_payment_difference" string="Difference (₦)" optional="show"/>
                     <field name="currency_id" column_invisible="1"/>
                 </list>
             </field>
@@ -70,6 +73,9 @@
                                 string="Cancel"
                                 invisible="state in ('posted','locked','cancelled')"
                                 groups="nbet_power_billing.group_nbet_admin"/>
+                        <button name="action_sync_settlement_documents" type="object"
+                                string="Sync Settlement Documents"
+                                help="Link every invoice, vendor bill and journal entry reachable from this cycle's bills back to this cycle."/>
                         <button name="action_reset_to_draft" type="object"
                                 string="Reset to Draft"
                                 invisible="state not in ('cancelled','calculated','reviewed','locked')"
@@ -104,6 +110,61 @@
                                     class="oe_stat_button" icon="fa-sliders">
                                 <field name="count_adjustments" widget="statinfo" string="Adjustments"/>
                             </button>
+                            <button name="action_view_disco_invoices" type="object"
+                                    class="oe_stat_button" icon="fa-file-text-o">
+                                <field name="count_disco_invoices" widget="statinfo" string="DISCO Invoices"/>
+                            </button>
+                            <button name="action_view_genco_vendor_bills" type="object"
+                                    class="oe_stat_button" icon="fa-file-o">
+                                <field name="count_genco_vendor_bills" widget="statinfo" string="GENCO Bills"/>
+                            </button>
+                            <button name="action_view_payments" type="object"
+                                    class="oe_stat_button" icon="fa-credit-card">
+                                <field name="count_payments" widget="statinfo" string="Payments"/>
+                            </button>
+                        </div>
+
+                        <!-- Cash Position Mini Dashboard -->
+                        <div class="o_horizontal_separator mt16">Cash Position</div>
+                        <div class="row">
+                            <div class="col-sm-6 col-md-4 col-lg-4">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-success" style="font-size:1.4rem;">
+                                        <field name="total_payment_received" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Payments Received (DISCOs)</span>
+                                    <small class="d-block text-muted">
+                                        of <field name="total_disco_invoiced" widget="monetary" class="d-inline"/>
+                                        invoiced · <field name="collection_rate_percent" class="d-inline"/>%
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-4">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-danger" style="font-size:1.4rem;">
+                                        <field name="total_payment_made" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Payments Made (GENCOs)</span>
+                                    <small class="d-block text-muted">
+                                        of <field name="total_genco_billed" widget="monetary" class="d-inline"/>
+                                        billed · <field name="settlement_rate_percent" class="d-inline"/>%
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-4 col-lg-4">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-primary" style="font-size:1.4rem;">
+                                        <field name="net_payment_difference" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Difference (Received − Paid)</span>
+                                    <small class="d-block text-muted">
+                                        Outstanding in
+                                        <field name="total_receivable_outstanding" widget="monetary" class="d-inline"/>
+                                        · out
+                                        <field name="total_payable_outstanding" widget="monetary" class="d-inline"/>
+                                    </small>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Title -->
@@ -288,6 +349,42 @@
                                         <field name="description"/>
                                         <field name="amount"/>
                                         <field name="approval_state" widget="badge"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Settlement Documents" name="settlement_documents">
+                                <field name="move_ids" readonly="1">
+                                    <list decoration-success="payment_state in ('paid','reversed')"
+                                          decoration-warning="payment_state in ('partial','in_payment')"
+                                          decoration-muted="state == 'cancel'">
+                                        <field name="name"/>
+                                        <field name="move_type"/>
+                                        <field name="nbet_settlement_role" widget="badge"/>
+                                        <field name="partner_id"/>
+                                        <field name="invoice_date"/>
+                                        <field name="invoice_date_due" optional="show"/>
+                                        <field name="amount_total" string="Document Total"/>
+                                        <field name="amount_residual" string="Outstanding"/>
+                                        <field name="nbet_amount_settled" string="Settled"/>
+                                        <field name="payment_state" widget="badge"/>
+                                        <field name="state" widget="badge"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                        <field name="company_currency_id" column_invisible="1"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Payments" name="settlement_payments">
+                                <field name="payment_ids" readonly="1">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="date"/>
+                                        <field name="partner_id"/>
+                                        <field name="payment_type" widget="badge"/>
+                                        <field name="journal_id" optional="show"/>
+                                        <field name="memo" optional="show"/>
+                                        <field name="amount"/>
+                                        <field name="state" widget="badge"/>
+                                        <field name="currency_id" column_invisible="1"/>
                                     </list>
                                 </field>
                             </page>

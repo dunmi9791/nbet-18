@@ -51,4 +51,18 @@
         <field name="padding">4</field>
     </record>
 
+    <record id="seq_payment_voucher" model="ir.sequence">
+        <field name="name">Payment Voucher</field>
+        <field name="code">nbet.payment.voucher</field>
+        <field name="prefix">PV/%(year)s/</field>
+        <field name="padding">5</field>
+    </record>
+
+    <record id="seq_payment_transaction" model="ir.sequence">
+        <field name="name">Payment Transaction Reference</field>
+        <field name="code">nbet.payment.transaction</field>
+        <field name="prefix">TXN/%(year)s/</field>
+        <field name="padding">5</field>
+    </record>
+
 </odoo>

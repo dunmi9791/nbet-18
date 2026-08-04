@@ -121,6 +121,26 @@ class NbetDiscoBill(models.Model):
                     f'{rec.participant_id.name} is not a DISCO.'
                 )
 
+    # ── Cycle Link on Generated Invoices ───────────────────────────────────────
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._sync_invoice_cycle_link()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'invoice_move_id' in vals or 'billing_cycle_id' in vals:
+            self._sync_invoice_cycle_link()
+        return res
+
+    def _sync_invoice_cycle_link(self):
+        """Every invoice generated for a DISCO bill carries its billing cycle."""
+        for rec in self:
+            if rec.invoice_move_id and rec.billing_cycle_id:
+                rec.billing_cycle_id._stamp_move(
+                    rec.invoice_move_id, rec.participant_id, 'disco')
+
     # ── Actions ────────────────────────────────────────────────────────────────
     def action_review(self):
         self.write({'state': 'reviewed'})
@@ -134,7 +154,14 @@ class NbetDiscoBill(models.Model):
         if self.invoice_move_id:
             return self.action_view_invoice()
         acct_svc = self.env['nbet.accounting.service'].create({})
-        acct_svc.create_disco_customer_invoice(self)
+        moves = acct_svc.create_disco_customer_invoice(self)
+        if not moves:
+            raise ValidationError(
+                f'No invoice could be created for {self.participant_id.name}. '
+                'Check that the DISCO has a linked partner and that the billing '
+                'accounts are configured.'
+            )
+        self.invoice_move_id = moves[0].id
         self.state = 'invoiced'
         return self.action_view_invoice()
 

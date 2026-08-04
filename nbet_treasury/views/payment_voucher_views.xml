@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Payment Voucher Form -->
+    <record id="view_payment_voucher_form" model="ir.ui.view">
+        <field name="name">nbet.payment.voucher.form</field>
+        <field name="model">nbet.payment.voucher</field>
+        <field name="arch" type="xml">
+            <form string="Payment Voucher">
+                <header>
+                    <button name="action_register_payment" string="Register Payment" type="object"
+                            class="btn-success" invisible="state != 'audited'"
+                            groups="nbet_treasury.group_treasury_manager"/>
+                    <button name="action_print_voucher" string="Print Voucher" type="object"
+                            class="btn-primary"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            class="btn-danger" invisible="state in ('audited', 'paid', 'cancelled')"
+                            groups="nbet_treasury.group_treasury_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,reviewed,audited,paid"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_payment" type="object"
+                                class="oe_stat_button" icon="fa-money"
+                                invisible="not payment_id">
+                            <field name="payment_id" widget="statinfo" string="Payment"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Paid" bg_color="text-bg-success"
+                            invisible="state != 'paid'"/>
+                    <widget name="web_ribbon" title="Audited" bg_color="bg-brown"
+                            invisible="state != 'audited'"/>
+                    <widget name="web_ribbon" title="Cancelled" bg_color="text-bg-danger"
+                            invisible="state not in ('cancelled',)"/>
+                    <widget name="web_ribbon" title="Tampered" bg_color="text-bg-danger"
+                            invisible="auth_valid or not auth_code"/>
+                    <div class="oe_title">
+                        <label for="name" string="Voucher Number"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Payee Details">
+                            <field name="voucher_type"/>
+                            <field name="partner_id"/>
+                            <field name="partner_vat"/>
+                            <field name="partner_phone"/>
+                            <field name="partner_email"/>
+                            <field name="bank_account"/>
+                        </group>
+                        <group string="Payment Details">
+                            <field name="transaction_reference"/>
+                            <field name="schedule_id"/>
+                            <field name="payment_request_id"/>
+                            <field name="contract_award_id"/>
+                            <field name="description"/>
+                            <field name="amount" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="tax_line_id" invisible="voucher_type != 'tax'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Payment" name="payment">
+                            <group>
+                                <group string="Disbursement">
+                                    <field name="payment_journal_id"
+                                           readonly="state == 'paid'"
+                                           required="state == 'paid'"/>
+                                    <field name="payment_reference" readonly="state == 'paid'"/>
+                                    <field name="payment_date" readonly="state == 'paid'"/>
+                                </group>
+                                <group string="Accounting">
+                                    <field name="payment_id"/>
+                                    <field name="invoice_id"
+                                           invisible="voucher_type != 'vendor'"/>
+                                </group>
+                            </group>
+                            <div class="text-muted" invisible="state == 'paid'">
+                                <p>Enter the reference and journal, then use
+                                   <b>Register Payment</b> to post the Odoo payment. A vendor
+                                   payment is matched against the vendor bill, with the tax
+                                   withheld moved to its payable account.</p>
+                            </div>
+                        </page>
+                        <page string="Approval History" name="approval_history">
+                            <field name="approval_line_ids" readonly="1">
+                                <list string="Approval History" create="false" delete="false"
+                                      decoration-danger="not auth_valid">
+                                    <field name="sequence" column_invisible="1"/>
+                                    <field name="stage"/>
+                                    <field name="user_id" string="Approving Officer"/>
+                                    <field name="user_login" string="User ID"/>
+                                    <field name="approval_datetime" string="Date &amp; Time"/>
+                                    <field name="auth_code" string="Digital Authentication Record"/>
+                                    <field name="auth_valid" string="Valid" widget="boolean_toggle"/>
+                                    <field name="notes" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Authentication" name="authentication">
+                            <group>
+                                <group string="Preparation">
+                                    <field name="generated_by_id"/>
+                                    <field name="generated_on"/>
+                                </group>
+                                <group string="Digital Authentication">
+                                    <field name="auth_code"/>
+                                    <field name="auth_valid"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Payment Voucher List -->
+    <record id="view_payment_voucher_list" model="ir.ui.view">
+        <field name="name">nbet.payment.voucher.list</field>
+        <field name="model">nbet.payment.voucher</field>
+        <field name="arch" type="xml">
+            <list string="Payment Vouchers"
+                  decoration-muted="state == 'cancelled'"
+                  decoration-success="state == 'paid'">
+                <field name="name"/>
+                <field name="transaction_reference"/>
+                <field name="voucher_type"/>
+                <field name="partner_id"/>
+                <field name="description" optional="show"/>
+                <field name="payment_request_id" optional="hide"/>
+                <field name="amount" widget="monetary" sum="Total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="payment_journal_id" optional="show"/>
+                <field name="payment_reference" optional="show"/>
+                <field name="payment_date" optional="show"/>
+                <field name="payment_id" optional="hide"/>
+                <field name="generated_by_id" optional="hide"/>
+                <field name="generated_on" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('draft', 'audited')"
+                       decoration-warning="state in ('submitted', 'reviewed')"
+                       decoration-success="state == 'paid'"
+                       decoration-danger="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Payment Voucher Search -->
+    <record id="view_payment_voucher_search" model="ir.ui.view">
+        <field name="name">nbet.payment.voucher.search</field>
+        <field name="model">nbet.payment.voucher</field>
+        <field name="arch" type="xml">
+            <search string="Search Payment Vouchers">
+                <field name="name"/>
+                <field name="transaction_reference"/>
+                <field name="partner_id"/>
+                <field name="payment_request_id"/>
+                <filter name="vendor_vouchers" string="Vendor Payment"
+                        domain="[('voucher_type', '=', 'vendor')]"/>
+                <filter name="tax_vouchers" string="Tax Remittance"
+                        domain="[('voucher_type', '=', 'tax')]"/>
+                <separator/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="submitted" string="Submitted to Audit" domain="[('state', '=', 'submitted')]"/>
+                <filter name="reviewed" string="Audit Reviewed" domain="[('state', '=', 'reviewed')]"/>
+                <filter name="audited" string="Audited" domain="[('state', '=', 'audited')]"/>
+                <filter name="paid" string="Paid" domain="[('state', '=', 'paid')]"/>
+                <separator/>
+                <filter name="in_audit" string="In Audit"
+                        domain="[('state', 'in', ('submitted', 'reviewed'))]"/>
+                <filter name="to_pay" string="Awaiting Payment"
+                        domain="[('state', '=', 'audited')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_type" string="Voucher Type" context="{'group_by': 'voucher_type'}"/>
+                    <filter name="group_partner" string="Payee" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_txn" string="Transaction Reference"
+                            context="{'group_by': 'transaction_reference'}"/>
+                    <filter name="group_journal" string="Payment Journal"
+                            context="{'group_by': 'payment_journal_id'}"/>
+                    <filter name="group_payment_date" string="Payment Date"
+                            context="{'group_by': 'payment_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Payment Voucher Action -->
+    <record id="action_payment_voucher" model="ir.actions.act_window">
+        <field name="name">Payment Vouchers</field>
+        <field name="res_model">nbet.payment.voucher</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No payment vouchers yet</p>
+            <p>Vouchers are raised by the assigned finance officer once the Finance
+               Manager has approved a scheduled payment.</p>
+        </field>
+    </record>
+
+    <!-- Payment queue: audited vouchers awaiting disbursement -->
+    <record id="action_payment_voucher_to_pay" model="ir.actions.act_window">
+        <field name="name">Vouchers to Pay</field>
+        <field name="res_model">nbet.payment.voucher</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'audited')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing awaiting payment</p>
+            <p>Audited vouchers appear here. Enter the reference and journal on each,
+               then register the payment.</p>
+        </field>
+    </record>
+
+    <!-- Audit queue: vouchers awaiting review/approval -->
+    <record id="action_payment_voucher_audit" model="ir.actions.act_window">
+        <field name="name">Vouchers for Audit</field>
+        <field name="res_model">nbet.payment.voucher</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', 'in', ('submitted', 'reviewed'))]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing awaiting audit</p>
+        </field>
+    </record>
+
+</odoo>

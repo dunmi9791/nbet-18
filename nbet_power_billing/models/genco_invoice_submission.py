@@ -176,6 +176,26 @@ class NbetGencoInvoiceSubmission(models.Model):
                 rec.variance_percent = 0.0
             rec.is_within_tolerance = rec.variance_percent <= rec.tolerance_percent
 
+    # ── Cycle Link on Generated Vendor Bills ─────────────────────────────────
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._sync_vendor_bill_cycle_link()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'vendor_bill_id' in vals or 'billing_cycle_id' in vals:
+            self._sync_vendor_bill_cycle_link()
+        return res
+
+    def _sync_vendor_bill_cycle_link(self):
+        """Every vendor bill raised from a GENCO submission carries its billing cycle."""
+        for rec in self:
+            if rec.vendor_bill_id and rec.billing_cycle_id:
+                rec.billing_cycle_id._stamp_move(
+                    rec.vendor_bill_id, rec.participant_id, 'genco')
+
     def action_submit(self):
         for rec in self:
             if rec.state != 'draft':

@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_niso_advice_user,nbet.niso.advice.user,model_nbet_niso_advice,group_niso_user,1,1,1,0
+access_niso_advice_manager,nbet.niso.advice.manager,model_nbet_niso_advice,group_niso_manager,1,1,1,1
+access_niso_receipt_user,nbet.niso.receipt.user,model_nbet_niso_receipt,group_niso_user,1,1,1,0
+access_niso_receipt_manager,nbet.niso.receipt.manager,model_nbet_niso_receipt,group_niso_manager,1,1,1,1
+access_account_move_niso_user,account.move.niso.user,account.model_account_move,group_niso_user,1,0,0,0
+access_account_move_niso_manager,account.move.niso.manager,account.model_account_move,group_niso_manager,1,0,0,0
+access_account_payment_niso_user,account.payment.niso.user,account.model_account_payment,group_niso_user,1,0,0,0
+access_account_payment_niso_manager,account.payment.niso.manager,account.model_account_payment,group_niso_manager,1,0,0,0
+access_account_journal_niso_user,account.journal.niso.user,account.model_account_journal,group_niso_user,1,0,0,0
+access_account_journal_niso_manager,account.journal.niso.manager,account.model_account_journal,group_niso_manager,1,0,0,0
+access_account_account_niso_manager,account.account.niso.manager,account.model_account_account,group_niso_manager,1,0,0,0

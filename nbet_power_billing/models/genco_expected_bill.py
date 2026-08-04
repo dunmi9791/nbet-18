@@ -91,6 +91,26 @@ class NbetGencoExpectedBill(models.Model):
         help='Odoo vendor bill created when the cycle is posted.',
     )
 
+    # ── Cycle Link on Generated Vendor Bills ──────────────────────────────────
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._sync_vendor_bill_cycle_link()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'vendor_bill_id' in vals or 'billing_cycle_id' in vals:
+            self._sync_vendor_bill_cycle_link()
+        return res
+
+    def _sync_vendor_bill_cycle_link(self):
+        """Every vendor bill raised for a GENCO expected bill carries its billing cycle."""
+        for rec in self:
+            if rec.vendor_bill_id and rec.billing_cycle_id:
+                rec.billing_cycle_id._stamp_move(
+                    rec.vendor_bill_id, rec.participant_id, 'genco')
+
     # ── State Actions ─────────────────────────────────────────────────────────
     def action_review(self):
         self.write({'state': 'reviewed'})

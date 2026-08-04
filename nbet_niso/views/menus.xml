@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Root Menu -->
+    <menuitem id="menu_nbet_niso_root"
+              name="NISO"
+              action="action_niso_advice"
+              sequence="47"
+              groups="nbet_niso.group_niso_user"/>
+
+    <!-- Admin Charge -->
+    <menuitem id="menu_niso_admin_charge"
+              name="Admin Charge"
+              parent="menu_nbet_niso_root"
+              sequence="10"/>
+
+    <menuitem id="menu_niso_advice"
+              name="Advices"
+              parent="menu_niso_admin_charge"
+              action="action_niso_advice"
+              sequence="10"/>
+
+    <menuitem id="menu_niso_advice_outstanding"
+              name="Outstanding Advices"
+              parent="menu_niso_admin_charge"
+              action="action_niso_advice_outstanding"
+              sequence="20"/>
+
+    <menuitem id="menu_niso_receipt"
+              name="Receipts"
+              parent="menu_niso_admin_charge"
+              action="action_niso_receipt"
+              sequence="30"/>
+
+</odoo>

@@ -13,6 +13,41 @@
                         invisible="not payment_schedule_id">
                     <field name="payment_schedule_id" widget="statinfo" string="Payment Schedule"/>
                 </button>
+                <button name="action_view_vouchers" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="voucher_count == 0">
+                    <field name="voucher_count" widget="statinfo" string="Vouchers"/>
+                </button>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <widget name="web_ribbon" title="Audited" bg_color="bg-brown"
+                        invisible="audit_state != 'audited'"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Audit" name="treasury_audit"
+                      invisible="audit_state == 'not_audited'">
+                    <group>
+                        <group string="Audit Sign-off">
+                            <field name="audit_state"/>
+                            <field name="audit_reviewer_id"/>
+                            <field name="auditor_id"/>
+                            <field name="audit_date"/>
+                        </group>
+                    </group>
+                    <field name="voucher_ids" readonly="1">
+                        <list string="Payment Vouchers" create="false" delete="false">
+                            <field name="name"/>
+                            <field name="transaction_reference"/>
+                            <field name="voucher_type"/>
+                            <field name="partner_id"/>
+                            <field name="amount" widget="monetary" sum="Total"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'audited'"
+                                   decoration-danger="state == 'cancelled'"/>
+                        </list>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>

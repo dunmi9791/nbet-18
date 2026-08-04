@@ -17,14 +17,27 @@
                     <button name="action_fm_approve" string="Finance Manager Approve" type="object"
                             class="btn-primary" invisible="state != 'cfo_approved'"
                             groups="nbet_treasury.group_finance_manager"/>
-                    <button name="action_audit" string="Auditor Sign-off" type="object"
-                            class="btn-primary" invisible="state != 'fm_approved'"
+                    <button name="action_generate_vouchers" string="Generate Payment Vouchers"
+                            type="object" class="btn-primary" invisible="state != 'fm_approved'"
+                            groups="nbet_treasury.group_treasury_user"/>
+                    <button name="action_generate_vouchers" string="Regenerate Vouchers"
+                            type="object" invisible="state != 'voucher_generated'"
+                            groups="nbet_treasury.group_treasury_user"/>
+                    <button name="action_forward_to_audit" string="Forward to Audit" type="object"
+                            class="btn-primary" invisible="state != 'voucher_generated'"
+                            groups="nbet_treasury.group_treasury_user"/>
+                    <button name="action_audit_review" string="Audit Review" type="object"
+                            class="btn-primary" invisible="state != 'audit_pending'"
                             groups="nbet_treasury.group_auditor"/>
-                    <button name="action_mark_paid" string="Mark as Paid" type="object"
+                    <button name="action_audit_approve" string="Audit Approve" type="object"
+                            class="btn-primary" invisible="state != 'audit_reviewed'"
+                            groups="nbet_treasury.group_auditor"/>
+                    <button name="action_view_vouchers" string="Mark Paid" type="object"
                             class="btn-success" invisible="state != 'audited'"
                             groups="nbet_treasury.group_treasury_manager"/>
                     <button name="action_reject" string="Reject" type="object"
-                            class="btn-warning" invisible="state not in ('cfo_approved', 'fm_approved', 'audited')"
+                            class="btn-warning"
+                            invisible="state not in ('cfo_approved', 'fm_approved', 'voucher_generated', 'audit_pending', 'audit_reviewed')"
                             groups="nbet_treasury.group_cfo,nbet_treasury.group_finance_manager,nbet_treasury.group_auditor"/>
                     <button name="action_hold" string="Put on Hold" type="object"
                             class="btn-warning" invisible="state not in ('pending', 'scheduled')"/>
@@ -33,11 +46,23 @@
                     <button name="action_cancel" string="Cancel" type="object"
                             class="btn-danger" invisible="state in ('paid', 'cancelled')"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="pending,scheduled,cfo_approved,fm_approved,audited,paid"/>
+                           statusbar_visible="pending,scheduled,cfo_approved,fm_approved,voucher_generated,audit_pending,audit_reviewed,audited,paid"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_vouchers" type="object"
+                                class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="voucher_count == 0">
+                            <field name="voucher_count" widget="statinfo" string="Vouchers"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Audited" bg_color="bg-brown"
+                            invisible="state != 'audited'"/>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
+                        <h3 invisible="not transaction_reference">
+                            <field name="transaction_reference" readonly="1"/>
+                        </h3>
                     </div>
                     <group>
                         <group string="Payment Details">
@@ -46,19 +71,71 @@
                             <field name="vendor_id"/>
                             <field name="description"/>
                             <field name="amount" widget="monetary"/>
+                            <field name="tax_amount" widget="monetary"/>
+                            <field name="net_amount" widget="monetary"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="priority" widget="priority"/>
                         </group>
                         <group string="Schedule &amp; Payment">
                             <field name="scheduled_date"/>
                             <field name="payment_method"/>
+                            <field name="payment_journal_id"/>
                             <field name="bank_account"/>
-                            <field name="payment_reference"/>
-                            <field name="payment_date"/>
+                            <field name="payment_reference" readonly="1"/>
+                            <field name="payment_date" readonly="1"/>
                             <field name="treasury_officer_id"/>
+                            <field name="finance_officer_id"
+                                   readonly="state in ('paid', 'cancelled')"/>
                         </group>
                     </group>
                     <notebook>
+                        <page string="Statutory Deductions" name="taxes">
+                            <button name="action_load_default_deductions" type="object"
+                                    string="Load Default Deductions" icon="fa-refresh"
+                                    class="btn-link"
+                                    confirm="This replaces the deduction lines below with the configured defaults for this contract category. Continue?"
+                                    invisible="state not in ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated')"
+                                    groups="nbet_treasury.group_treasury_user"/>
+                            <field name="tax_line_ids"
+                                   readonly="state not in ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated')">
+                                <list string="Statutory Deductions" editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="tax_type"/>
+                                    <field name="name"/>
+                                    <field name="rate"/>
+                                    <field name="base_amount" widget="monetary"/>
+                                    <field name="amount" widget="monetary" sum="Total Deductions"/>
+                                    <field name="tax_body_id"/>
+                                    <field name="tax_payable_account_id"/>
+                                    <field name="tax_rule_id" readonly="1" optional="hide"/>
+                                    <field name="voucher_id" readonly="1" optional="show"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="amount" widget="monetary" string="Gross Amount"/>
+                                <field name="tax_amount" widget="monetary"/>
+                                <field name="net_amount" widget="monetary" class="oe_subtotal_footer_separator"/>
+                            </group>
+                        </page>
+                        <page string="Vouchers" name="vouchers" invisible="voucher_count == 0">
+                            <field name="voucher_ids" readonly="1">
+                                <list string="Payment Vouchers" create="false" delete="false">
+                                    <field name="name"/>
+                                    <field name="voucher_type"/>
+                                    <field name="partner_id"/>
+                                    <field name="amount" widget="monetary" sum="Total"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="payment_journal_id"/>
+                                    <field name="payment_reference"/>
+                                    <field name="payment_date"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'paid'"
+                                           decoration-info="state == 'audited'"
+                                           decoration-danger="state == 'cancelled'"/>
+                                </list>
+                            </field>
+                        </page>
                         <page string="CFO Approval" name="cfo_approval"
                               invisible="state == 'pending'">
                             <group>
@@ -83,8 +160,20 @@
                                 </group>
                             </group>
                         </page>
-                        <page string="Audit Sign-off" name="audit"
-                              invisible="state in ('pending', 'scheduled', 'cfo_approved')">
+                        <page string="Audit Review" name="audit_review"
+                              invisible="state in ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated')">
+                            <group>
+                                <group>
+                                    <field name="audit_reviewer_id"/>
+                                    <field name="audit_review_date"/>
+                                </group>
+                                <group>
+                                    <field name="audit_review_notes"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Audit Approval" name="audit"
+                              invisible="state in ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated', 'audit_pending')">
                             <group>
                                 <group>
                                     <field name="auditor_id"/>
@@ -118,20 +207,26 @@
         <field name="arch" type="xml">
             <list string="Payment Schedule"
                   decoration-info="state == 'pending'"
-                  decoration-warning="state in ('scheduled', 'cfo_approved', 'fm_approved')"
+                  decoration-warning="state in ('scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated', 'audit_pending', 'audit_reviewed')"
                   decoration-success="state in ('audited', 'paid')"
                   decoration-muted="state in ('on_hold', 'cancelled')">
                 <field name="name"/>
                 <field name="payment_request_id"/>
+                <field name="transaction_reference" optional="show"/>
                 <field name="vendor_id"/>
                 <field name="description"/>
                 <field name="amount" widget="monetary" sum="Total"/>
+                <field name="tax_amount" widget="monetary" sum="Total Deductions" optional="hide"/>
+                <field name="net_amount" widget="monetary" sum="Total Net" optional="hide"/>
+                <field name="currency_id" column_invisible="1"/>
                 <field name="scheduled_date"/>
                 <field name="payment_method"/>
+                <field name="finance_officer_id" optional="hide"/>
+                <field name="voucher_count" string="Vouchers" optional="hide"/>
                 <field name="priority" widget="priority"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'pending'"
-                       decoration-warning="state in ('scheduled', 'cfo_approved', 'fm_approved')"
+                       decoration-warning="state in ('scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated', 'audit_pending', 'audit_reviewed')"
                        decoration-success="state in ('audited', 'paid')"
                        decoration-danger="state == 'cancelled'"/>
             </list>
@@ -147,22 +242,32 @@
                 <field name="name"/>
                 <field name="vendor_id"/>
                 <field name="payment_request_id"/>
+                <field name="transaction_reference"/>
+                <field name="finance_officer_id"/>
                 <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
                 <filter name="scheduled" string="Scheduled" domain="[('state', '=', 'scheduled')]"/>
                 <filter name="cfo_approved" string="CFO Approved" domain="[('state', '=', 'cfo_approved')]"/>
                 <filter name="fm_approved" string="Finance Manager Approved" domain="[('state', '=', 'fm_approved')]"/>
+                <filter name="voucher_generated" string="Vouchers Generated" domain="[('state', '=', 'voucher_generated')]"/>
+                <filter name="audit_pending" string="Pending Audit Review" domain="[('state', '=', 'audit_pending')]"/>
+                <filter name="audit_reviewed" string="Audit Reviewed" domain="[('state', '=', 'audit_reviewed')]"/>
                 <filter name="audited" string="Audited" domain="[('state', '=', 'audited')]"/>
                 <filter name="paid" string="Paid" domain="[('state', '=', 'paid')]"/>
                 <filter name="on_hold" string="On Hold" domain="[('state', '=', 'on_hold')]"/>
                 <separator/>
+                <filter name="my_vouchers" string="Assigned to Me"
+                        domain="[('finance_officer_id', '=', uid)]"/>
+                <filter name="in_audit" string="In Audit"
+                        domain="[('state', 'in', ('audit_pending', 'audit_reviewed'))]"/>
                 <filter name="pending_action" string="Needs Action"
-                        domain="[('state', 'in', ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'audited'))]"/>
+                        domain="[('state', 'in', ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated', 'audit_pending', 'audit_reviewed', 'audited'))]"/>
                 <filter name="overdue" string="Overdue"
-                        domain="[('scheduled_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ('pending', 'scheduled', 'cfo_approved', 'fm_approved'))]"/>
+                        domain="[('scheduled_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated', 'audit_pending', 'audit_reviewed'))]"/>
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_finance_officer" string="Finance Officer" context="{'group_by': 'finance_officer_id'}"/>
                     <filter name="group_scheduled" string="Scheduled Date" context="{'group_by': 'scheduled_date:month'}"/>
                     <filter name="group_method" string="Payment Method" context="{'group_by': 'payment_method'}"/>
                 </group>
