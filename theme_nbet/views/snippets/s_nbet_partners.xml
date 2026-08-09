@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="s_nbet_partners" name="NBET Partners">
+    <section class="s_nbet_partners pt56 pb56 o_cc o_cc2 o_colored_level">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2 class="o_nbet_section_title text-center">Our Partners</h2>
+                    <p class="lead mb-0">
+                        Working alongside regulators, operators and development partners
+                        across the Nigerian Electricity Supply Industry.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row align-items-center justify-content-center g-5 mt-2">
+                <div class="col-lg-2 col-md-3 col-4 text-center">
+                    <img src="/web/image/website.s_company_team_image_1" alt="Partner"
+                         class="s_nbet_partner_logo img-fluid"/>
+                </div>
+                <div class="col-lg-2 col-md-3 col-4 text-center">
+                    <img src="/web/image/website.s_company_team_image_2" alt="Partner"
+                         class="s_nbet_partner_logo img-fluid"/>
+                </div>
+                <div class="col-lg-2 col-md-3 col-4 text-center">
+                    <img src="/web/image/website.s_company_team_image_3" alt="Partner"
+                         class="s_nbet_partner_logo img-fluid"/>
+                </div>
+                <div class="col-lg-2 col-md-3 col-4 text-center">
+                    <img src="/web/image/website.s_company_team_image_4" alt="Partner"
+                         class="s_nbet_partner_logo img-fluid"/>
+                </div>
+                <div class="col-lg-2 col-md-3 col-4 text-center">
+                    <img src="/web/image/website.s_company_team_image_1" alt="Partner"
+                         class="s_nbet_partner_logo img-fluid"/>
+                </div>
+            </div>
+        </div>
+    </section>
+</template>
+
+</odoo>

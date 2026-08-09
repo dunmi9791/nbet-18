@@ -1,0 +1,29 @@
+// Bootstrap overrides for the NBET theme.
+//
+// Loaded with the `prepend` directive into web._assets_frontend_helpers, so
+// these land before Bootstrap computes its own derived values.
+
+// The corporate site sits on flat cards with a very soft ambient shadow rather
+// than Bootstrap's default drop shadows.
+$box-shadow-sm:     0 .125rem .5rem rgba(19, 30, 74, .06) !default;
+$box-shadow:        0 .5rem 1.5rem rgba(19, 30, 74, .10) !default;
+$box-shadow-lg:     0 1rem 3rem rgba(19, 30, 74, .14) !default;
+
+// Squared-off, institutional feel.
+$border-radius:     .125rem !default;
+$border-radius-sm:  .125rem !default;
+$border-radius-lg:  .25rem !default;
+
+$headings-font-weight: 700 !default;
+$font-weight-bold:     700 !default;
+
+// Do NOT set $grid-gutter-width here.
+//
+// This file is *prepended* to web._assets_frontend_helpers, so it wins every
+// `!default` race — including against website/static/src/scss/bootstrap_overridden.scss
+// which declares `$grid-gutter-width: 30px !default`. Odoo's grid maths is in
+// px (website.scss computes `$v - $grid-gutter-width` over $container-max-widths
+// for the mega-menu), so a rem value here fails the whole web.assets_frontend
+// bundle with "Incompatible units: 'rem' and 'px'" and the site renders unstyled.
+//
+// Any value added below must keep the units Odoo already uses for that variable.

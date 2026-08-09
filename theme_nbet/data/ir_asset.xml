@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Theme assets are declared as theme.ir.asset so that they are copied to
+        the website that activates the theme, and removed again if the theme is
+        switched out.
+    -->
+
+    <record id="theme_nbet.primary_variables_scss" model="theme.ir.asset">
+        <field name="key">theme_nbet.primary_variables_scss</field>
+        <field name="name">NBET primary variables SCSS</field>
+        <field name="bundle">web._assets_primary_variables</field>
+        <field name="path">theme_nbet/static/src/scss/primary_variables.scss</field>
+    </record>
+
+    <record id="theme_nbet.bootstrap_overridden_scss" model="theme.ir.asset">
+        <field name="key">theme_nbet.bootstrap_overridden_scss</field>
+        <field name="name">NBET Bootstrap overridden SCSS</field>
+        <field name="bundle">web._assets_frontend_helpers</field>
+        <field name="directive">prepend</field>
+        <field name="path">theme_nbet/static/src/scss/bootstrap_overridden.scss</field>
+    </record>
+
+    <record id="theme_nbet.theme_scss" model="theme.ir.asset">
+        <field name="key">theme_nbet.theme_scss</field>
+        <field name="name">NBET theme SCSS</field>
+        <field name="bundle">web.assets_frontend</field>
+        <field name="path">theme_nbet/static/src/scss/theme.scss</field>
+    </record>
+
+    <record id="theme_nbet.counter_js" model="theme.ir.asset">
+        <field name="key">theme_nbet.counter_js</field>
+        <field name="name">NBET capacity counter JS</field>
+        <field name="bundle">web.assets_frontend</field>
+        <field name="path">theme_nbet/static/src/js/nbet_counter.js</field>
+    </record>
+
+</odoo>

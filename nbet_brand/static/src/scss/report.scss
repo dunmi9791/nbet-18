@@ -1,0 +1,74 @@
+//------------------------------------------------------------------------------
+// NBET PDF letterhead (web.report_assets_common)
+//
+// Plain hex values throughout: the report bundle does not load the website
+// colour palette, so o-color() is not available here.
+//------------------------------------------------------------------------------
+
+$o-nbet-navy: #131e4a;
+$o-nbet-lime: #85c226;
+
+// The navy rule with a lime leader, reused in the header and the footer.
+.o_nbet_report_rule {
+    height: 3px;
+    background: linear-gradient(
+        to right,
+        $o-nbet-lime 0,
+        $o-nbet-lime 3.5rem,
+        $o-nbet-navy 3.5rem,
+        $o-nbet-navy 100%
+    );
+}
+
+.o_nbet_report_header {
+    .o_company_logo_small {
+        max-height: 46px;
+        width: auto;
+    }
+
+    .o_company_tagline {
+        color: $o-nbet-navy;
+        font-weight: 600;
+    }
+
+    ul {
+        color: #444;
+        margin-bottom: 0;
+    }
+}
+
+.o_nbet_report_body {
+    h2 {
+        color: $o-nbet-navy;
+        font-weight: 700;
+        border-bottom: 2px solid $o-nbet-lime;
+        padding-bottom: .35rem;
+        margin-bottom: 1rem;
+    }
+
+    // Table headers pick up the navy/lime treatment used on the site's
+    // market-data tables.
+    table.table thead th,
+    table.o_main_table thead th {
+        background-color: rgba($o-nbet-navy, .06);
+        color: $o-nbet-navy;
+        border-bottom: 2px solid $o-nbet-lime !important;
+        text-transform: uppercase;
+        font-size: .72rem;
+        letter-spacing: .03em;
+    }
+
+    // Totals / emphasis rows
+    tr.border-black,
+    .o_total_row {
+        border-top: 2px solid $o-nbet-navy !important;
+    }
+}
+
+.o_nbet_report_footer {
+    color: #555;
+
+    .o_footer_content {
+        padding-top: .35rem;
+    }
+}

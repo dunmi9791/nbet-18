@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!--
+    Branded sign-in.
+
+    This inherits website.login_layout, NOT web.login_layout. When the Website
+    app is installed, website.login_layout (priority 20) does
+    `<xpath expr="t" position="replace">` on web.login_layout — discarding its
+    entire body (the card, the company-logo block, body_classname) and
+    re-rendering /web/login through website.layout instead. Anything targeting
+    web.login_layout's original markup therefore cannot be located.
+
+    Resolved parent arch we are extending:
+
+        <t t-call="website.layout">
+            <div class="oe_website_login_container" t-out="0"/>
+        </t>
+
+    Because login now renders inside website.layout, it already picks up the
+    NBET header, footer, palette and fonts from the theme. All that is left is
+    the lockup and the card around the form.
+-->
+<template id="login_layout" inherit_id="website.login_layout"
+          name="NBET Login Layout" priority="30">
+    <xpath expr="//div[hasclass('oe_website_login_container')]" position="replace">
+        <div class="o_nbet_login_wrap">
+            <div class="o_nbet_login_card">
+                <div class="o_nbet_login_brand text-center">
+                    <img src="/theme_nbet/static/src/img/nbet_logo.png"
+                         alt="Nigerian Bulk Electricity Trading Plc"
+                         class="o_nbet_login_logo"/>
+                    <p class="o_nbet_login_tagline">Enterprise Resource Planning</p>
+                </div>
+                <!-- Class preserved: other auth modules and tours select on it. -->
+                <div class="oe_website_login_container" t-out="0"/>
+            </div>
+        </div>
+    </xpath>
+</template>
+
+<!--
+    web.login is left intact by the website module, so its markup can be
+    targeted directly. Anchored on .oe_login_buttons because the debug
+    "Log in as superuser" button sits under its own <t t-if="debug"> and would
+    otherwise also match a plain //button[@type='submit'][1].
+-->
+<template id="login" inherit_id="web.login" name="NBET Login" priority="30">
+    <xpath expr="//div[hasclass('oe_login_buttons')]/button[@type='submit']" position="attributes">
+        <attribute name="class">btn btn-primary w-100 py-2</attribute>
+    </xpath>
+</template>
+
+</odoo>

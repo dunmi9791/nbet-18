@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="snippets" inherit_id="website.snippets" name="NBET snippets">
+
+    <!-- Add an "NBET" category to the snippet panel -->
+    <xpath expr="//t[@id='installed_snippets_hook']" position="before">
+        <t snippet-group="nbet" t-snippet="website.s_snippet_group" string="NBET"
+           t-thumbnail="/theme_nbet/static/src/img/snippets_thumbs/s_nbet_group.svg"/>
+    </xpath>
+
+    <!-- Register the blocks themselves. Previews are rendered live by the
+         editor, so no per-snippet thumbnail is needed. -->
+    <xpath expr="//snippets[@id='snippet_structure']" position="inside">
+        <t t-snippet="theme_nbet.s_nbet_hero" string="Hero Slider" group="nbet">
+            <keywords>hero, banner, carousel, slider, cover, intro, home, headline, nbet</keywords>
+        </t>
+        <t t-snippet="theme_nbet.s_nbet_quicklinks" string="Quick Links" group="nbet">
+            <keywords>cards, links, resources, documents, ppa, shortcuts, grid, nbet</keywords>
+        </t>
+        <t t-snippet="theme_nbet.s_nbet_capacity" string="Capacity Figures" group="nbet">
+            <keywords>numbers, counter, statistics, megawatts, mw, capacity, kpi, metrics, nbet</keywords>
+        </t>
+        <t t-snippet="theme_nbet.s_nbet_value_chain" string="Value Chain" group="nbet">
+            <keywords>process, steps, chain, generation, transmission, distribution, nesi, flow, nbet</keywords>
+        </t>
+        <t t-snippet="theme_nbet.s_nbet_leadership" string="Leadership" group="nbet">
+            <keywords>team, board, directors, management, people, profiles, governance, nbet</keywords>
+        </t>
+        <t t-snippet="theme_nbet.s_nbet_partners" string="Partners" group="nbet">
+            <keywords>logos, partners, references, clients, stakeholders, brands, nbet</keywords>
+        </t>
+    </xpath>
+
+</template>
+
+</odoo>

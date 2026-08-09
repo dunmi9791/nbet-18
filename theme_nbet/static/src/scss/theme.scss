@@ -1,0 +1,556 @@
+//------------------------------------------------------------------------------
+// NBET theme — frontend styling
+//
+// Loaded into web.assets_frontend. Everything here is scoped to a theme class
+// or an `.s_nbet_*` snippet so it cannot leak into the backend or into other
+// themes' markup.
+//------------------------------------------------------------------------------
+
+$o-nbet-lime: #85c226;
+$o-nbet-navy: #131e4a;
+
+//------------------------------------------------------------------------------
+// Typography — the corporate site sets headings in tight, heavy Poppins
+//------------------------------------------------------------------------------
+
+#wrapwrap {
+    h1, h2, h3, h4, h5, h6 {
+        letter-spacing: -.01em;
+    }
+}
+
+// The recurring "short lime rule under a navy heading" device used as a section
+// header throughout nbet.com.ng.
+.o_nbet_section_title {
+    position: relative;
+    padding-bottom: .85rem;
+    margin-bottom: 1.75rem;
+
+    &:after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 3.25rem;
+        height: 3px;
+        background-color: $o-nbet-lime;
+    }
+
+    &.text-center:after,
+    .text-center > &:after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+.o_nbet_eyebrow {
+    display: inline-block;
+    font-size: .8125rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: $o-nbet-lime;
+    margin-bottom: .75rem;
+}
+
+//------------------------------------------------------------------------------
+// Header
+//------------------------------------------------------------------------------
+
+#wrapwrap > header {
+    // Slim contact/social strip above the navbar (see views/layout.xml)
+    .o_nbet_topbar {
+        background-color: $o-nbet-navy;
+        color: rgba(#fff, .8);
+        font-size: .8125rem;
+        padding: .5rem 0;
+
+        a {
+            color: rgba(#fff, .8);
+            text-decoration: none;
+            transition: color .2s ease;
+
+            &:hover { color: $o-nbet-lime; }
+        }
+
+        .o_nbet_topbar_social a {
+            font-size: .9375rem;
+        }
+    }
+
+    .navbar {
+        // Top-level items get a lime underline that grows on hover/active,
+        // mirroring the corporate site's menu behaviour.
+        .nav-link {
+            position: relative;
+            font-weight: 500;
+
+            &:after {
+                content: "";
+                position: absolute;
+                left: .5rem;
+                right: .5rem;
+                bottom: .35rem;
+                height: 2px;
+                background-color: $o-nbet-lime;
+                transform: scaleX(0);
+                transform-origin: left center;
+                transition: transform .25s ease-in-out;
+            }
+
+            &:hover:after,
+            &.active:after {
+                transform: scaleX(1);
+            }
+        }
+
+        // Dropdowns sit flush and squared with a lime top edge.
+        .dropdown-menu {
+            border: 0;
+            border-top: 3px solid $o-nbet-lime;
+            border-radius: 0;
+            box-shadow: 0 .75rem 2rem rgba(19, 30, 74, .16);
+            padding: .5rem 0;
+
+            .dropdown-item {
+                padding: .5rem 1.25rem;
+                font-size: .9375rem;
+
+                &:hover, &:focus {
+                    background-color: rgba($o-nbet-lime, .12);
+                    color: $o-nbet-navy;
+                }
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+// Buttons — flat, squared, with a firm colour shift on hover
+//------------------------------------------------------------------------------
+
+.btn {
+    font-weight: 600;
+    letter-spacing: .02em;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.btn-primary {
+    &:hover, &:focus {
+        background-color: darken($o-nbet-lime, 8%);
+        border-color: darken($o-nbet-lime, 8%);
+    }
+}
+
+//------------------------------------------------------------------------------
+// s_nbet_hero — full-bleed cover slider
+//------------------------------------------------------------------------------
+
+.s_nbet_hero {
+    .carousel-item {
+        min-height: 34rem;
+        background-size: cover;
+        background-position: center center;
+
+        @media (max-width: 767.98px) {
+            min-height: 26rem;
+        }
+    }
+
+    // Vertical centring must be applied ONLY to the slides Bootstrap has
+    // already made visible.
+    //
+    // Bootstrap drives the carousel purely through `display`:
+    //     .carousel-item                { display: none; }
+    //     .carousel-item.active,
+    //     .carousel-item-next,
+    //     .carousel-item-prev           { display: block; }
+    //
+    // A `d-flex` utility class on the item itself compiles to
+    // `display: flex !important`, which outranks both — so every slide stays
+    // visible and they stack on top of each other. Centring has to come from
+    // here, matched to the same three states Bootstrap shows.
+    .carousel-item.active,
+    .carousel-item-next,
+    .carousel-item-prev {
+        display: flex;
+        align-items: center;
+    }
+
+    // Safety net for pages saved before this fix. Editing a page in the site
+    // builder copies its markup into the website.page record (copy-on-write),
+    // so a stale `d-flex` on a slide survives a module upgrade. This pins the
+    // hidden slides back down regardless of what classes they carry.
+    .carousel-item:not(.active):not(.carousel-item-next):not(.carousel-item-prev) {
+        display: none !important;
+    }
+
+    // The container becomes a flex child once the slide is centred.
+    > .carousel-inner > .carousel-item > .container {
+        width: 100%;
+    }
+
+    // Navy scrim so white display copy stays legible over photography.
+    .s_nbet_hero_overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            100deg,
+            rgba($o-nbet-navy, .92) 0%,
+            rgba($o-nbet-navy, .72) 45%,
+            rgba($o-nbet-navy, .35) 100%
+        );
+    }
+
+    .s_nbet_hero_content {
+        position: relative;
+        z-index: 1;
+        max-width: 46rem;
+    }
+
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 4rem;
+        opacity: .65;
+
+        &:hover { opacity: 1; }
+    }
+
+    .carousel-indicators [data-bs-target] {
+        width: 2.25rem;
+        height: 3px;
+        border: 0;
+        border-radius: 0;
+        background-color: rgba(#fff, .45);
+
+        &.active { background-color: $o-nbet-lime; }
+    }
+}
+
+//------------------------------------------------------------------------------
+// s_nbet_quicklinks — the card grid linking to PPAs, market rules, EPSRA...
+//------------------------------------------------------------------------------
+
+.s_nbet_quicklinks {
+    .s_nbet_quicklink {
+        display: block;
+        height: 100%;
+        background-color: #fff;
+        border: 1px solid rgba($o-nbet-navy, .10);
+        border-bottom: 3px solid transparent;
+        padding: 1.75rem 1.5rem;
+        text-decoration: none;
+        transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+
+        .s_nbet_quicklink_icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 3.25rem;
+            height: 3.25rem;
+            margin-bottom: 1.1rem;
+            font-size: 1.4rem;
+            color: $o-nbet-lime;
+            background-color: rgba($o-nbet-lime, .12);
+            transition: background-color .25s ease, color .25s ease;
+        }
+
+        h4 {
+            color: $o-nbet-navy;
+            margin-bottom: .5rem;
+        }
+
+        p {
+            margin-bottom: 0;
+            font-size: .9375rem;
+        }
+
+        &:hover {
+            border-bottom-color: $o-nbet-lime;
+            box-shadow: 0 .75rem 2rem rgba($o-nbet-navy, .12);
+            transform: translateY(-3px);
+
+            .s_nbet_quicklink_icon {
+                background-color: $o-nbet-lime;
+                color: #fff;
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+// s_nbet_capacity — the "00 MW" counters
+//------------------------------------------------------------------------------
+
+.s_nbet_capacity {
+    .s_nbet_counter_value {
+        font-family: var(--headings-font, inherit);
+        font-size: clamp(2.5rem, 6vw, 3.75rem);
+        font-weight: 700;
+        line-height: 1;
+        color: $o-nbet-lime;
+    }
+
+    .s_nbet_counter_unit {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-left: .25rem;
+        color: $o-nbet-lime;
+    }
+
+    .s_nbet_counter_label {
+        margin-top: .6rem;
+        margin-bottom: 0;
+        font-size: .9375rem;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    // Hairline separators between figures, dropped on narrow viewports.
+    .s_nbet_counter + .s_nbet_counter {
+        @media (min-width: 768px) {
+            border-left: 1px solid rgba(#fff, .18);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+// s_nbet_value_chain — Generation > Transmission > Distribution > Customer
+//------------------------------------------------------------------------------
+
+.s_nbet_value_chain {
+    .s_nbet_chain_step {
+        position: relative;
+        text-align: center;
+        padding: 0 .75rem;
+
+        .s_nbet_chain_icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 5rem;
+            height: 5rem;
+            margin-bottom: 1rem;
+            border: 2px solid $o-nbet-lime;
+            border-radius: 50%;
+            font-size: 1.75rem;
+            color: $o-nbet-navy;
+            background-color: #fff;
+            position: relative;
+            z-index: 1;
+        }
+
+        h5 {
+            color: $o-nbet-navy;
+            margin-bottom: .35rem;
+        }
+
+        p {
+            font-size: .875rem;
+            margin-bottom: 0;
+        }
+    }
+
+    // Connector line running behind the icon row on desktop only.
+    .s_nbet_chain_row {
+        position: relative;
+
+        @media (min-width: 992px) {
+            &:before {
+                content: "";
+                position: absolute;
+                top: 2.5rem;
+                left: 12%;
+                right: 12%;
+                height: 2px;
+                background: repeating-linear-gradient(
+                    to right,
+                    rgba($o-nbet-lime, .55) 0 .5rem,
+                    transparent .5rem 1rem
+                );
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+// s_nbet_partners — greyscale logo strip that colours on hover
+//------------------------------------------------------------------------------
+
+.s_nbet_partners {
+    .s_nbet_partner_logo {
+        max-height: 4.5rem;
+        width: auto;
+        filter: grayscale(100%);
+        opacity: .55;
+        transition: filter .25s ease, opacity .25s ease;
+
+        &:hover {
+            filter: grayscale(0);
+            opacity: 1;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+// s_nbet_leadership — board / executive management cards
+//------------------------------------------------------------------------------
+
+.s_nbet_leadership {
+    .s_nbet_person {
+        background-color: #fff;
+        border: 1px solid rgba($o-nbet-navy, .10);
+        height: 100%;
+
+        img {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            object-position: top center;
+        }
+
+        .s_nbet_person_body {
+            padding: 1.25rem;
+            border-top: 3px solid $o-nbet-lime;
+        }
+
+        h5 {
+            color: $o-nbet-navy;
+            margin-bottom: .2rem;
+        }
+
+        .s_nbet_person_role {
+            font-size: .875rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: $o-nbet-lime;
+            margin-bottom: 0;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+// Footer
+//------------------------------------------------------------------------------
+
+#wrapwrap > footer {
+    h5, h6, .h5, .h6 {
+        position: relative;
+        padding-bottom: .65rem;
+        margin-bottom: 1.1rem;
+
+        &:after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 2.25rem;
+            height: 2px;
+            background-color: $o-nbet-lime;
+        }
+    }
+
+    a:not(.btn) {
+        text-decoration: none;
+
+        &:hover {
+            color: $o-nbet-lime !important;
+        }
+    }
+
+    .o_footer_copyright {
+        font-size: .875rem;
+    }
+}
+
+//------------------------------------------------------------------------------
+// Sign-in (/web/login, /web/reset_password, signup)
+//
+// With Website installed, login renders inside website.layout, so the header,
+// footer and palette already come from the theme. This only styles the card.
+//------------------------------------------------------------------------------
+
+.o_nbet_login_wrap {
+    display: flex;
+    justify-content: center;
+    padding: 3.5rem 1rem 4.5rem;
+}
+
+.o_nbet_login_card {
+    width: 100%;
+    max-width: 26rem;
+    padding: 2.25rem 2rem;
+    background-color: #fff;
+    border: 1px solid rgba($o-nbet-navy, .10);
+    border-top: 4px solid $o-nbet-lime;
+    box-shadow: 0 1rem 2.5rem rgba($o-nbet-navy, .12);
+
+    .o_nbet_login_brand {
+        margin-bottom: 1.75rem;
+    }
+
+    .o_nbet_login_logo {
+        max-width: 14rem;
+        width: 100%;
+        height: auto;
+    }
+
+    .o_nbet_login_tagline {
+        margin: .9rem 0 0;
+        padding-top: .9rem;
+        border-top: 1px solid rgba($o-nbet-navy, .12);
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        color: rgba($o-nbet-navy, .55);
+    }
+
+    label {
+        font-weight: 600;
+        font-size: .875rem;
+        color: $o-nbet-navy;
+    }
+
+    .form-control:focus {
+        border-color: $o-nbet-lime;
+        box-shadow: 0 0 0 .2rem rgba($o-nbet-lime, .22);
+    }
+}
+
+//------------------------------------------------------------------------------
+// Portal — keeps nbet_hr_leave_portal and the customer portal on-brand
+//------------------------------------------------------------------------------
+
+.o_portal {
+    .o_portal_navbar,
+    .breadcrumb {
+        --bs-breadcrumb-divider-color: #{rgba($o-nbet-navy, .4)};
+    }
+
+    .card {
+        border-color: rgba($o-nbet-navy, .12);
+
+        > .card-header {
+            background-color: rgba($o-nbet-navy, .04);
+            border-bottom: 2px solid $o-nbet-lime;
+            font-weight: 600;
+            color: $o-nbet-navy;
+        }
+    }
+
+    .o_portal_my_doc_table thead th {
+        background-color: rgba($o-nbet-navy, .04);
+        color: $o-nbet-navy;
+        border-bottom: 2px solid $o-nbet-lime;
+        text-transform: uppercase;
+        font-size: .8125rem;
+        letter-spacing: .04em;
+    }
+}
+
+// Portal search / status pills
+.o_portal_search_panel .input-group-text,
+.o_portal .badge.bg-primary {
+    background-color: $o-nbet-lime !important;
+}

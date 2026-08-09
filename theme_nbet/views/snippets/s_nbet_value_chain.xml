@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="s_nbet_value_chain" name="NBET Value Chain">
+    <section class="s_nbet_value_chain pt64 pb64 o_cc o_cc1 o_colored_level">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <span class="o_nbet_eyebrow">NESI</span>
+                    <h2 class="o_nbet_section_title text-center">The Value Chain</h2>
+                    <p class="lead">
+                        How electricity moves from the point of generation to the end-use
+                        customer, and where NBET sits within it.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-3 s_nbet_chain_row">
+                <div class="col-lg-3 col-sm-6 s_nbet_chain_step">
+                    <span class="s_nbet_chain_icon">
+                        <i class="fa fa-industry" role="img" aria-label="Generation"/>
+                    </span>
+                    <h5>Generation</h5>
+                    <p>Hydro, gas and solar generation companies produce power and sell it in bulk.</p>
+                </div>
+                <div class="col-lg-3 col-sm-6 s_nbet_chain_step">
+                    <span class="s_nbet_chain_icon">
+                        <i class="fa fa-exchange" role="img" aria-label="Bulk trading"/>
+                    </span>
+                    <h5>Bulk Trading</h5>
+                    <p>NBET purchases that power under long-term Power Purchase Agreements.</p>
+                </div>
+                <div class="col-lg-3 col-sm-6 s_nbet_chain_step">
+                    <span class="s_nbet_chain_icon">
+                        <i class="fa fa-sitemap" role="img" aria-label="Transmission"/>
+                    </span>
+                    <h5>Transmission</h5>
+                    <p>The transmission network wheels power across the national grid.</p>
+                </div>
+                <div class="col-lg-3 col-sm-6 s_nbet_chain_step">
+                    <span class="s_nbet_chain_icon">
+                        <i class="fa fa-home" role="img" aria-label="Distribution"/>
+                    </span>
+                    <h5>Distribution</h5>
+                    <p>Distribution companies buy under Vesting Contracts and supply end customers.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</template>
+
+</odoo>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="s_nbet_hero" name="NBET Hero">
+    <section class="s_nbet_hero_wrapper p-0">
+        <t t-set="uniq" t-value="datetime.datetime.now().microsecond"/>
+        <div t-attf-id="nbetHero{{uniq}}" class="s_nbet_hero carousel slide" data-bs-ride="carousel" data-bs-interval="7000">
+            <div class="carousel-inner">
+
+                <!-- #01 -->
+                <div class="carousel-item active oe_img_bg o_bg_img_center o_cc o_cc5"
+                     style="background-image: url('/web/image/website.s_cover_default_image');"
+                     data-name="Slide">
+                    <div class="s_nbet_hero_overlay"/>
+                    <div class="container oe_unremovable">
+                        <div class="s_nbet_hero_content pt64 pb64">
+                            <span class="o_nbet_eyebrow">Nigerian Bulk Electricity Trading Plc</span>
+                            <h1 class="display-3-fs">Developing the Energy Sector</h1>
+                            <p class="lead">
+                                We are the manager and administrator of the electricity pool in the
+                                Nigerian Electricity Supply Industry, purchasing power in bulk from
+                                generation companies and reselling it to distribution companies.
+                            </p>
+                            <p class="mb-0">
+                                <a href="/about-us" class="btn btn-primary btn-lg">Our Mandate</a>
+                                <a href="/market-data" class="btn btn-outline-light btn-lg ms-2">Market Data</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- #02 -->
+                <div class="carousel-item oe_img_bg o_bg_img_center o_cc o_cc5"
+                     style="background-image: url('/web/image/website.s_banner_default_image');"
+                     data-name="Slide">
+                    <div class="s_nbet_hero_overlay"/>
+                    <div class="container oe_unremovable">
+                        <div class="s_nbet_hero_content pt64 pb64">
+                            <span class="o_nbet_eyebrow">Power Purchase Agreements</span>
+                            <h1 class="display-3-fs">An Investment Friendly Environment</h1>
+                            <p class="lead">
+                                Bankable, transparent Power Purchase Agreements and Vesting Contracts
+                                that give investors the certainty they need to build generation
+                                capacity in Nigeria.
+                            </p>
+                            <p class="mb-0">
+                                <a href="/ppa" class="btn btn-primary btn-lg">Explore the PPA</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- #03 -->
+                <div class="carousel-item oe_img_bg o_bg_img_center o_cc o_cc5"
+                     style="background-image: url('/web/image/website.s_picture_default_image');"
+                     data-name="Slide">
+                    <div class="s_nbet_hero_overlay"/>
+                    <div class="container oe_unremovable">
+                        <div class="s_nbet_hero_content pt64 pb64">
+                            <span class="o_nbet_eyebrow">Market Administration</span>
+                            <h1 class="display-3-fs">Powering Nigeria's Growth</h1>
+                            <p class="lead">
+                                Settlement, reconciliation and claw-backs administered to the
+                                Market Rules, so every participant in the value chain is paid on
+                                a transparent and auditable basis.
+                            </p>
+                            <p class="mb-0">
+                                <a href="/contactus" class="btn btn-primary btn-lg">Get in Touch</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <button class="carousel-control-prev o_not_editable" type="button"
+                    t-attf-data-bs-target="#nbetHero{{uniq}}" data-bs-slide="prev"
+                    aria-label="Previous" title="Previous">
+                <span class="carousel-control-prev-icon" aria-hidden="true"/>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next o_not_editable" type="button"
+                    t-attf-data-bs-target="#nbetHero{{uniq}}" data-bs-slide="next"
+                    aria-label="Next" title="Next">
+                <span class="carousel-control-next-icon" aria-hidden="true"/>
+                <span class="visually-hidden">Next</span>
+            </button>
+
+            <!-- Indicators -->
+            <div class="carousel-indicators o_not_editable">
+                <button type="button" class="active" aria-current="true" aria-label="Slide 1"
+                        t-attf-data-bs-target="#nbetHero{{uniq}}" data-bs-slide-to="0"/>
+                <button type="button" aria-label="Slide 2"
+                        t-attf-data-bs-target="#nbetHero{{uniq}}" data-bs-slide-to="1"/>
+                <button type="button" aria-label="Slide 3"
+                        t-attf-data-bs-target="#nbetHero{{uniq}}" data-bs-slide-to="2"/>
+            </div>
+        </div>
+    </section>
+</template>
+
+</odoo>

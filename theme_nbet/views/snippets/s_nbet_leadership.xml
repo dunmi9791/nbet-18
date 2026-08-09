@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="s_nbet_leadership" name="NBET Leadership">
+    <section class="s_nbet_leadership pt64 pb64 o_cc o_cc1 o_colored_level">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <span class="o_nbet_eyebrow">Governance</span>
+                    <h2 class="o_nbet_section_title">Board of Directors</h2>
+                    <p class="lead">
+                        The board provides oversight and strategic direction for the
+                        company on behalf of its shareholder, the Federal Government of Nigeria.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-1">
+                <div class="col-lg-3 col-md-6">
+                    <div class="s_nbet_person">
+                        <img src="/web/image/website.s_company_team_image_1" alt="Board member"/>
+                        <div class="s_nbet_person_body">
+                            <h5>Full Name</h5>
+                            <p class="s_nbet_person_role">Chairman</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="s_nbet_person">
+                        <img src="/web/image/website.s_company_team_image_2" alt="Board member"/>
+                        <div class="s_nbet_person_body">
+                            <h5>Full Name</h5>
+                            <p class="s_nbet_person_role">Managing Director / CEO</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="s_nbet_person">
+                        <img src="/web/image/website.s_company_team_image_3" alt="Board member"/>
+                        <div class="s_nbet_person_body">
+                            <h5>Full Name</h5>
+                            <p class="s_nbet_person_role">Executive Director, Finance</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="s_nbet_person">
+                        <img src="/web/image/website.s_company_team_image_4" alt="Board member"/>
+                        <div class="s_nbet_person_body">
+                            <h5>Full Name</h5>
+                            <p class="s_nbet_person_role">Non-Executive Director</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</template>
+
+</odoo>

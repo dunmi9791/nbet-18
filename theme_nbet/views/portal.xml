@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!--
+    Portal touch-ups.
+
+    Most of the portal restyle is CSS (see theme.scss, .o_portal block). This
+    file only adds the NBET lockup to the portal breadcrumb area so that
+    employees using nbet_hr_leave_portal land somewhere that reads as NBET
+    rather than as a generic Odoo portal.
+-->
+<template id="portal_my_home" inherit_id="portal.portal_my_home" name="NBET Portal Home" priority="30">
+    <xpath expr="//div[hasclass('o_portal_my_home')]" position="before">
+        <div class="o_nbet_portal_hero o_cc o_cc5 py-4 mb-4">
+            <div class="container">
+                <h2 class="mb-1">Self-Service Portal</h2>
+                <p class="mb-0 opacity-75">
+                    Nigerian Bulk Electricity Trading Plc
+                </p>
+            </div>
+        </div>
+    </xpath>
+</template>
+
+</odoo>

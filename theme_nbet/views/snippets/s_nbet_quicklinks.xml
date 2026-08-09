@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="s_nbet_quicklinks" name="NBET Quick Links">
+    <section class="s_nbet_quicklinks pt64 pb64 o_cc o_cc2 o_colored_level">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <h2 class="o_nbet_section_title">Key Resources</h2>
+                    <p class="lead">
+                        The documents, agreements and market instruments that govern bulk
+                        electricity trading in Nigeria.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-1">
+                <div class="col-lg-3 col-md-6">
+                    <a href="/about-us" class="s_nbet_quicklink">
+                        <span class="s_nbet_quicklink_icon">
+                            <i class="fa fa-bullseye" role="img" aria-label="Mandate"/>
+                        </span>
+                        <h4>Our Mandate</h4>
+                        <p>Why NBET exists, and the role it plays in the Nigerian Electricity Supply Industry.</p>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <a href="/ppa" class="s_nbet_quicklink">
+                        <span class="s_nbet_quicklink_icon">
+                            <i class="fa fa-file-text-o" role="img" aria-label="Agreement"/>
+                        </span>
+                        <h4>NBET PPA</h4>
+                        <p>The Power Purchase Agreement, its key parts, and the process for competitive procurement.</p>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <a href="/market-rules" class="s_nbet_quicklink">
+                        <span class="s_nbet_quicklink_icon">
+                            <i class="fa fa-balance-scale" role="img" aria-label="Market Rules"/>
+                        </span>
+                        <h4>Market Rules</h4>
+                        <p>The rules governing settlement, reconciliation and claw-backs across the market.</p>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <a href="/resources" class="s_nbet_quicklink">
+                        <span class="s_nbet_quicklink_icon">
+                            <i class="fa fa-gavel" role="img" aria-label="Legislation"/>
+                        </span>
+                        <h4>EPSRA 2005</h4>
+                        <p>The Electric Power Sector Reform Act and the industry documents built upon it.</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</template>
+
+</odoo>

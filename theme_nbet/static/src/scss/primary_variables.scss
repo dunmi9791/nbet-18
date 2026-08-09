@@ -1,0 +1,121 @@
+//------------------------------------------------------------------------------
+// NBET brand colours
+//
+// Sampled from the corporate site (www.nbet.com.ng, assets/css/style2.css):
+//   #131e4a  navy       - masthead, footer, headings
+//   #85c226  lime       - primary accent, CTAs, the bolt in the logo
+//   #016004  deep green - secondary/hover green
+//   #fd824a  orange     - sparing highlight
+//   #f0fbff  ice        - alternating section background
+//------------------------------------------------------------------------------
+
+$o-nbet-navy:   #131e4a;
+$o-nbet-lime:   #85c226;
+$o-nbet-green:  #016004;
+$o-nbet-orange: #fd824a;
+$o-nbet-ice:    #f0fbff;
+$o-nbet-mist:   #f4f4f4;
+
+$o-color-palettes: map-merge($o-color-palettes,
+    (
+        // Default: lime drives the calls to action, navy carries the chrome.
+        'nbet-1': (
+            'o-color-1': $o-nbet-lime,
+            'o-color-2': $o-nbet-navy,
+            'o-color-3': $o-nbet-ice,
+            'o-color-4': #FFFFFF,
+            'o-color-5': $o-nbet-navy,
+
+            'menu': 5,
+            'footer': 5,
+            'copyright': 5,
+            'copyright-custom': 'black-25',
+        ),
+        // Institutional: navy leads, lime is reserved for emphasis.
+        'nbet-2': (
+            'o-color-1': $o-nbet-navy,
+            'o-color-2': $o-nbet-lime,
+            'o-color-3': $o-nbet-mist,
+            'o-color-4': #FFFFFF,
+            'o-color-5': #0d142f,
+
+            'menu': 4,
+            'footer': 5,
+            'copyright': 5,
+            'copyright-custom': 'black-25',
+        ),
+        // Generation/energy: the deeper green used across the market-data pages.
+        'nbet-3': (
+            'o-color-1': $o-nbet-green,
+            'o-color-2': $o-nbet-navy,
+            'o-color-3': #eef4e6,
+            'o-color-4': #FFFFFF,
+            'o-color-5': #04220b,
+
+            'menu': 5,
+            'footer': 5,
+            'copyright': 5,
+            'copyright-custom': 'black-25',
+        ),
+    )
+);
+
+//------------------------------------------------------------------------------
+// Fonts
+//
+// The corporate site pairs Roboto (body) with Poppins (headings). Roboto ships
+// with Odoo's base config; Poppins has to be declared here.
+//------------------------------------------------------------------------------
+
+$o-theme-font-configs: map-merge($o-theme-font-configs,
+    (
+        'Poppins': (
+            'family': ('Poppins', sans-serif),
+            'url': 'Poppins:300,300i,400,400i,500,600,700,700i',
+        ),
+    )
+);
+
+$o-theme-h1-font-size-multiplier: (52 / 16);
+$o-theme-h2-font-size-multiplier: (40 / 16);
+$o-theme-h3-font-size-multiplier: (30 / 16);
+$o-theme-h4-font-size-multiplier: (22 / 16);
+$o-theme-h5-font-size-multiplier: (18 / 16);
+$o-theme-h6-font-size-multiplier: (16 / 16);
+
+//------------------------------------------------------------------------------
+// Website defaults applied when the theme is installed
+//------------------------------------------------------------------------------
+
+$o-website-values-palettes: (
+    (
+        'color-palettes-name':   'nbet-1',
+
+        'font':                  'Roboto',
+        'headings-font':         'Poppins',
+        'navbar-font':           'Poppins',
+        'buttons-font':          'Poppins',
+
+        'headings-line-height':  1.25,
+        'body-line-height':      1.7,
+
+        'header-template':       'default',
+        'header-font-size':      0.9375rem,
+        'header-links-style':    'default',
+        'logo-height':           2.75rem,
+
+        'footer-template':       'links',
+        'footer-scrolltop':      true,
+
+        'btn-border-radius':     2px,
+        'btn-border-radius-sm':  2px,
+        'btn-border-radius-lg':  2px,
+        'btn-padding-y':         .65rem,
+        'btn-padding-x':         1.75rem,
+        'btn-padding-y-lg':      .9rem,
+        'btn-padding-x-lg':      2.5rem,
+
+        'input-border-radius':   2px,
+        'link-underline':        'hover',
+    ),
+);

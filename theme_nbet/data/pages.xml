@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!--
+    Homepage.
+
+    website.homepage ships as an empty `oe_structure`, so we fill it rather than
+    creating a competing page at "/". Everything below sits inside the
+    oe_structure, which means the site builder can rearrange, edit or delete any
+    of it — the first edit triggers Odoo's copy-on-write, leaving this template
+    untouched as the fallback.
+-->
+<template id="homepage" inherit_id="website.homepage" name="NBET Homepage">
+    <xpath expr="//div[@id='wrap']" position="inside">
+        <t t-snippet-call="theme_nbet.s_nbet_hero"/>
+        <t t-snippet-call="theme_nbet.s_nbet_quicklinks"/>
+        <t t-snippet-call="theme_nbet.s_nbet_capacity"/>
+        <t t-snippet-call="theme_nbet.s_nbet_value_chain"/>
+        <t t-snippet-call="theme_nbet.s_nbet_partners"/>
+    </xpath>
+    <xpath expr="//div[@id='wrap']" position="attributes">
+        <attribute name="class" remove="oe_empty" separator=" "/>
+    </xpath>
+</template>
+
+<!--
+    About Us — "Who We Are", the mandate, and the board.
+-->
+<template id="page_about_us" name="About Us">
+    <t t-set="additional_title" t-valuef="About Us"/>
+    <t t-call="website.layout">
+        <div id="wrap" class="oe_structure">
+            <section class="s_title pt64 pb32 o_cc o_cc1 o_colored_level">
+                <div class="container">
+                    <span class="o_nbet_eyebrow">Who We Are</span>
+                    <h1 class="o_nbet_section_title">About NBET</h1>
+                    <p class="lead">
+                        Nigerian Bulk Electricity Trading Plc was incorporated on 29 July 2010
+                        and is wholly owned by the Federal Government of Nigeria. It is the
+                        manager and administrator of the electricity pool in the Nigerian
+                        Electricity Supply Industry.
+                    </p>
+                </div>
+            </section>
+
+            <t t-snippet-call="theme_nbet.s_nbet_value_chain"/>
+            <t t-snippet-call="theme_nbet.s_nbet_leadership"/>
+        </div>
+    </t>
+</template>
+
+<record id="page_about_us_page" model="theme.website.page">
+    <field name="view_id" ref="page_about_us"/>
+    <field name="url">/about-us</field>
+    <field name="is_published" eval="True"/>
+</record>
+
+<!--
+    Top-level navigation, following the corporate site's information
+    architecture. Sub-items point at pages the site team will create in the
+    builder; they are left here as the skeleton to fill in.
+-->
+<record id="menu_about" model="theme.website.menu">
+    <field name="name">About Us</field>
+    <field name="url">/about-us</field>
+    <field name="sequence" type="int">20</field>
+</record>
+
+<record id="menu_customers" model="theme.website.menu">
+    <field name="name">Our Customers</field>
+    <field name="url">#</field>
+    <field name="sequence" type="int">30</field>
+</record>
+
+<record id="menu_market_data" model="theme.website.menu">
+    <field name="name">Market Data</field>
+    <field name="url">#</field>
+    <field name="sequence" type="int">40</field>
+</record>
+
+<record id="menu_resources" model="theme.website.menu">
+    <field name="name">Resources</field>
+    <field name="url">#</field>
+    <field name="sequence" type="int">50</field>
+</record>
+
+<record id="menu_press_media" model="theme.website.menu">
+    <field name="name">Press &amp; Media</field>
+    <field name="url">#</field>
+    <field name="sequence" type="int">60</field>
+</record>
+
+</odoo>

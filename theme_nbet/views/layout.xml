@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!--
+    Slim utility bar above the main navigation, carrying the contact details and
+    social links the way the corporate site does.
+
+    It is injected inside <header>, ahead of the navbar, so it scrolls and sticks
+    with the header regardless of which header template is selected in the
+    website builder. Content is pulled from the company record rather than being
+    hard-coded, so it stays correct without anyone editing the theme.
+-->
+<template id="layout_topbar" inherit_id="website.layout" name="NBET Header Top Bar">
+    <xpath expr="//header/t[@t-cache]" position="before">
+        <div class="o_nbet_topbar d-none d-lg-block o_not_editable">
+            <div class="container d-flex align-items-center justify-content-between">
+                <div class="o_nbet_topbar_contact d-flex align-items-center gap-4">
+                    <span t-if="res_company.phone">
+                        <i class="fa fa-phone me-2" role="img" aria-label="Phone"/>
+                        <a t-attf-href="tel:#{res_company.phone}" t-esc="res_company.phone"/>
+                    </span>
+                    <span t-if="res_company.email">
+                        <i class="fa fa-envelope-o me-2" role="img" aria-label="Email"/>
+                        <a t-attf-href="mailto:#{res_company.email}" t-esc="res_company.email"/>
+                    </span>
+                </div>
+                <div class="o_nbet_topbar_social d-flex align-items-center gap-3">
+                    <a t-if="website.social_linkedin" t-att-href="website.social_linkedin"
+                       target="_blank" rel="noreferrer" aria-label="LinkedIn">
+                        <i class="fa fa-linkedin" role="img"/>
+                    </a>
+                    <a t-if="website.social_twitter" t-att-href="website.social_twitter"
+                       target="_blank" rel="noreferrer" aria-label="X">
+                        <i class="fa fa-twitter" role="img"/>
+                    </a>
+                    <a t-if="website.social_facebook" t-att-href="website.social_facebook"
+                       target="_blank" rel="noreferrer" aria-label="Facebook">
+                        <i class="fa fa-facebook" role="img"/>
+                    </a>
+                    <a t-if="website.social_instagram" t-att-href="website.social_instagram"
+                       target="_blank" rel="noreferrer" aria-label="Instagram">
+                        <i class="fa fa-instagram" role="img"/>
+                    </a>
+                    <a t-if="website.social_youtube" t-att-href="website.social_youtube"
+                       target="_blank" rel="noreferrer" aria-label="YouTube">
+                        <i class="fa fa-youtube-play" role="img"/>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </xpath>
+</template>
+
+</odoo>
