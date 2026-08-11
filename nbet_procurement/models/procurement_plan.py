@@ -172,3 +172,11 @@ class ProcurementPlanLine(models.Model):
     ], default='planned')
     purchase_order_id = fields.Many2one('purchase.order', string='Purchase Order')
     notes = fields.Text()
+
+    # ── Computed ───────────────────────────────────────────────────────────────
+    display_name = fields.Char(compute='_compute_display_name', store=True)
+
+    @api.depends('plan_id.name', 'description')
+    def _compute_display_name(self):
+        for line in self:
+            line.display_name = f"[{line.plan_id.name}] {line.description}"
