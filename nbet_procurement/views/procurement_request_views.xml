@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Procurement Request Form -->
+    <record id="view_procurement_request_form" model="ir.ui.view">
+        <field name="name">nbet.procurement.request.form</field>
+        <field name="model">nbet.procurement.request</field>
+        <field name="arch" type="xml">
+            <form string="Procurement Request">
+                <header>
+                    <button name="action_submit" string="Submit" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_dept_approve" string="Department Approve" type="object"
+                            class="btn-primary" invisible="state != 'dept_approval'"
+                            groups="nbet_procurement.group_procurement_submitter"/>
+                    <button name="action_procurement_approve" string="Procurement Approve" type="object"
+                            class="btn-primary" invisible="state != 'procurement_review'"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_authority_approve" string="Authority Approve" type="object"
+                            class="btn-primary" invisible="state != 'authority_approval'"
+                            groups="nbet_procurement.group_procurement_approver"/>
+                    <button name="action_create_bid_evaluation" string="Start Bid Evaluation" type="object"
+                            class="btn-success" invisible="state != 'approved'"
+                            groups="nbet_procurement.group_procurement_head"/>
+                    <button name="action_reject" string="Reject" type="object"
+                            class="btn-danger"
+                            invisible="state not in ('dept_approval', 'procurement_review', 'authority_approval')"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('draft', 'done', 'rejected', 'cancelled')"/>
+                    <button name="action_reset_draft" string="Reset to Draft" type="object"
+                            invisible="state not in ('dept_approval', 'rejected', 'cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,dept_approval,procurement_review,authority_approval,approved,in_bidding,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_bid_evaluation" type="object"
+                                class="oe_stat_button" icon="fa-gavel"
+                                invisible="not bid_evaluation_id"
+                                groups="nbet_procurement.group_procurement_user">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Bid</span>
+                                <span class="o_stat_text">Evaluation</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h2><field name="title" placeholder="What is being procured?"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="request_type"/>
+                            <field name="department_id"/>
+                            <field name="requested_by"/>
+                            <field name="date"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="is_unplanned"/>
+                            <field name="plan_id" invisible="is_unplanned"
+                                   required="not is_unplanned"/>
+                            <field name="plan_line_id" invisible="is_unplanned"
+                                   required="not is_unplanned"
+                                   options="{'no_create': True}"/>
+                            <field name="category"/>
+                            <field name="estimated_amount"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-warning" role="alert" invisible="not is_unplanned">
+                        This is an <strong>unplanned / emergency</strong> procurement. It is not
+                        covered by any approved plan item and always requires the approving
+                        authority's sign-off.
+                    </div>
+
+                    <group string="Emergency Justification" invisible="not is_unplanned">
+                        <field name="unplanned_justification" nolabel="1"
+                               required="is_unplanned"
+                               placeholder="Why could this not be planned for?"/>
+                    </group>
+
+                    <group string="Plan Item Budget Position" invisible="is_unplanned or not plan_line_id">
+                        <group>
+                            <field name="plan_line_budget" readonly="1"/>
+                            <field name="plan_line_committed_other" readonly="1"/>
+                            <field name="plan_line_awarded" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="plan_line_available" readonly="1"/>
+                            <field name="plan_line_utilisation" widget="progressbar" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-danger" role="alert"
+                         invisible="is_unplanned or not plan_line_id or estimated_amount &lt;= plan_line_available">
+                        This request exceeds what is left on the selected plan item. Reduce the
+                        requested items or raise it as an unplanned procurement — it cannot be
+                        submitted as it stands.
+                    </div>
+
+                    <notebook>
+                        <page string="Requested Items" name="lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="description"/>
+                                    <field name="product_id" optional="show"/>
+                                    <field name="quantity"/>
+                                    <field name="estimated_unit_cost"/>
+                                    <field name="estimated_cost" sum="Total"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="justification" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Justification" name="justification">
+                            <field name="justification" nolabel="1"
+                                   placeholder="Why does the department need this?"/>
+                        </page>
+                        <page string="Routing &amp; Approvals" name="approvals">
+                            <group>
+                                <group string="Routing">
+                                    <field name="procurement_method_id"/>
+                                    <field name="approval_authority"/>
+                                </group>
+                                <group string="Bid Evaluation" invisible="not bid_evaluation_id">
+                                    <field name="bid_evaluation_id"/>
+                                    <field name="bid_evaluation_state"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Department">
+                                    <field name="dept_approver_id"/>
+                                    <field name="dept_approval_date"/>
+                                </group>
+                                <group string="Procurement">
+                                    <field name="proc_approver_id"/>
+                                    <field name="proc_approval_date"/>
+                                </group>
+                                <group string="Approving Authority">
+                                    <field name="authority_approver_id"/>
+                                    <field name="authority_approval_date"/>
+                                </group>
+                            </group>
+                            <group string="Rejection"
+                                   invisible="state not in ('dept_approval', 'procurement_review', 'authority_approval', 'rejected')">
+                                <field name="rejection_reason" nolabel="1"/>
+                            </group>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Procurement Request List -->
+    <record id="view_procurement_request_list" model="ir.ui.view">
+        <field name="name">nbet.procurement.request.list</field>
+        <field name="model">nbet.procurement.request</field>
+        <field name="arch" type="xml">
+            <list string="Procurement Requests"
+                  decoration-info="state == 'draft'"
+                  decoration-warning="state in ('dept_approval', 'procurement_review', 'authority_approval')"
+                  decoration-success="state in ('approved', 'in_bidding', 'done')"
+                  decoration-danger="state == 'rejected'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="department_id"/>
+                <field name="title"/>
+                <field name="request_type"/>
+                <field name="plan_line_id" optional="show"/>
+                <field name="is_unplanned" optional="show"/>
+                <field name="estimated_amount" sum="Total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state in ('dept_approval', 'procurement_review', 'authority_approval')"
+                       decoration-success="state in ('approved', 'in_bidding', 'done')"
+                       decoration-danger="state == 'rejected'"
+                       decoration-muted="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Procurement Request Search -->
+    <record id="view_procurement_request_search" model="ir.ui.view">
+        <field name="name">nbet.procurement.request.search</field>
+        <field name="model">nbet.procurement.request</field>
+        <field name="arch" type="xml">
+            <search string="Search Procurement Requests">
+                <field name="name"/>
+                <field name="title"/>
+                <field name="department_id"/>
+                <field name="plan_line_id"/>
+                <filter name="my_requests" string="My Requests"
+                        domain="[('requested_by', '=', uid)]"/>
+                <separator/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="pending_approval" string="Pending Approval"
+                        domain="[('state', 'in', ('dept_approval', 'procurement_review', 'authority_approval'))]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="in_bidding" string="In Bid Evaluation" domain="[('state', '=', 'in_bidding')]"/>
+                <separator/>
+                <filter name="unplanned" string="Unplanned / Emergency" domain="[('is_unplanned', '=', True)]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_plan" string="Procurement Plan" context="{'group_by': 'plan_id'}"/>
+                    <filter name="group_plan_line" string="Plan Item" context="{'group_by': 'plan_line_id'}"/>
+                    <filter name="group_type" string="Request Type" context="{'group_by': 'request_type'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_procurement_request" model="ir.actions.act_window">
+        <field name="name">Procurement Requests</field>
+        <field name="res_model">nbet.procurement.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Record a Procurement Request</p>
+            <p>Departments raise requests against an approved procurement plan item.
+               Approved requests continue into bid evaluation.</p>
+        </field>
+    </record>
+
+    <record id="action_my_department_requests" model="ir.actions.act_window">
+        <field name="name">My Requests</field>
+        <field name="res_model">nbet.procurement.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_state': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Raise a Procurement Request</p>
+            <p>Initiate a new expense or project against your department's approved
+               procurement plan items.</p>
+        </field>
+    </record>
+
+</odoo>

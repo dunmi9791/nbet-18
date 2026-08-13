@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 
@@ -16,6 +16,20 @@ class BidEvaluation(models.Model):
         copy=False,
     )
     plan_line_id = fields.Many2one('nbet.procurement.plan.line', string='Plan Item')
+    request_id = fields.Many2one(
+        'nbet.procurement.request',
+        string='Procurement Request',
+        readonly=True,
+        ondelete='set null',
+        copy=False,
+    )
+    department_id = fields.Many2one(
+        'hr.department',
+        string='Requesting Department',
+        compute='_compute_department_id',
+        store=True,
+        readonly=False,
+    )
     description = fields.Char(required=True)
     category = fields.Selection([
         ('goods', 'Goods'),
@@ -52,6 +66,7 @@ class BidEvaluation(models.Model):
     )
 
     bid_line_ids = fields.One2many('nbet.bid.evaluation.line', 'evaluation_id', string='Bids Received')
+    award_ids = fields.One2many('nbet.contract.award', 'evaluation_id', string='Contract Awards')
     evaluation_criteria = fields.Html(string='Evaluation Criteria')
     evaluation_report = fields.Html(string='Evaluation Report')
     recommended_vendor_id = fields.Many2one('res.partner', string='Recommended Vendor')
@@ -66,6 +81,17 @@ class BidEvaluation(models.Model):
     approval_date = fields.Date()
     approved_by = fields.Many2one('res.users')
     notes = fields.Html()
+
+    @api.depends('request_id.department_id', 'plan_line_id.department_id')
+    def _compute_department_id(self):
+        """The requesting department, from the request or -- for evaluations
+        raised directly by Procurement -- from the plan item."""
+        for rec in self:
+            department = rec.request_id.department_id or rec.plan_line_id.department_id
+            if department:
+                rec.department_id = department
+            elif not rec.department_id:
+                rec.department_id = False
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -113,6 +139,14 @@ class BidEvaluation(models.Model):
 
     def action_reject(self):
         self.write({'state': 'rejected'})
+        for rec in self:
+            # Hand the request back so procurement can re-tender it.
+            if rec.request_id and rec.request_id.state == 'in_bidding':
+                rec.request_id.sudo().write({'state': 'approved', 'bid_evaluation_id': False})
+                rec.request_id.message_post(body=_(
+                    'Bid evaluation %s was rejected; the request is back with '
+                    'Procurement for re-tendering.', rec.name,
+                ))
 
     def action_reset_draft(self):
         self.write({'state': 'draft'})
@@ -128,6 +162,8 @@ class BidEvaluation(models.Model):
             'category': self.category,
             'award_amount': self.recommended_amount,
         })
+        if self.request_id and self.request_id.state == 'in_bidding':
+            self.request_id.sudo().state = 'done'
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'nbet.contract.award',

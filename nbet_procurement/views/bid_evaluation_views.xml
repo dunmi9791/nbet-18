@@ -40,6 +40,8 @@
                             <field name="category"/>
                             <field name="procurement_method_id"/>
                             <field name="plan_line_id"/>
+                            <field name="request_id" readonly="1" invisible="not request_id"/>
+                            <field name="department_id" readonly="1" invisible="not request_id"/>
                         </group>
                         <group>
                             <field name="approval_authority"/>
@@ -119,6 +121,7 @@
                   decoration-danger="state == 'rejected'">
                 <field name="name"/>
                 <field name="description"/>
+                <field name="department_id" optional="show"/>
                 <field name="category"/>
                 <field name="procurement_method_id"/>
                 <field name="bid_deadline"/>
@@ -142,12 +145,14 @@
                 <field name="name"/>
                 <field name="description"/>
                 <field name="recommended_vendor_id"/>
+                <field name="department_id"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="in_progress" string="In Progress"
                         domain="[('state', 'in', ('advertised', 'receiving', 'tec_evaluation', 'report_submitted'))]"/>
                 <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
                 <separator/>
                 <group expand="0" string="Group By">
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
                     <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
                     <filter name="group_method" string="Procurement Method" context="{'group_by': 'procurement_method_id'}"/>

@@ -43,6 +43,9 @@
                             <field name="date"/>
                             <field name="total_items"/>
                             <field name="total_budget" widget="monetary"/>
+                            <field name="total_committed" widget="monetary"/>
+                            <field name="total_awarded" widget="monetary"/>
+                            <field name="total_available" widget="monetary"/>
                         </group>
                         <group>
                             <field name="ppc_chair_id"/>
@@ -72,15 +75,25 @@
                             <field name="line_ids">
                                 <list editable="bottom">
                                     <field name="description"/>
+                                    <field name="department_id" required="1"
+                                           options="{'no_create': True}"/>
                                     <field name="product_id" optional="show"/>
                                     <field name="category"/>
                                     <field name="quantity"/>
                                     <field name="estimated_amount" widget="monetary"/>
-                                    <field name="procurement_method_id"/>
-                                    <field name="approval_authority"/>
-                                    <field name="target_quarter"/>
+                                    <field name="committed_amount" widget="monetary"/>
+                                    <field name="awarded_amount" widget="monetary" optional="show"/>
+                                    <field name="available_amount" widget="monetary"
+                                           decoration-danger="available_amount &lt;= 0"/>
+                                    <field name="utilisation_percent" widget="progressbar"/>
+                                    <field name="procurement_method_id" optional="show"/>
+                                    <field name="approval_authority" optional="hide"/>
+                                    <field name="target_quarter" optional="show"/>
                                     <field name="status" widget="badge"/>
+                                    <field name="request_count" string="Requests" optional="hide"/>
                                     <field name="purchase_order_id" optional="hide"/>
+                                    <button name="action_view_requests" type="object"
+                                            icon="fa-list" title="View procurement requests"/>
                                 </list>
                             </field>
                         </page>
@@ -111,6 +124,8 @@
                 <field name="date"/>
                 <field name="total_items"/>
                 <field name="total_budget" widget="monetary"/>
+                <field name="total_committed" widget="monetary" optional="show"/>
+                <field name="total_available" widget="monetary" optional="show"/>
                 <field name="nocopo_reference" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
@@ -129,6 +144,11 @@
             <search string="Search Procurement Plans">
                 <field name="name"/>
                 <field name="fiscal_year"/>
+                <field name="line_ids" string="Department"
+                       filter_domain="[('line_ids.department_id', 'ilike', self)]"/>
+                <filter name="unassigned_items" string="Items Without a Department"
+                        domain="[('line_ids.department_id', '=', False)]"/>
+                <separator/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="pending_approval" string="Pending Approval"
                         domain="[('state', 'in', ('ppc_review', 'md_approval', 'ptb_approval'))]"/>

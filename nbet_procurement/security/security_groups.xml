@@ -35,6 +35,66 @@
         <field name="comment">MD/CEO or PTB member. Can approve procurement plans and contract awards.</field>
     </record>
 
+    <!-- Record Rules.
+
+         Odoo OR-s record rules across the groups a user belongs to, but only
+         among the groups that actually carry a rule for the model: a group with
+         no rule adds nothing rather than granting everything. So every model
+         with a department-scoped submitter rule below needs a matching
+         see-everything rule on group_procurement_user, otherwise a Procurement
+         Officer/Head who is also a Department Submitter is silently narrowed
+         down to their own department. group_procurement_head and
+         group_procurement_approver both imply group_procurement_user; the
+         submitter group does not. -->
+    <record id="rule_needs_assessment_officer" model="ir.rule">
+        <field name="name">Procurement Officer: all needs assessments</field>
+        <field name="model_id" ref="model_nbet_needs_assessment"/>
+        <field name="groups" eval="[(4, ref('group_procurement_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_needs_assessment_line_officer" model="ir.rule">
+        <field name="name">Procurement Officer: all needs assessment lines</field>
+        <field name="model_id" ref="model_nbet_needs_assessment_line"/>
+        <field name="groups" eval="[(4, ref('group_procurement_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_procurement_plan_officer" model="ir.rule">
+        <field name="name">Procurement Officer: all procurement plans</field>
+        <field name="model_id" ref="model_nbet_procurement_plan"/>
+        <field name="groups" eval="[(4, ref('group_procurement_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_procurement_plan_line_officer" model="ir.rule">
+        <field name="name">Procurement Officer: all plan items</field>
+        <field name="model_id" ref="model_nbet_procurement_plan_line"/>
+        <field name="groups" eval="[(4, ref('group_procurement_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_procurement_request_officer" model="ir.rule">
+        <field name="name">Procurement Officer: all procurement requests</field>
+        <field name="model_id" ref="model_nbet_procurement_request"/>
+        <field name="groups" eval="[(4, ref('group_procurement_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_procurement_request_line_officer" model="ir.rule">
+        <field name="name">Procurement Officer: all procurement request lines</field>
+        <field name="model_id" ref="model_nbet_procurement_request_line"/>
+        <field name="groups" eval="[(4, ref('group_procurement_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_bid_evaluation_officer" model="ir.rule">
+        <field name="name">Procurement Officer: all bid evaluations</field>
+        <field name="model_id" ref="model_nbet_bid_evaluation"/>
+        <field name="groups" eval="[(4, ref('group_procurement_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
     <!-- Record Rules: department submitters only see/edit their own department's needs -->
     <record id="rule_needs_assessment_submitter" model="ir.rule">
         <field name="name">Department Submitter: own department needs assessments</field>
@@ -58,6 +118,65 @@
         <field name="perm_unlink" eval="True"/>
     </record>
 
+    <record id="rule_procurement_request_submitter" model="ir.rule">
+        <field name="name">Department Submitter: own department procurement requests</field>
+        <field name="model_id" ref="model_nbet_procurement_request"/>
+        <field name="groups" eval="[(4, ref('group_procurement_submitter'))]"/>
+        <field name="domain_force">['|', ('department_id.manager_id.user_id', '=', user.id), ('department_id.member_ids.user_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_procurement_request_line_submitter" model="ir.rule">
+        <field name="name">Department Submitter: own department request lines</field>
+        <field name="model_id" ref="model_nbet_procurement_request_line"/>
+        <field name="groups" eval="[(4, ref('group_procurement_submitter'))]"/>
+        <field name="domain_force">['|', ('request_id.department_id.manager_id.user_id', '=', user.id), ('request_id.department_id.member_ids.user_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Departments only see procurement plan items assigned to them, and only
+         the plans that carry at least one of their items. -->
+    <record id="rule_procurement_plan_line_submitter" model="ir.rule">
+        <field name="name">Department Submitter: own department plan items</field>
+        <field name="model_id" ref="model_nbet_procurement_plan_line"/>
+        <field name="groups" eval="[(4, ref('group_procurement_submitter'))]"/>
+        <field name="domain_force">['|', ('department_id.manager_id.user_id', '=', user.id), ('department_id.member_ids.user_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_procurement_plan_submitter" model="ir.rule">
+        <field name="name">Department Submitter: plans carrying own department items</field>
+        <field name="model_id" ref="model_nbet_procurement_plan"/>
+        <field name="groups" eval="[(4, ref('group_procurement_submitter'))]"/>
+        <field name="domain_force">['|', ('line_ids.department_id.manager_id.user_id', '=', user.id), ('line_ids.department_id.member_ids.user_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Submitters may follow the tender raised off their own request, but the
+         bids themselves stay with Procurement (no access to the bid lines). -->
+    <record id="rule_bid_evaluation_submitter" model="ir.rule">
+        <field name="name">Department Submitter: own department bid evaluations</field>
+        <field name="model_id" ref="model_nbet_bid_evaluation"/>
+        <field name="groups" eval="[(4, ref('group_procurement_submitter'))]"/>
+        <field name="domain_force">['|', ('department_id.manager_id.user_id', '=', user.id), ('department_id.member_ids.user_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
     <!-- Sequences -->
     <record id="seq_needs_call" model="ir.sequence">
         <field name="name">Needs Call</field>
@@ -77,6 +196,13 @@
         <field name="name">Procurement Plan</field>
         <field name="code">nbet.procurement.plan</field>
         <field name="prefix">PP/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
+    <record id="seq_procurement_request" model="ir.sequence">
+        <field name="name">Procurement Request</field>
+        <field name="code">nbet.procurement.request</field>
+        <field name="prefix">PRQ/%(year)s/</field>
         <field name="padding">4</field>
     </record>
 

@@ -39,6 +39,12 @@
               action="action_procurement_plan"
               sequence="20"/>
 
+    <menuitem id="menu_procurement_request"
+              name="Procurement Requests"
+              parent="menu_procurement_process"
+              action="action_procurement_request"
+              sequence="25"/>
+
     <menuitem id="menu_bid_evaluation"
               name="Bid Evaluations"
               parent="menu_procurement_process"
@@ -70,6 +76,13 @@
               parent="menu_submitter_root"
               action="action_my_department_needs"
               sequence="10"
+              groups="nbet_procurement.group_procurement_submitter"/>
+
+    <menuitem id="menu_my_department_requests"
+              name="My Requests"
+              parent="menu_submitter_root"
+              action="action_my_department_requests"
+              sequence="20"
               groups="nbet_procurement.group_procurement_submitter"/>
 
     <!-- Configuration Actions -->
