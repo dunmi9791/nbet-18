@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from odoo.tools import float_compare
+
+from .contract_milestone import CLAIMING_STATES
 
 
 class PaymentRequest(models.Model):
@@ -20,7 +23,28 @@ class PaymentRequest(models.Model):
         string='Contract Award',
         required=True,
         tracking=True,
-        domain="[('state', '=', 'verified')]",
+        # A single-delivery contract must be verified in full; a milestone
+        # contract is payable stage by stage while still in execution.
+        domain="['|', ('state', '=', 'verified'),"
+               " '&', ('execution_mode', '=', 'milestone'),"
+               " ('state', 'in', ('in_execution', 'payment_processing'))]",
+    )
+    execution_mode = fields.Selection(
+        related='contract_award_id.execution_mode',
+        store=True,
+    )
+    milestone_id = fields.Many2one(
+        'nbet.contract.milestone',
+        string='Milestone',
+        tracking=True,
+        ondelete='restrict',
+        domain="[('contract_id', '=', contract_award_id),"
+               " ('state', 'in', ('verified', 'payment_requested'))]",
+    )
+    milestone_amount = fields.Monetary(
+        string='Milestone Value',
+        related='milestone_id.amount',
+        store=True,
     )
     vendor_id = fields.Many2one(
         'res.partner',
@@ -104,12 +128,61 @@ class PaymentRequest(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('nbet.payment.request') or 'New'
         return super().create(vals_list)
 
+    @api.onchange('contract_award_id')
+    def _onchange_contract_award_id(self):
+        if self.milestone_id.contract_id != self.contract_award_id:
+            self.milestone_id = False
+
+    @api.onchange('milestone_id')
+    def _onchange_milestone_id(self):
+        if self.milestone_id:
+            self.requested_amount = max(
+                self.milestone_id.amount - self.milestone_id.claimed_amount, 0.0
+            )
+
+    def _check_amount_within_envelope(self):
+        """Refuse a request that would over-draw its milestone, or the contract.
+
+        Prior non-rejected requests count against the same envelope, so a second
+        full-value claim is caught rather than silently doubling the payout.
+        """
+        for rec in self:
+            if rec.milestone_id:
+                envelope = rec.milestone_id.amount
+                label = _('milestone "%s"', rec.milestone_id.title)
+                siblings = rec.milestone_id.sudo().payment_request_ids
+            else:
+                envelope = rec.contract_amount
+                label = _('contract %s', rec.contract_award_id.name)
+                siblings = rec.contract_award_id.sudo().payment_request_ids
+            claimed = sum(
+                siblings.filtered(
+                    lambda r: r.id != rec.id and r.state in CLAIMING_STATES
+                ).mapped('requested_amount')
+            )
+            if float_compare(claimed + rec.requested_amount, envelope, precision_digits=2) > 0:
+                raise UserError(_(
+                    'This request of %(requested).2f would take the total claimed '
+                    'against %(label)s to %(total).2f, above its value of %(envelope).2f.',
+                    requested=rec.requested_amount, label=label,
+                    total=claimed + rec.requested_amount, envelope=envelope,
+                ))
+
     def action_submit_to_md(self):
         for rec in self:
             if not rec.requested_amount:
                 raise UserError("Please enter the requested amount before submitting.")
-            if rec.requested_amount > rec.contract_amount:
-                raise UserError("Requested amount cannot exceed the contract amount.")
+            if rec.execution_mode == 'milestone' and not rec.milestone_id:
+                raise UserError(_(
+                    'Contract %s is milestone-based. Select the milestone this '
+                    'payment is being claimed against.', rec.contract_award_id.name,
+                ))
+            if rec.milestone_id and rec.milestone_id.contract_id != rec.contract_award_id:
+                raise UserError(_(
+                    'Milestone "%s" does not belong to the selected contract.',
+                    rec.milestone_id.title,
+                ))
+        self._check_amount_within_envelope()
         self.write({
             'state': 'submitted_to_md',
             'request_date': fields.Date.context_today(self),
@@ -145,12 +218,33 @@ class PaymentRequest(models.Model):
     def action_send_to_treasury(self):
         for rec in self:
             rec.write({'state': 'sent_to_treasury'})
-            rec.contract_award_id.write({'state': 'payment_processing'})
+            rec._flag_milestone_payment_requested()
+
+    def _flag_milestone_payment_requested(self):
+        """Advance the milestone, and only move a single-delivery contract along.
+
+        A milestone contract stays in execution so the remaining milestones can
+        still be delivered and claimed.
+        """
+        self.ensure_one()
+        if self.milestone_id and self.milestone_id.state == 'verified':
+            self.milestone_id.write({'state': 'payment_requested'})
+        if self.contract_award_id.execution_mode != 'milestone':
+            self.contract_award_id.write({'state': 'payment_processing'})
 
     def action_mark_paid(self):
         self.write({'state': 'paid'})
         for rec in self:
-            rec.contract_award_id.write({'state': 'completed'})
+            rec._settle_contract_position()
+
+    def _settle_contract_position(self):
+        """Close the milestone, and the contract once nothing is left outstanding."""
+        self.ensure_one()
+        if self.milestone_id:
+            self.milestone_id.write({'state': 'paid'})
+        contract = self.contract_award_id
+        if contract.execution_mode != 'milestone' or contract._milestone_all_settled():
+            contract.write({'state': 'completed'})
 
     def action_reject(self):
         self.write({

@@ -22,7 +22,8 @@
                     <button name="action_verify" string="Complete Verification" type="object"
                             class="btn-primary" invisible="state != 'delivered'"/>
                     <button name="action_create_payment_request" string="Create Payment Request" type="object"
-                            class="btn-primary" invisible="state != 'verified'"/>
+                            class="btn-primary"
+                            invisible="state != 'verified' or execution_mode == 'milestone'"/>
                     <button name="action_complete" string="Complete" type="object"
                             class="btn-success" invisible="state != 'payment_processing'"/>
                     <button name="action_create_purchase_order" string="Create Purchase Order" type="object"
@@ -41,6 +42,11 @@
                                 invisible="payment_request_count == 0">
                             <field name="payment_request_count" widget="statinfo" string="Payment Requests"/>
                         </button>
+                        <button name="action_view_milestones" type="object"
+                                class="oe_stat_button" icon="fa-flag-checkered"
+                                invisible="milestone_count == 0">
+                            <field name="milestone_count" widget="statinfo" string="Milestones"/>
+                        </button>
                     </div>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
@@ -51,6 +57,8 @@
                             <field name="description"/>
                             <field name="category"/>
                             <field name="award_amount" widget="monetary"/>
+                            <field name="execution_mode" widget="radio"
+                                   readonly="state not in ('draft', 'letter_sent', 'agreement_prep')"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                         <group>
@@ -61,6 +69,42 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Milestones" name="milestones"
+                              invisible="execution_mode != 'milestone'">
+                            <field name="milestone_ids"
+                                   context="{'default_contract_id': id}">
+                                <list editable="bottom" decoration-muted="state == 'cancelled'">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="title"/>
+                                    <field name="amount_basis"/>
+                                    <field name="percentage" readonly="amount_basis == 'fixed'"/>
+                                    <field name="amount" widget="monetary" sum="Total"
+                                           readonly="amount_basis == 'percent'"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="planned_end_date"/>
+                                    <field name="actual_completion_date" optional="hide"/>
+                                    <field name="paid_amount" widget="monetary" optional="hide" sum="Paid"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'pending'"
+                                           decoration-warning="state in ('in_progress', 'delivered')"
+                                           decoration-success="state in ('verified', 'paid')"
+                                           decoration-danger="state == 'cancelled'"/>
+                                    <button name="action_request_payment" type="object"
+                                            icon="fa-money" title="Request Payment"
+                                            invisible="state not in ('verified', 'payment_requested')"/>
+                                </list>
+                            </field>
+                            <group>
+                                <group>
+                                    <field name="milestone_total_amount" widget="monetary"/>
+                                    <field name="milestone_unallocated_amount" widget="monetary"/>
+                                </group>
+                                <group>
+                                    <field name="milestone_paid_amount" widget="monetary"/>
+                                    <field name="milestone_progress_percent" widget="progressbar"/>
+                                </group>
+                            </group>
+                        </page>
                         <page string="Delivery &amp; Inspection" name="delivery">
                             <group>
                                 <group>
@@ -126,6 +170,8 @@
                 <field name="description"/>
                 <field name="category"/>
                 <field name="award_amount" widget="monetary"/>
+                <field name="execution_mode" optional="show"/>
+                <field name="milestone_progress_percent" widget="progressbar" optional="hide"/>
                 <field name="award_date"/>
                 <field name="purchase_order_id" optional="show"/>
                 <field name="state" widget="badge"
@@ -153,7 +199,12 @@
                 <filter name="pending_verification" string="Pending Verification"
                         domain="[('state', '=', 'delivered')]"/>
                 <separator/>
+                <filter name="milestone_based" string="Milestone-Based"
+                        domain="[('execution_mode', '=', 'milestone')]"/>
+                <separator/>
                 <group expand="0" string="Group By">
+                    <filter name="group_execution_mode" string="Execution Mode"
+                            context="{'group_by': 'execution_mode'}"/>
                     <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
                     <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>

@@ -220,6 +220,13 @@
         <field name="padding">4</field>
     </record>
 
+    <record id="seq_contract_milestone" model="ir.sequence">
+        <field name="name">Contract Milestone</field>
+        <field name="code">nbet.contract.milestone</field>
+        <field name="prefix">MS/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
     <record id="seq_payment_request" model="ir.sequence">
         <field name="name">Payment Request</field>
         <field name="code">nbet.payment.request</field>

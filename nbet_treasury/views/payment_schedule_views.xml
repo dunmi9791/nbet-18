@@ -68,6 +68,7 @@
                         <group string="Payment Details">
                             <field name="payment_request_id"/>
                             <field name="contract_award_id"/>
+                            <field name="milestone_id" invisible="not milestone_id"/>
                             <field name="vendor_id"/>
                             <field name="description"/>
                             <field name="amount" widget="monetary"/>

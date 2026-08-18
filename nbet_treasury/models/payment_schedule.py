@@ -34,6 +34,12 @@ class PaymentSchedule(models.Model):
         related='payment_request_id.contract_award_id',
         store=True,
     )
+    milestone_id = fields.Many2one(
+        'nbet.contract.milestone',
+        string='Milestone',
+        related='payment_request_id.milestone_id',
+        store=True,
+    )
     description = fields.Char(
         related='payment_request_id.description',
         store=True,
@@ -567,11 +573,19 @@ class PaymentSchedule(models.Model):
             'payment_reference': reference,
         })
         self.payment_request_id.write({'state': 'paid'})
-        self.payment_request_id.contract_award_id.write({
-            'state': 'completed',
+        milestone = self.payment_request_id.milestone_id
+        if milestone:
+            milestone.write({'state': 'paid'})
+        # A milestone contract only closes once every milestone has been paid;
+        # until then it stays in execution so the rest can still be claimed.
+        contract = self.payment_request_id.contract_award_id
+        contract_vals = {
             'payment_date': payment_date,
             'payment_reference': reference,
-        })
+        }
+        if contract.execution_mode != 'milestone' or contract._milestone_all_settled():
+            contract_vals['state'] = 'completed'
+        contract.write(contract_vals)
         self.message_post(
             body="All %s voucher(s) paid. Payment closed under reference %s."
                  % (len(vouchers), reference)

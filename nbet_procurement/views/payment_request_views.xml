@@ -55,6 +55,10 @@
                     <group>
                         <group string="Request Details">
                             <field name="contract_award_id"/>
+                            <field name="execution_mode" invisible="1"/>
+                            <field name="milestone_id"
+                                   invisible="execution_mode != 'milestone'"
+                                   required="execution_mode == 'milestone'"/>
                             <field name="vendor_id"/>
                             <field name="description"/>
                             <field name="category"/>
@@ -62,6 +66,8 @@
                         </group>
                         <group string="Amount">
                             <field name="contract_amount" widget="monetary"/>
+                            <field name="milestone_amount" widget="monetary"
+                                   invisible="not milestone_id"/>
                             <field name="requested_amount" widget="monetary"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="request_date"/>
@@ -152,6 +158,7 @@
                   decoration-danger="state == 'rejected'">
                 <field name="name"/>
                 <field name="contract_award_id"/>
+                <field name="milestone_id" optional="show"/>
                 <field name="vendor_id"/>
                 <field name="description"/>
                 <field name="requested_amount" widget="monetary"/>
@@ -175,6 +182,7 @@
                 <field name="name"/>
                 <field name="vendor_id"/>
                 <field name="contract_award_id"/>
+                <field name="milestone_id"/>
                 <field name="department_id"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="pending_approval" string="Pending Approval"
@@ -186,6 +194,7 @@
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
+                    <filter name="group_milestone" string="Milestone" context="{'group_by': 'milestone_id'}"/>
                     <filter name="group_dept" string="Department" context="{'group_by': 'department_id'}"/>
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
                     <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>

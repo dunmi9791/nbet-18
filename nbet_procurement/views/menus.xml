@@ -57,6 +57,12 @@
               action="action_contract_award"
               sequence="40"/>
 
+    <menuitem id="menu_contract_milestone"
+              name="Contract Milestones"
+              parent="menu_procurement_process"
+              action="action_contract_milestone"
+              sequence="45"/>
+
     <menuitem id="menu_payment_request"
               name="Payment Requests"
               parent="menu_procurement_process"

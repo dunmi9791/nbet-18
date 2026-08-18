@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from odoo.tools import float_is_zero
+
+from .contract_milestone import EARNED_STATES
 
 
 class ContractAward(models.Model):
@@ -29,6 +32,12 @@ class ContractAward(models.Model):
         'res.currency',
         default=lambda self: self.env.company.currency_id,
     )
+    execution_mode = fields.Selection([
+        ('single', 'Single Delivery'),
+        ('milestone', 'Milestone-Based'),
+    ], default='single', required=True, tracking=True,
+        help='Milestone-based contracts are delivered, certified and paid in '
+             'stages. The contract only closes once every milestone is paid.')
 
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -67,6 +76,29 @@ class ContractAward(models.Model):
         compute='_compute_payment_request_count',
     )
 
+    milestone_ids = fields.One2many(
+        'nbet.contract.milestone', 'contract_id', string='Milestones',
+    )
+    milestone_count = fields.Integer(compute='_compute_milestone_position')
+    milestone_total_amount = fields.Float(
+        string='Allocated to Milestones',
+        compute='_compute_milestone_position',
+    )
+    milestone_unallocated_amount = fields.Float(
+        string='Unallocated',
+        compute='_compute_milestone_position',
+    )
+    milestone_paid_amount = fields.Float(
+        string='Paid to Date',
+        compute='_compute_milestone_position',
+    )
+    milestone_progress_percent = fields.Float(
+        string='Certified Progress (%)',
+        compute='_compute_milestone_position',
+        help='Share of the contract value sitting on milestones that have been '
+             'verified or paid.',
+    )
+
     terms_of_contract = fields.Html()
     notes = fields.Html()
 
@@ -74,6 +106,32 @@ class ContractAward(models.Model):
     def _compute_payment_request_count(self):
         for rec in self:
             rec.payment_request_count = len(rec.payment_request_ids)
+
+    @api.depends(
+        'award_amount',
+        'milestone_ids.amount', 'milestone_ids.state', 'milestone_ids.paid_amount',
+    )
+    def _compute_milestone_position(self):
+        for rec in self:
+            live = rec.milestone_ids.filtered(lambda m: m.state != 'cancelled')
+            allocated = sum(live.mapped('amount'))
+            earned = sum(live.filtered(lambda m: m.state in EARNED_STATES).mapped('amount'))
+            rec.milestone_count = len(rec.milestone_ids)
+            rec.milestone_total_amount = allocated
+            rec.milestone_unallocated_amount = rec.award_amount - allocated
+            rec.milestone_paid_amount = sum(live.mapped('paid_amount'))
+            rec.milestone_progress_percent = (
+                earned / rec.award_amount * 100.0
+                if not float_is_zero(rec.award_amount, precision_digits=2) else 0.0
+            )
+
+    def _milestone_all_settled(self):
+        """True when this is a milestone contract whose every live milestone is paid."""
+        self.ensure_one()
+        if self.execution_mode != 'milestone':
+            return True
+        live = self.milestone_ids.filtered(lambda m: m.state != 'cancelled')
+        return bool(live) and all(m.state == 'paid' for m in live)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -111,6 +169,21 @@ class ContractAward(models.Model):
         self.write({'state': 'in_execution'})
 
     def action_mark_delivered(self):
+        for rec in self:
+            if rec.execution_mode != 'milestone':
+                continue
+            live = rec.milestone_ids.filtered(lambda m: m.state != 'cancelled')
+            if not live:
+                raise UserError(_(
+                    'Contract %s is milestone-based but has no milestones defined.',
+                    rec.name,
+                ))
+            outstanding = live.filtered(lambda m: m.state in ('pending', 'in_progress'))
+            if outstanding:
+                raise UserError(_(
+                    'Every milestone must be delivered first. Still outstanding: %s',
+                    ', '.join(outstanding.mapped('title')),
+                ))
         self.write({
             'state': 'delivered',
             'actual_delivery_date': fields.Date.context_today(self),
@@ -123,6 +196,16 @@ class ContractAward(models.Model):
                     "Both Internal Audit and User Department sign-offs are "
                     "required before verification can be completed."
                 )
+            if rec.execution_mode != 'milestone':
+                continue
+            unverified = rec.milestone_ids.filtered(
+                lambda m: m.state not in EARNED_STATES and m.state != 'cancelled'
+            )
+            if unverified:
+                raise UserError(_(
+                    'These milestones are not yet verified: %s',
+                    ', '.join(unverified.mapped('title')),
+                ))
         self.write({
             'state': 'verified',
             'verification_date': fields.Date.context_today(self),
@@ -133,6 +216,15 @@ class ContractAward(models.Model):
         self.write({'state': 'payment_processing'})
 
     def action_complete(self):
+        for rec in self:
+            if rec.execution_mode == 'milestone' and not rec._milestone_all_settled():
+                outstanding = rec.milestone_ids.filtered(
+                    lambda m: m.state not in ('paid', 'cancelled')
+                )
+                raise UserError(_(
+                    'These milestones are not yet paid: %s',
+                    ', '.join(outstanding.mapped('title')),
+                ))
         self.write({'state': 'completed'})
 
     def action_cancel(self):
@@ -143,6 +235,11 @@ class ContractAward(models.Model):
 
     def action_create_payment_request(self):
         self.ensure_one()
+        if self.execution_mode == 'milestone':
+            raise UserError(_(
+                'Payments on %s are raised per milestone. Use "Request Payment" '
+                'on the verified milestone instead.', self.name,
+            ))
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'nbet.payment.request',
@@ -151,6 +248,17 @@ class ContractAward(models.Model):
                 'default_contract_award_id': self.id,
                 'default_requested_amount': self.award_amount,
             },
+        }
+
+    def action_view_milestones(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Milestones on %s', self.name),
+            'res_model': 'nbet.contract.milestone',
+            'view_mode': 'list,form',
+            'domain': [('contract_id', '=', self.id)],
+            'context': {'default_contract_id': self.id},
         }
 
     def action_view_payment_requests(self):
@@ -182,6 +290,34 @@ class ContractAward(models.Model):
             if self.evaluation_id.plan_line_id and self.evaluation_id.plan_line_id.product_id:
                 product_id = self.evaluation_id.plan_line_id.product_id.id
 
+        # Milestone contracts get one order line per milestone so that each
+        # milestone payment can be billed against its own line.
+        billable_milestones = self.env['nbet.contract.milestone']
+        if self.execution_mode == 'milestone':
+            billable_milestones = self.milestone_ids.filtered(
+                lambda m: m.state != 'cancelled'
+            )
+            if not billable_milestones:
+                raise UserError(_(
+                    "Define the milestones for %s before raising its purchase order.",
+                    self.name,
+                ))
+            order_lines = [(0, 0, {
+                'name': milestone.title,
+                'product_id': product_id,
+                'product_qty': 1.0,
+                'price_unit': milestone.amount,
+                'date_planned': fields.Datetime.now(),
+            }) for milestone in billable_milestones]
+        else:
+            order_lines = [(0, 0, {
+                'name': self.description,
+                'product_id': product_id,
+                'product_qty': 1.0,
+                'price_unit': self.award_amount,
+                'date_planned': fields.Datetime.now(),
+            })]
+
         po_vals = {
             'partner_id': self.vendor_id.id,
             'nbet_contract_award_id': self.id,
@@ -190,16 +326,14 @@ class ContractAward(models.Model):
             'nbet_bid_evaluation_id': self.evaluation_id.id,
             'origin': self.name,
             'notes': self.terms_of_contract,
-            'order_line': [(0, 0, {
-                'name': self.description,
-                'product_id': product_id,
-                'product_qty': 1.0,
-                'price_unit': self.award_amount,
-                'date_planned': fields.Datetime.now(),
-            })],
+            'order_line': order_lines,
         }
         po = self.env['purchase.order'].create(po_vals)
         self.purchase_order_id = po.id
+        # Back-link each milestone to the line raised for it. order_line comes
+        # back ordered by sequence, matching the order the lines were fed in.
+        for milestone, line in zip(billable_milestones, po.order_line):
+            milestone.purchase_line_id = line.id
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'purchase.order',

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NBET Procurement Management',
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.2.0',
     'category': 'Purchases/NBET',
     'summary': 'Customizes Purchase module to implement NBET Procurement SOP',
     'description': """
@@ -41,6 +41,7 @@ Works and Services, including:
         'views/procurement_request_views.xml',
         'views/bid_evaluation_views.xml',
         'views/contract_award_views.xml',
+        'views/contract_milestone_views.xml',
         'views/purchase_order_views.xml',
         'views/payment_request_views.xml',
         'views/dashboard_views.xml',
