@@ -23,20 +23,20 @@
 
                 <table class="table table-sm table-borderless mt-4" style="width:100%;">
                     <tr>
-                        <td style="width:18%;"><strong>Voucher Number:</strong></td>
-                        <td style="width:32%;"><span t-field="doc.name"/></td>
-                        <td style="width:18%;"><strong>Prepared By:</strong></td>
-                        <td style="width:32%;"><span t-field="doc.generated_by_id.name"/></td>
+                        <td><strong>Payment Request:</strong></td>
+                        <td><span t-field="doc.payment_request_id.name"/></td>
+                        <td><strong>Prepared By:</strong></td>
+                        <td><span t-field="doc.generated_by_id.name"/></td>
                     </tr>
                     <tr>
-                        <td><strong>Transaction Ref:</strong></td>
-                        <td><span t-field="doc.transaction_reference"/></td>
+                        <td><strong>Voucher Number:</strong></td>
+                        <td><span t-field="doc.name"/></td>
                         <td><strong>Prepared On:</strong></td>
                         <td><span t-field="doc.generated_on"/></td>
                     </tr>
                     <tr>
-                        <td><strong>Payment Request:</strong></td>
-                        <td><span t-field="doc.payment_request_id.name"/></td>
+                        <td><strong>Transaction Ref:</strong></td>
+                        <td><span t-field="doc.transaction_reference"/></td>
                         <td><strong>Status:</strong></td>
                         <td><span t-field="doc.state"/></td>
                     </tr>
@@ -141,31 +141,6 @@
                         </td>
                     </tr>
                 </table>
-
-                <h4 class="mt-3">Approval History</h4>
-                <table class="table table-sm table-bordered" style="width:100%;">
-                    <thead>
-                        <tr>
-                            <th>Stage</th>
-                            <th>Approving Officer</th>
-                            <th>User ID</th>
-                            <th>Date &amp; Time</th>
-                            <th>Digital Authentication Record</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr t-foreach="doc.approval_line_ids" t-as="line">
-                            <td><span t-field="line.stage"/></td>
-                            <td><span t-field="line.user_id.name"/></td>
-                            <td><span t-field="line.user_login"/></td>
-                            <td><span t-field="line.approval_datetime"/></td>
-                            <td style="font-family: monospace; font-size: 8px;">
-                                <span t-field="line.auth_code"/>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
                 <table class="table table-sm table-borderless mt-4" style="width:100%;">
                     <tr>
                         <td style="width:33%;">
@@ -194,18 +169,8 @@
 
                 <div class="row mt-4">
                     <div class="col-12">
-                        <p style="font-size: 9px;">
-                            <strong>Voucher Authentication Code:</strong>
-                            <span style="font-family: monospace;" t-field="doc.auth_code"/>
-                            <t t-if="not doc.auth_valid">
-                                <span class="text-danger"><strong> — WARNING: this voucher's contents do not match its authentication code.</strong></span>
-                            </t>
-                        </p>
                         <p style="font-size: 8px;" class="text-muted">
                             This voucher was generated electronically by the NBET Treasury system.
-                            Each approval above is stamped with an HMAC-SHA256 digital authentication
-                            record derived from the approving officer's identity and the date and time
-                            of approval. Any alteration invalidates the record.
                         </p>
                     </div>
                 </div>
