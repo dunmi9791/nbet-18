@@ -26,6 +26,8 @@ from the Procurement module, including:
 - Hold/resume capability for scheduled payments
 - Automatic status update on source documents when paid
 - Priority-based payment queue management
+- Treasury Report: balances of all active bank accounts with the inflow and
+  outflow of each summarised by day, week or month over any date range
     """,
     'author': 'NBET Technical Team',
     'license': 'LGPL-3',
@@ -39,11 +41,13 @@ from the Procurement module, including:
         'security/security_groups.xml',
         'security/ir.model.access.csv',
         'reports/payment_voucher_report.xml',
+        'reports/treasury_report.xml',
         'views/tax_rule_views.xml',
         'views/payment_schedule_views.xml',
         'views/payment_voucher_views.xml',
         'views/payment_request_inherit_views.xml',
         'views/dashboard_views.xml',
+        'wizard/treasury_report_views.xml',
         'views/menus.xml',
     ],
     'assets': {

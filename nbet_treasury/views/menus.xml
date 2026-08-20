@@ -73,6 +73,26 @@
               groups="nbet_treasury.group_treasury_manager"
               sequence="18"/>
 
+    <!-- Reporting -->
+    <menuitem id="menu_treasury_reporting"
+              name="Reporting"
+              parent="menu_nbet_treasury_root"
+              sequence="80"/>
+
+    <menuitem id="menu_treasury_report"
+              name="Treasury Report"
+              parent="menu_treasury_reporting"
+              action="action_treasury_report"
+              sequence="10"/>
+
+    <!-- Also reachable from Accounting > Reporting -->
+    <menuitem id="menu_treasury_report_accounting"
+              name="Treasury Report"
+              parent="account.menu_finance_reports"
+              action="action_treasury_report"
+              groups="nbet_treasury.group_treasury_user,nbet_treasury.group_cfo,nbet_treasury.group_finance_manager,nbet_treasury.group_auditor,account.group_account_readonly"
+              sequence="95"/>
+
     <!-- Configuration -->
     <menuitem id="menu_treasury_configuration"
               name="Configuration"

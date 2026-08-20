@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Filters dialog -->
+    <record id="view_treasury_report_wizard" model="ir.ui.view">
+        <field name="name">nbet.treasury.report.wizard.form</field>
+        <field name="model">nbet.treasury.report</field>
+        <field name="arch" type="xml">
+            <form string="Treasury Report">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Treasury Report</h1>
+                        <p class="text-muted">
+                            Balances of every active bank account, with the inflow and
+                            outflow of each one summarised over the period.
+                        </p>
+                    </div>
+                    <group>
+                        <group string="Period">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="period_type" widget="radio" options="{'horizontal': true}"/>
+                        </group>
+                        <group string="Scope">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="include_cash"/>
+                            <field name="target_move"/>
+                            <field name="journal_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"
+                                   placeholder="All active bank accounts"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_generate" string="View Report" type="object"
+                            class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"
+                            data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Result screen -->
+    <record id="view_treasury_report_result" model="ir.ui.view">
+        <field name="name">nbet.treasury.report.result.form</field>
+        <field name="model">nbet.treasury.report</field>
+        <field name="arch" type="xml">
+            <form string="Treasury Report" create="false" edit="false">
+                <header>
+                    <button name="action_print_pdf" string="Print PDF" type="object"
+                            class="btn-primary"/>
+                    <button name="action_generate" string="Refresh" type="object"
+                            class="btn-secondary"/>
+                    <button name="action_back_to_filters" string="Change Filters"
+                            type="object" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Treasury Report</h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date_from" readonly="1"/>
+                            <field name="date_to" readonly="1"/>
+                            <field name="period_type" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                            <field name="currency_id" readonly="1"/>
+                            <field name="target_move" readonly="1"/>
+                            <field name="generated_on" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Bank Account Balances" name="balances">
+                            <field name="line_ids" readonly="1">
+                                <list string="Bank Account Balances"
+                                      create="false" delete="false">
+                                    <field name="journal_code" optional="show"/>
+                                    <field name="journal_name" string="Bank Account"/>
+                                    <field name="bank_id" optional="show"/>
+                                    <field name="acc_number" optional="show"/>
+                                    <field name="account_id" optional="hide"/>
+                                    <field name="journal_currency_id" optional="hide"/>
+                                    <field name="opening_balance" sum="Total"/>
+                                    <field name="inflow" sum="Total"
+                                           decoration-success="inflow &gt; 0"/>
+                                    <field name="outflow" sum="Total"
+                                           decoration-danger="outflow &gt; 0"/>
+                                    <field name="net_movement" sum="Total"
+                                           decoration-success="net_movement &gt; 0"
+                                           decoration-danger="net_movement &lt; 0"/>
+                                    <field name="closing_balance" sum="Total"
+                                           decoration-bf="1"/>
+                                    <field name="move_count" string="Txns" sum="Total"
+                                           optional="show"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <button name="action_open_move_lines" type="object"
+                                            icon="fa-search-plus" title="Journal Items"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Inflow / Outflow by Period" name="periods">
+                            <field name="period_line_ids" readonly="1">
+                                <list string="Period Breakdown" create="false" delete="false"
+                                      default_order="journal_name, sequence">
+                                    <field name="journal_name" string="Bank Account"/>
+                                    <field name="period_label" string="Period"/>
+                                    <field name="date_start" optional="hide"/>
+                                    <field name="date_stop" optional="hide"/>
+                                    <field name="opening_balance"/>
+                                    <field name="inflow" sum="Total"
+                                           decoration-success="inflow &gt; 0"/>
+                                    <field name="outflow" sum="Total"
+                                           decoration-danger="outflow &gt; 0"/>
+                                    <field name="net_movement" sum="Total"
+                                           decoration-success="net_movement &gt; 0"
+                                           decoration-danger="net_movement &lt; 0"/>
+                                    <field name="closing_balance" decoration-bf="1"/>
+                                    <field name="move_count" string="Txns" sum="Total"
+                                           optional="show"/>
+                                    <field name="sequence" column_invisible="1"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <button name="action_open_move_lines" type="object"
+                                            icon="fa-search-plus" title="Journal Items"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group class="oe_subtotal_footer" name="totals">
+                        <field name="total_opening" string="Total Opening"/>
+                        <field name="total_inflow" string="Total Inflow"/>
+                        <field name="total_outflow" string="Total Outflow"/>
+                        <field name="total_net" string="Net Movement"/>
+                        <div class="oe_subtotal_footer_separator">
+                            <label for="total_closing" string="Total Closing Balance"/>
+                        </div>
+                        <field name="total_closing" nolabel="1" class="oe_subtotal_footer_separator"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_treasury_report" model="ir.actions.act_window">
+        <field name="name">Treasury Report</field>
+        <field name="res_model">nbet.treasury.report</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_treasury_report_wizard"/>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
