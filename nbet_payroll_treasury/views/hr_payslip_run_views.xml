@@ -102,17 +102,17 @@
         <field name="model">hr.payslip.run</field>
         <field name="inherit_id" ref="hr_payroll.hr_payslip_run_filter"/>
         <field name="arch" type="xml">
-            <xpath expr="//search/group[@string='Group By']" position="before">
+            <filter name="done_filter" position="after">
                 <separator/>
                 <filter name="pending_md" string="Pending MD Approval"
                         domain="[('approval_state', '=', 'md_approval')]"/>
                 <filter name="with_treasury" string="With Treasury"
                         domain="[('approval_state', '=', 'treasury')]"/>
-            </xpath>
-            <xpath expr="//search/group[@string='Group By']" position="inside">
+            </filter>
+            <filter name="state" position="after">
                 <filter name="group_approval_state" string="Payment Approval"
                         context="{'group_by': 'approval_state'}"/>
-            </xpath>
+            </filter>
         </field>
     </record>
 
