@@ -189,18 +189,28 @@ class PaymentVoucher(models.Model):
             ),
             'payment_reference': self.payment_reference,
         }
-        if self.voucher_type == 'tax':
-            # Remitting clears the liability raised when the vendor was paid,
-            # so the payment lands on the tax payable account rather than on AP.
-            account = self.tax_line_id.tax_payable_account_id
-            if not account:
-                raise UserError(
-                    "Set a Tax Payable Account on the deduction '%s' of %s before "
-                    "paying its remittance voucher."
-                    % (self.tax_line_id.name, self.schedule_id.name)
-                )
+        account = self._payment_destination_account()
+        if account:
             vals['destination_account_id'] = account.id
         return vals
+
+    def _payment_destination_account(self):
+        """Account the disbursement clears, when it is not the payee's payable.
+
+        Remitting a deduction clears the liability raised when the vendor was
+        paid, so it lands on the tax payable account rather than on AP.
+        """
+        self.ensure_one()
+        if self.voucher_type != 'tax':
+            return self.env['account.account']
+        account = self.tax_line_id.tax_payable_account_id
+        if not account:
+            raise UserError(
+                "Set a Tax Payable Account on the deduction '%s' of %s before "
+                "paying its remittance voucher."
+                % (self.tax_line_id.name, self.schedule_id.name)
+            )
+        return account
 
     def _create_account_payment(self):
         """Post the Odoo payment behind this voucher and match it where possible."""
@@ -273,6 +283,7 @@ class PaymentVoucher(models.Model):
                 rec.payment_date = fields.Date.context_today(rec)
             rec.payment_id = rec._create_account_payment()
             rec.state = 'paid'
+            rec._on_voucher_paid()
             rec._log_approval(
                 'Payment Registered', self.env.user, fields.Datetime.now(),
                 'Reference: %s' % rec.payment_reference,
@@ -283,6 +294,13 @@ class PaymentVoucher(models.Model):
                         rec.payment_journal_id.display_name, rec.payment_id.name)
             )
             rec.schedule_id._settle_if_fully_paid()
+
+    def _on_voucher_paid(self):
+        """Hook for what this voucher settles beyond the payment itself.
+
+        Used by the payroll integration to mark the voucher's payslip paid.
+        """
+        return
 
     def action_view_payment(self):
         self.ensure_one()

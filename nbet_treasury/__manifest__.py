@@ -25,6 +25,10 @@ from the Procurement module, including:
 - Payment method tracking (Bank Transfer, Cheque, Bank Draft)
 - Hold/resume capability for scheduled payments
 - Automatic status update on source documents when paid
+- Payment sources are pluggable: procurement payment requests out of the box,
+  payroll batches once NBET Payroll Treasury is installed
+- Bulk payment registration: settle every audited voucher on a schedule against
+  one bank instruction reference
 - Priority-based payment queue management
 - Treasury Report: balances of all active bank accounts with the inflow and
   outflow of each summarised by day, week or month over any date range
@@ -48,6 +52,7 @@ from the Procurement module, including:
         'views/payment_request_inherit_views.xml',
         'views/dashboard_views.xml',
         'wizard/treasury_report_views.xml',
+        'wizard/voucher_payment_views.xml',
         'views/menus.xml',
     ],
     'assets': {

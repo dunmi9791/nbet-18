@@ -48,7 +48,7 @@ class TreasuryDashboard extends Component {
         const records = await this.orm.searchRead(
             "nbet.payment.schedule",
             [],
-            ["state", "amount", "scheduled_date", "name", "vendor_id", "payment_date"],
+            ["state", "amount", "scheduled_date", "name", "vendor_id", "description", "payment_date"],
         );
 
         const today = new Date().toISOString().split("T")[0];

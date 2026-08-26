@@ -66,10 +66,11 @@
                     </div>
                     <group>
                         <group string="Payment Details">
-                            <field name="payment_request_id"/>
-                            <field name="contract_award_id"/>
+                            <field name="source_type"/>
+                            <field name="payment_request_id" invisible="not payment_request_id"/>
+                            <field name="contract_award_id" invisible="not contract_award_id"/>
                             <field name="milestone_id" invisible="not milestone_id"/>
-                            <field name="vendor_id"/>
+                            <field name="vendor_id" invisible="not vendor_id"/>
                             <field name="description"/>
                             <field name="amount" widget="monetary"/>
                             <field name="tax_amount" widget="monetary"/>

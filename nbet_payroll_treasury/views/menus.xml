@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- MD approval queue, on the Treasury app so the MD has one place to look -->
+    <menuitem id="menu_payroll_md_approval"
+              name="Payroll for MD Approval"
+              parent="nbet_treasury.menu_treasury_operations"
+              action="action_payroll_batch_md_approval"
+              groups="nbet_payroll_treasury.group_payroll_md"
+              sequence="5"/>
+
+    <menuitem id="menu_payroll_batches_treasury"
+              name="Payroll Batches"
+              parent="nbet_treasury.menu_treasury_operations"
+              action="action_payroll_batch_treasury"
+              groups="nbet_treasury.group_treasury_user"
+              sequence="16"/>
+
+    <menuitem id="menu_payroll_deduction_rule_treasury"
+              name="Payroll Deduction Rules"
+              parent="nbet_treasury.menu_treasury_configuration"
+              action="action_payroll_deduction_rule"
+              sequence="20"/>
+
+    <!-- Also under Payroll > Configuration, where the salary rules live -->
+    <menuitem id="menu_payroll_deduction_rule_payroll"
+              name="Statutory Remittances"
+              parent="hr_work_entry_contract_enterprise.menu_hr_payroll_configuration"
+              action="action_payroll_deduction_rule"
+              groups="hr_payroll.group_hr_payroll_manager"
+              sequence="35"/>
+
+</odoo>

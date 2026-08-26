@@ -63,3 +63,4 @@ access_treasury_report_period_cfo,nbet.treasury.report.period.cfo,model_nbet_tre
 access_treasury_report_period_fm,nbet.treasury.report.period.fm,model_nbet_treasury_report_period,group_finance_manager,1,1,1,1
 access_treasury_report_period_auditor,nbet.treasury.report.period.auditor,model_nbet_treasury_report_period,group_auditor,1,1,1,1
 access_treasury_report_period_accountant,nbet.treasury.report.period.accountant,model_nbet_treasury_report_period,account.group_account_readonly,1,1,1,1
+access_voucher_payment_manager,nbet.voucher.payment.manager,model_nbet_voucher_payment,group_treasury_manager,1,1,1,1

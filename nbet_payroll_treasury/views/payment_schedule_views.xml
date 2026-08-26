@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_payment_schedule_form_payroll" model="ir.ui.view">
+        <field name="name">nbet.payment.schedule.form.payroll</field>
+        <field name="model">nbet.payment.schedule</field>
+        <field name="inherit_id" ref="nbet_treasury.view_payment_schedule_form"/>
+        <field name="arch" type="xml">
+            <field name="source_type" position="after">
+                <field name="payslip_run_id" invisible="source_type != 'payroll'"/>
+            </field>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_payslips" type="object"
+                        class="oe_stat_button" icon="fa-users"
+                        invisible="source_type != 'payroll' or payslip_count == 0">
+                    <field name="payslip_count" widget="statinfo" string="Payslips"/>
+                </button>
+            </xpath>
+            <!-- Payroll deductions are totalled off the payslips, so there is no
+                 contract category of tax rules to load them from. -->
+            <xpath expr="//button[@name='action_load_default_deductions']" position="attributes">
+                <attribute name="invisible">source_type == 'payroll' or state not in ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated')</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_payment_schedule_list_payroll" model="ir.ui.view">
+        <field name="name">nbet.payment.schedule.list.payroll</field>
+        <field name="model">nbet.payment.schedule</field>
+        <field name="inherit_id" ref="nbet_treasury.view_payment_schedule_list"/>
+        <field name="arch" type="xml">
+            <field name="payment_request_id" position="after">
+                <field name="payslip_run_id" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

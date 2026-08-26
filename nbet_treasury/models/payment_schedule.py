@@ -16,17 +16,26 @@ class PaymentSchedule(models.Model):
         default='New',
         copy=False,
     )
+    source_type = fields.Selection(
+        [('procurement', 'Procurement Payment Request')],
+        string='Payment Source',
+        default='procurement',
+        required=True,
+        readonly=True,
+        help='What the treasury is being asked to pay. Other modules add their '
+             'own sources, e.g. a payroll batch.',
+    )
     payment_request_id = fields.Many2one(
         'nbet.payment.request',
         string='Payment Request',
-        required=True,
         tracking=True,
     )
     vendor_id = fields.Many2one(
         'res.partner',
         string='Contractor/Vendor',
-        related='payment_request_id.vendor_id',
+        compute='_compute_from_payment_request',
         store=True,
+        readonly=False,
     )
     contract_award_id = fields.Many2one(
         'nbet.contract.award',
@@ -41,8 +50,9 @@ class PaymentSchedule(models.Model):
         store=True,
     )
     description = fields.Char(
-        related='payment_request_id.description',
+        compute='_compute_from_payment_request',
         store=True,
+        readonly=False,
     )
     category = fields.Selection(
         related='payment_request_id.category',
@@ -50,8 +60,9 @@ class PaymentSchedule(models.Model):
     )
     amount = fields.Float(
         string='Payment Amount (NGN)',
-        related='payment_request_id.requested_amount',
+        compute='_compute_from_payment_request',
         store=True,
+        readonly=False,
     )
     currency_id = fields.Many2one(
         'res.currency',
@@ -161,6 +172,25 @@ class PaymentSchedule(models.Model):
     hold_reason = fields.Text(string='Hold Reason')
     notes = fields.Html()
 
+    @api.depends('payment_request_id', 'payment_request_id.vendor_id',
+                 'payment_request_id.description', 'payment_request_id.requested_amount')
+    def _compute_from_payment_request(self):
+        """Carry the request's figures onto the schedule.
+
+        A schedule raised from another source - a payroll batch, say - has no
+        payment request, and fills these in itself, so leave those alone.
+        """
+        for rec in self:
+            request = rec.payment_request_id
+            if not request:
+                rec.vendor_id = rec.vendor_id
+                rec.description = rec.description
+                rec.amount = rec.amount
+                continue
+            rec.vendor_id = request.vendor_id
+            rec.description = request.description
+            rec.amount = request.requested_amount
+
     @api.depends('amount', 'tax_line_ids.amount')
     def _compute_amounts(self):
         for rec in self:
@@ -193,9 +223,23 @@ class PaymentSchedule(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('nbet.payment.schedule') or 'New'
         schedules = super().create(vals_list)
         for rec in schedules:
-            if not rec.tax_line_ids:
+            if not rec.tax_line_ids and rec._uses_default_deductions():
                 rec._apply_default_deductions()
         return schedules
+
+    def _source_document_name(self):
+        """How the source of this payment is named in logs and vouchers."""
+        self.ensure_one()
+        return self.payment_request_id.name or self.name
+
+    def _uses_default_deductions(self):
+        """Whether the configured tax rules pre-fill this schedule's deductions.
+
+        Only contract payments are deducted by rule; a payroll batch brings its
+        own statutory deductions off the payslips.
+        """
+        self.ensure_one()
+        return self.source_type == 'procurement'
 
     def _apply_default_deductions(self):
         """Pre-fill the statutory deductions from the configured tax rules."""
@@ -214,6 +258,11 @@ class PaymentSchedule(models.Model):
                                  'fm_approved', 'voucher_generated'):
                 raise UserError(
                     "Deductions can no longer be changed on %s at this stage." % rec.name
+                )
+            if not rec._uses_default_deductions():
+                raise UserError(
+                    "%s is not a contract payment, so it has no tax rules to load. "
+                    "Its deductions come from the source document." % rec.name
                 )
             rules = self.env['nbet.tax.rule']._rules_for_category(rec.category)
             if not rules:
@@ -278,15 +327,27 @@ class PaymentSchedule(models.Model):
                 % (self.finance_officer_id.display_name, self.name)
             )
 
-    def _voucher_approval_history(self):
-        """Approval trail to stamp onto every voucher raised for this payment."""
+    def _source_approval_history(self):
+        """Approvals the source document collected before it reached treasury.
+
+        Overridden by the modules that feed treasury from somewhere other than a
+        procurement payment request.
+        """
         self.ensure_one()
         request = self.payment_request_id
-        stages = [
+        if not request:
+            return []
+        return [
             ('Payment Request Raised', request.requested_by, request.request_date),
             ('MD Review', request.md_reviewer_id, request.md_review_date),
             ('User Department Review', request.dept_reviewer_id, request.dept_review_date),
             ('MD Final Approval', request.md_final_approver_id, request.md_final_approval_date),
+        ]
+
+    def _voucher_approval_history(self):
+        """Approval trail to stamp onto every voucher raised for this payment."""
+        self.ensure_one()
+        stages = self._source_approval_history() + [
             ('Treasury Scheduling', self.treasury_officer_id, self.create_date),
             ('CFO Approval', self.cfo_approved_by, self.cfo_approval_date),
             ('Finance Manager Approval', self.fm_approved_by, self.fm_approval_date),
@@ -323,6 +384,34 @@ class PaymentSchedule(models.Model):
             'generated_on': fields.Datetime.now(),
         }
 
+    def _check_voucher_generation(self):
+        """Refuse to raise vouchers the payment cannot support.
+
+        Source-specific; a payroll batch has no single vendor to pay, so it
+        checks its payslips instead.
+        """
+        self.ensure_one()
+        if not self.vendor_id:
+            raise UserError("The payment request has no vendor set.")
+        precision = self.currency_id.rounding or 0.01
+        if float_compare(self.net_amount, 0.0, precision_rounding=precision) <= 0:
+            raise UserError(
+                "The net amount payable to the vendor on %s is not positive. "
+                "Review the statutory deductions." % self.name
+            )
+
+    def _prepare_voucher_vals_list(self):
+        """The vouchers to raise for this payment, one dict each.
+
+        A contract payment pays the vendor and remits each deduction; other
+        sources override this to split the payment their own way.
+        """
+        self.ensure_one()
+        return (
+            [self._prepare_vendor_voucher_vals()]
+            + [self._prepare_tax_voucher_vals(line) for line in self.tax_line_ids]
+        )
+
     def action_generate_vouchers(self):
         """Raise the vendor voucher plus a remittance voucher per statutory deduction."""
         Voucher = self.env['nbet.payment.voucher']
@@ -332,15 +421,9 @@ class PaymentSchedule(models.Model):
                     "Vouchers can only be generated after Finance Manager approval."
                 )
             rec._check_finance_officer()
-            if not rec.vendor_id:
-                raise UserError("The payment request has no vendor set.")
+            rec._check_voucher_generation()
 
             precision = rec.currency_id.rounding or 0.01
-            if float_compare(rec.net_amount, 0.0, precision_rounding=precision) <= 0:
-                raise UserError(
-                    "The net amount payable to the vendor on %s is not positive. "
-                    "Review the statutory deductions." % rec.name
-                )
             for line in rec.tax_line_ids:
                 if float_is_zero(line.amount, precision_rounding=precision):
                     raise UserError(
@@ -363,10 +446,7 @@ class PaymentSchedule(models.Model):
                 ) or rec.name
 
             history = rec._voucher_approval_history()
-            vouchers = Voucher.create(
-                [rec._prepare_vendor_voucher_vals()]
-                + [rec._prepare_tax_voucher_vals(line) for line in rec.tax_line_ids]
-            )
+            vouchers = Voucher.create(rec._prepare_voucher_vals_list())
             for voucher in vouchers:
                 for stage, user, timestamp in history:
                     voucher._log_approval(stage, user, timestamp)
@@ -393,8 +473,9 @@ class PaymentSchedule(models.Model):
             rec.state = 'audit_pending'
             rec.payment_request_id.audit_state = 'under_review'
             rec.message_post(
-                body="Payment request %s and %s voucher(s) forwarded to Audit by %s."
-                     % (rec.payment_request_id.name, len(rec.voucher_ids), self.env.user.display_name)
+                body="%s and %s voucher(s) forwarded to Audit by %s."
+                     % (rec._source_document_name(), len(rec.voucher_ids),
+                        self.env.user.display_name)
             )
 
     # ------------------------------------------------------------------
@@ -482,9 +563,9 @@ class PaymentSchedule(models.Model):
                 'audit_date': now,
             })
             rec.message_post(
-                body="Payment request %s and its %s voucher(s) marked as audited "
+                body="%s and its %s voucher(s) marked as audited "
                      "(reviewed by %s, approved by %s)."
-                     % (rec.payment_request_id.name, len(rec.voucher_ids),
+                     % (rec._source_document_name(), len(rec.voucher_ids),
                         rec.audit_reviewer_id.display_name, self.env.user.display_name)
             )
 
@@ -572,13 +653,28 @@ class PaymentSchedule(models.Model):
             'payment_date': payment_date,
             'payment_reference': reference,
         })
-        self.payment_request_id.write({'state': 'paid'})
-        milestone = self.payment_request_id.milestone_id
-        if milestone:
-            milestone.write({'state': 'paid'})
+        self._settle_source_document(payment_date, reference)
+        self.message_post(
+            body="All %s voucher(s) paid. Payment closed under reference %s."
+                 % (len(vouchers), reference)
+        )
+
+    def _settle_source_document(self, payment_date, reference):
+        """Close out whatever the treasury was paying for.
+
+        Overridden by the modules that feed treasury from elsewhere, e.g. to mark
+        the payslips of a paid payroll batch.
+        """
+        self.ensure_one()
+        request = self.payment_request_id
+        if not request:
+            return
+        request.write({'state': 'paid'})
+        if request.milestone_id:
+            request.milestone_id.write({'state': 'paid'})
         # A milestone contract only closes once every milestone has been paid;
         # until then it stays in execution so the rest can still be claimed.
-        contract = self.payment_request_id.contract_award_id
+        contract = request.contract_award_id
         contract_vals = {
             'payment_date': payment_date,
             'payment_reference': reference,
@@ -586,10 +682,6 @@ class PaymentSchedule(models.Model):
         if contract.execution_mode != 'milestone' or contract._milestone_all_settled():
             contract_vals['state'] = 'completed'
         contract.write(contract_vals)
-        self.message_post(
-            body="All %s voucher(s) paid. Payment closed under reference %s."
-                 % (len(vouchers), reference)
-        )
 
     def action_reject(self):
         """Send the payment back to the treasury officer, clearing approval stamps."""

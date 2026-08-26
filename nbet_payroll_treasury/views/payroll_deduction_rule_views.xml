@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_payroll_deduction_rule_list" model="ir.ui.view">
+        <field name="name">nbet.payroll.deduction.rule.list</field>
+        <field name="model">nbet.payroll.deduction.rule</field>
+        <field name="arch" type="xml">
+            <list string="Payroll Deduction Rules" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="tax_type"/>
+                <field name="salary_rule_ids" widget="many2many_tags"/>
+                <field name="partner_id"/>
+                <field name="tax_payable_account_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_payroll_deduction_rule_form" model="ir.ui.view">
+        <field name="name">nbet.payroll.deduction.rule.form</field>
+        <field name="model">nbet.payroll.deduction.rule</field>
+        <field name="arch" type="xml">
+            <form string="Payroll Deduction Rule">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. PAYE - FIRS"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="tax_type"/>
+                            <field name="partner_id"/>
+                            <field name="tax_payable_account_id"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="sequence"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Salary Rules Remitted">
+                        <field name="salary_rule_ids" nolabel="1"
+                               widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <group string="Notes">
+                        <field name="note" nolabel="1" placeholder="How this deduction is remitted, filing deadlines, ..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_payroll_deduction_rule" model="ir.actions.act_window">
+        <field name="name">Payroll Deduction Rules</field>
+        <field name="res_model">nbet.payroll.deduction.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Set up your statutory payroll deductions</p>
+            <p>Each rule groups the payslip salary rules whose amounts are withheld
+               from staff and remitted to one body - PAYE to the tax authority,
+               pension to the PFA, and so on. When a payroll batch reaches treasury,
+               one remittance voucher is raised per rule.</p>
+        </field>
+    </record>
+
+</odoo>

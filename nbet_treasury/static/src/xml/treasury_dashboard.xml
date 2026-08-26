@@ -201,7 +201,7 @@
                                             <t t-foreach="state.recent_paid" t-as="payment" t-key="payment.id">
                                                 <tr>
                                                     <td><t t-esc="payment.name"/></td>
-                                                    <td><t t-esc="payment.vendor_id ? payment.vendor_id[1] : ''"/></td>
+                                                    <td><t t-esc="payment.vendor_id ? payment.vendor_id[1] : (payment.description || '')"/></td>
                                                     <td><t t-esc="payment.payment_date || '-'"/></td>
                                                     <td class="text-end"><t t-esc="formatCurrency(payment.amount)"/></td>
                                                 </tr>

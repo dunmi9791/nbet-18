@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="group_payroll_md" model="res.groups">
+        <field name="name">Managing Director (Payroll Approval)</field>
+        <field name="category_id" ref="nbet_treasury.module_category_nbet_treasury"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Approves a processed payroll batch before it is sent to Treasury for payment.</field>
+    </record>
+
+</odoo>

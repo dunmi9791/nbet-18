@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="hr_payslip_run_form_treasury" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form.treasury</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//header" position="inside">
+                <button name="action_submit_to_md" type="object"
+                        string="Submit to MD" class="btn-primary"
+                        invisible="state != 'close' or approval_state not in ('none', 'rejected')"
+                        groups="hr_payroll.group_hr_payroll_user"/>
+                <button name="action_md_approve" type="object"
+                        string="MD Approve" class="btn-primary"
+                        invisible="approval_state != 'md_approval'"
+                        groups="nbet_payroll_treasury.group_payroll_md"/>
+                <button name="action_md_reject" type="object"
+                        string="Reject" class="btn-warning"
+                        invisible="approval_state != 'md_approval'"
+                        groups="nbet_payroll_treasury.group_payroll_md"/>
+                <button name="action_send_to_treasury" type="object"
+                        string="Send to Treasury" class="btn-primary"
+                        invisible="approval_state != 'md_approved'"
+                        groups="hr_payroll.group_hr_payroll_user"/>
+                <field name="approval_state" widget="statusbar"
+                       statusbar_visible="none,md_approval,md_approved,treasury,paid"/>
+            </xpath>
+
+            <!-- Payment is recorded by treasury once the batch is in the chain. -->
+            <xpath expr="//header/button[@name='action_paid']" position="attributes">
+                <attribute name="invisible">state != 'close' or approval_state != 'none'</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_draft']" position="attributes">
+                <attribute name="invisible">state not in ('verify', 'close') or approval_state not in ('none', 'rejected')</attribute>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_payment_schedule" type="object"
+                        class="oe_stat_button" icon="fa-money"
+                        invisible="not payment_schedule_id">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Payment</span>
+                        <span class="o_stat_text">Schedule</span>
+                    </div>
+                </button>
+                <button name="action_view_vouchers" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="voucher_count == 0">
+                    <field name="voucher_count" widget="statinfo" string="Vouchers"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//sheet/group" position="after">
+                <widget name="web_ribbon" title="Rejected" bg_color="text-bg-danger"
+                        invisible="approval_state != 'rejected'"/>
+                <group string="Treasury Payment" name="nbet_treasury">
+                    <group>
+                        <field name="payable_payslip_count" string="Payslips to Pay"/>
+                        <field name="payroll_net_total" widget="monetary"/>
+                        <field name="payroll_deduction_total" widget="monetary"/>
+                        <field name="payroll_total" widget="monetary"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                    <group>
+                        <field name="payment_schedule_id" invisible="not payment_schedule_id"/>
+                        <field name="schedule_state" invisible="not payment_schedule_id"/>
+                        <field name="submitted_by_id" invisible="not submitted_by_id"/>
+                        <field name="md_approver_id" invisible="not md_approver_id"/>
+                        <field name="md_approval_date" invisible="not md_approver_id"/>
+                        <field name="treasury_submitted_by_id" invisible="not treasury_submitted_by_id"/>
+                    </group>
+                    <field name="md_notes" placeholder="MD notes on this payroll batch..."
+                           invisible="approval_state not in ('md_approval', 'md_approved', 'treasury', 'paid')"
+                           readonly="approval_state != 'md_approval'"
+                           groups="nbet_payroll_treasury.group_payroll_md"/>
+                    <field name="rejection_reason" placeholder="Why is this batch being sent back?"
+                           invisible="approval_state not in ('md_approval', 'rejected')"
+                           readonly="approval_state == 'rejected'"/>
+                    <field name="rejected_by_id" invisible="approval_state != 'rejected'"/>
+                    <field name="rejection_date" invisible="approval_state != 'rejected'"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="hr_payslip_run_tree_treasury" model="ir.ui.view">
+        <field name="name">hr.payslip.run.list.treasury</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_tree"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="approval_state" string="Payment Approval"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="hr_payslip_run_filter_treasury" model="ir.ui.view">
+        <field name="name">hr.payslip.run.filter.treasury</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search/group[@string='Group By']" position="before">
+                <separator/>
+                <filter name="pending_md" string="Pending MD Approval"
+                        domain="[('approval_state', '=', 'md_approval')]"/>
+                <filter name="with_treasury" string="With Treasury"
+                        domain="[('approval_state', '=', 'treasury')]"/>
+            </xpath>
+            <xpath expr="//search/group[@string='Group By']" position="inside">
+                <filter name="group_approval_state" string="Payment Approval"
+                        context="{'group_by': 'approval_state'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_payroll_batch_md_approval" model="ir.actions.act_window">
+        <field name="name">Payroll for MD Approval</field>
+        <field name="res_model">hr.payslip.run</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('approval_state', '=', 'md_approval')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing awaiting your approval</p>
+            <p>Processed payroll batches appear here once payroll submits them.</p>
+        </field>
+    </record>
+
+    <record id="action_payroll_batch_treasury" model="ir.actions.act_window">
+        <field name="name">Payroll Batches with Treasury</field>
+        <field name="res_model">hr.payslip.run</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('approval_state', 'in', ('treasury', 'paid'))]</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_payslip_form_treasury" model="ir.ui.view">
+        <field name="name">hr.payslip.form.treasury</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+        <field name="arch" type="xml">
+            <!-- Payment is recorded by treasury once the batch is in the chain. -->
+            <xpath expr="//header/button[@name='action_payslip_paid']" position="attributes">
+                <attribute name="invisible">state != 'done' or run_approval_state in ('md_approval', 'md_approved', 'treasury')</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_payslip_paid']" position="before">
+                <field name="run_approval_state" invisible="1"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_payment_voucher" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="not payment_voucher_id">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Payment</span>
+                        <span class="o_stat_text">Voucher</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
