@@ -1,0 +1,22 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_payment_advice_treasury_user,nbet.payment.advice treasury user,nbet_power_billing.model_nbet_payment_advice,nbet_treasury.group_treasury_user,1,0,0,0
+access_payment_advice_line_treasury_user,nbet.payment.advice.line treasury user,nbet_power_billing.model_nbet_payment_advice_line,nbet_treasury.group_treasury_user,1,0,0,0
+access_payment_advice_cfo,nbet.payment.advice cfo,nbet_power_billing.model_nbet_payment_advice,nbet_treasury.group_cfo,1,0,0,0
+access_payment_advice_line_cfo,nbet.payment.advice.line cfo,nbet_power_billing.model_nbet_payment_advice_line,nbet_treasury.group_cfo,1,0,0,0
+access_payment_advice_fm,nbet.payment.advice fm,nbet_power_billing.model_nbet_payment_advice,nbet_treasury.group_finance_manager,1,0,0,0
+access_payment_advice_line_fm,nbet.payment.advice.line fm,nbet_power_billing.model_nbet_payment_advice_line,nbet_treasury.group_finance_manager,1,0,0,0
+access_payment_advice_auditor,nbet.payment.advice auditor,nbet_power_billing.model_nbet_payment_advice,nbet_treasury.group_auditor,1,0,0,0
+access_payment_advice_line_auditor,nbet.payment.advice.line auditor,nbet_power_billing.model_nbet_payment_advice_line,nbet_treasury.group_auditor,1,0,0,0
+access_billing_cycle_treasury_user,nbet.billing.cycle treasury user,nbet_power_billing.model_nbet_billing_cycle,nbet_treasury.group_treasury_user,1,0,0,0
+access_billing_cycle_cfo,nbet.billing.cycle cfo,nbet_power_billing.model_nbet_billing_cycle,nbet_treasury.group_cfo,1,0,0,0
+access_billing_cycle_fm,nbet.billing.cycle fm,nbet_power_billing.model_nbet_billing_cycle,nbet_treasury.group_finance_manager,1,0,0,0
+access_billing_cycle_auditor,nbet.billing.cycle auditor,nbet_power_billing.model_nbet_billing_cycle,nbet_treasury.group_auditor,1,0,0,0
+access_market_participant_treasury_user,nbet.market.participant treasury user,nbet_power_billing.model_nbet_market_participant,nbet_treasury.group_treasury_user,1,0,0,0
+access_market_participant_cfo,nbet.market.participant cfo,nbet_power_billing.model_nbet_market_participant,nbet_treasury.group_cfo,1,0,0,0
+access_market_participant_fm,nbet.market.participant fm,nbet_power_billing.model_nbet_market_participant,nbet_treasury.group_finance_manager,1,0,0,0
+access_market_participant_auditor,nbet.market.participant auditor,nbet_power_billing.model_nbet_market_participant,nbet_treasury.group_auditor,1,0,0,0
+access_payment_schedule_billing_manager,nbet.payment.schedule billing manager,nbet_treasury.model_nbet_payment_schedule,nbet_power_billing.group_nbet_settlement_manager,1,0,0,0
+access_payment_voucher_billing_manager,nbet.payment.voucher billing manager,nbet_treasury.model_nbet_payment_voucher,nbet_power_billing.group_nbet_settlement_manager,1,0,0,0
+access_payment_schedule_billing_md,nbet.payment.schedule billing md,nbet_treasury.model_nbet_payment_schedule,nbet_power_billing.group_nbet_md,1,0,0,0
+access_payment_voucher_billing_md,nbet.payment.voucher billing md,nbet_treasury.model_nbet_payment_voucher,nbet_power_billing.group_nbet_md,1,0,0,0
+access_payment_schedule_billing_ocma,nbet.payment.schedule billing ocma,nbet_treasury.model_nbet_payment_schedule,nbet_power_billing.group_nbet_ocma_head,1,0,0,0

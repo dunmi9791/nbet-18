@@ -55,6 +55,29 @@
             </field>
         </record>
 
+        <!-- Head of OCMA: approves payment advices (first approval step).
+             A side-branch approval authority, not part of the officer→admin ladder. -->
+        <record id="group_nbet_ocma_head" model="res.groups">
+            <field name="name">Head of OCMA</field>
+            <field name="category_id" ref="module_category_nbet"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">
+                Approves GENCO payment advices after the Payment Committee
+                meeting, before they go to the Managing Director.
+            </field>
+        </record>
+
+        <!-- Managing Director: final approval of payment advices before treasury. -->
+        <record id="group_nbet_md" model="res.groups">
+            <field name="name">Managing Director (Billing Approval)</field>
+            <field name="category_id" ref="module_category_nbet"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">
+                Gives the final approval on GENCO payment advices before they
+                are sent to Treasury for payment.
+            </field>
+        </record>
+
         <!-- Administrator: full access including reset and config -->
         <record id="group_nbet_admin" model="res.groups">
             <field name="name">Administrator</field>

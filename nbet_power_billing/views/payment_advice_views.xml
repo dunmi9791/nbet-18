@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_nbet_payment_advice_list" model="ir.ui.view">
+            <field name="name">nbet.payment.advice.list</field>
+            <field name="model">nbet.payment.advice</field>
+            <field name="arch" type="xml">
+                <list string="Payment Advices"
+                      decoration-success="state in ('md_approved','sent_to_treasury','paid')"
+                      decoration-warning="state in ('submitted','ocma_approved')"
+                      decoration-danger="state == 'rejected'"
+                      decoration-muted="state == 'cancelled'">
+                    <field name="name"/>
+                    <field name="billing_cycle_id"/>
+                    <field name="advice_date"/>
+                    <field name="committee_date" optional="show"/>
+                    <field name="line_count" string="GENCOs" optional="show"/>
+                    <field name="pool_available" string="Available Pool"/>
+                    <field name="total_advice_amount" string="Total Advised"/>
+                    <field name="currency_id" column_invisible="1"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state in ('md_approved','sent_to_treasury','paid')"
+                           decoration-warning="state in ('submitted','ocma_approved')"
+                           decoration-danger="state == 'rejected'"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_nbet_payment_advice_form" model="ir.ui.view">
+            <field name="name">nbet.payment.advice.form</field>
+            <field name="model">nbet.payment.advice</field>
+            <field name="arch" type="xml">
+                <form string="Payment Advice">
+                    <header>
+                        <button name="action_generate_lines" type="object"
+                                string="Compute Allocation" class="btn-primary"
+                                invisible="state != 'draft'"
+                                help="Snapshot the collections received so far and suggest each GENCO's pro-rata share."/>
+                        <button name="action_submit" type="object"
+                                string="Submit for Approval"
+                                invisible="state != 'draft'"/>
+                        <button name="action_ocma_approve" type="object"
+                                string="Approve (OCMA)" class="btn-primary"
+                                invisible="state != 'submitted'"
+                                groups="nbet_power_billing.group_nbet_ocma_head"/>
+                        <button name="action_md_approve" type="object"
+                                string="Approve (MD)" class="btn-primary"
+                                invisible="state != 'ocma_approved'"
+                                groups="nbet_power_billing.group_nbet_md"/>
+                        <button name="action_reject" type="object"
+                                string="Reject"
+                                invisible="state not in ('submitted','ocma_approved')"
+                                groups="nbet_power_billing.group_nbet_ocma_head,nbet_power_billing.group_nbet_md"/>
+                        <button name="action_reset_to_draft" type="object"
+                                string="Reset to Draft"
+                                invisible="state != 'rejected'"/>
+                        <button name="action_cancel" type="object"
+                                string="Cancel"
+                                invisible="state in ('sent_to_treasury','paid','cancelled')"
+                                groups="nbet_power_billing.group_nbet_settlement_manager"/>
+                        <button name="action_print_advice" type="object"
+                                string="Print Advice"
+                                invisible="state == 'draft'"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,submitted,ocma_approved,md_approved,sent_to_treasury,paid"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box"/>
+
+                        <div class="oe_title">
+                            <h1><field name="name" readonly="1"/></h1>
+                        </div>
+
+                        <!-- Collections Pool -->
+                        <div class="o_horizontal_separator mt16">Collections Pool</div>
+                        <div class="row">
+                            <div class="col-sm-6 col-md-4 col-lg-4">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-success" style="font-size:1.4rem;">
+                                        <field name="pool_collections_received" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Collections Received</span>
+                                    <small class="d-block text-muted">
+                                        snapshotted <field name="pool_snapshot_date" class="d-inline"/>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-4">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-primary" style="font-size:1.4rem;">
+                                        <field name="pool_available" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Available Pool</span>
+                                    <small class="d-block text-muted">
+                                        previously advised
+                                        <field name="pool_previously_advised" widget="monetary" class="d-inline"/>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-4 col-lg-4">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-danger" style="font-size:1.4rem;">
+                                        <field name="total_advice_amount" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">This Advice</span>
+                                    <small class="d-block text-muted">
+                                        pool balance after
+                                        <field name="pool_balance_after" widget="monetary" class="d-inline"/>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <group>
+                            <group string="Reference">
+                                <field name="billing_cycle_id"
+                                       readonly="state != 'draft'"
+                                       domain="[('state', 'in', ('posted', 'locked'))]"/>
+                                <field name="advice_date" readonly="state != 'draft'"/>
+                                <field name="company_id" groups="base.group_multi_company"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                            <group string="Payment Committee">
+                                <field name="committee_date" readonly="state != 'draft'"/>
+                                <field name="committee_reference" readonly="state != 'draft'"/>
+                            </group>
+                        </group>
+
+                        <group string="Approvals" invisible="not submitted_by_id">
+                            <group>
+                                <field name="submitted_by_id"/>
+                                <field name="submitted_date"/>
+                                <field name="ocma_approver_id" invisible="not ocma_approver_id"/>
+                                <field name="ocma_approval_date" invisible="not ocma_approver_id"/>
+                            </group>
+                            <group>
+                                <field name="md_approver_id" invisible="not md_approver_id"/>
+                                <field name="md_approval_date" invisible="not md_approver_id"/>
+                            </group>
+                        </group>
+
+                        <group string="Rejection"
+                               invisible="not rejection_reason and state not in ('submitted','ocma_approved')">
+                            <field name="rejection_reason"
+                                   readonly="state not in ('submitted','ocma_approved')"
+                                   placeholder="Required before rejecting the advice..."/>
+                            <field name="rejected_by_id" invisible="not rejected_by_id"/>
+                            <field name="rejection_date" invisible="not rejected_by_id"/>
+                        </group>
+
+                        <notebook>
+                            <page string="Advice Lines" name="lines">
+                                <field name="line_ids" readonly="state != 'draft'">
+                                    <list editable="bottom">
+                                        <field name="participant_id"/>
+                                        <field name="partner_id" optional="hide"/>
+                                        <field name="outstanding_amount" sum="Total Outstanding"/>
+                                        <field name="pro_rata_share" sum="Total Suggested"/>
+                                        <field name="advice_amount" sum="Total to Pay"/>
+                                        <field name="remarks" optional="show"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                    </list>
+                                </field>
+                                <group class="oe_subtotal_footer">
+                                    <field name="total_outstanding_amount"/>
+                                    <field name="total_advice_amount" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </page>
+                            <page string="Vendor Bills" name="bills"
+                                  groups="nbet_power_billing.group_nbet_accounting_officer">
+                                <field name="line_ids" readonly="1">
+                                    <list>
+                                        <field name="participant_id"/>
+                                        <field name="vendor_bill_ids" widget="many2many_tags"/>
+                                        <field name="outstanding_amount"/>
+                                        <field name="advice_amount"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Notes" name="notes">
+                                <field name="notes"/>
+                                <group invisible="not ocma_notes and not md_notes">
+                                    <field name="ocma_notes" readonly="state != 'submitted'"/>
+                                    <field name="md_notes" readonly="state != 'ocma_approved'"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_nbet_payment_advice_search" model="ir.ui.view">
+            <field name="name">nbet.payment.advice.search</field>
+            <field name="model">nbet.payment.advice</field>
+            <field name="arch" type="xml">
+                <search string="Payment Advices">
+                    <field name="name"/>
+                    <field name="billing_cycle_id"/>
+                    <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                    <filter string="Awaiting OCMA" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                    <filter string="Awaiting MD" name="ocma_approved" domain="[('state', '=', 'ocma_approved')]"/>
+                    <filter string="Ready for Treasury" name="md_approved" domain="[('state', '=', 'md_approved')]"/>
+                    <filter string="With Treasury" name="sent_to_treasury" domain="[('state', '=', 'sent_to_treasury')]"/>
+                    <filter string="Paid" name="paid" domain="[('state', '=', 'paid')]"/>
+                    <filter string="Rejected" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Billing Cycle" name="group_cycle"
+                                context="{'group_by': 'billing_cycle_id'}"/>
+                        <filter string="Status" name="group_state"
+                                context="{'group_by': 'state'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_nbet_payment_advice" model="ir.actions.act_window">
+            <field name="name">Payment Advices</field>
+            <field name="res_model">nbet.payment.advice</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Raise a payment advice after the Payment Committee meeting
+                </p>
+                <p>
+                    It lists the GENCOs to be paid and how much each gets from
+                    the collections received so far on a posted billing cycle,
+                    then goes to the Head of OCMA, the MD, and Treasury.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

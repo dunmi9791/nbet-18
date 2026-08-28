@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Report Action -->
+        <record id="action_report_payment_advice" model="ir.actions.report">
+            <field name="name">GENCO Payment Advice</field>
+            <field name="model">nbet.payment.advice</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">nbet_power_billing.report_payment_advice_template</field>
+            <field name="report_file">nbet_power_billing.report_payment_advice</field>
+            <field name="print_report_name">'NBET Payment Advice - ' + object.name</field>
+            <field name="binding_model_id" ref="model_nbet_payment_advice"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- QWeb Template -->
+        <template id="report_payment_advice_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="advice">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <!-- Header -->
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <h2>Nigerian Bulk Electricity Trading (NBET)</h2>
+                                    <h3>GENCO Payment Advice</h3>
+                                    <h4><t t-esc="advice.name"/></h4>
+                                    <p>
+                                        Billing Cycle: <t t-esc="advice.billing_cycle_id.name"/>
+                                        (<t t-esc="advice.billing_cycle_id.date_start"/> to
+                                        <t t-esc="advice.billing_cycle_id.date_end"/>)
+                                        &amp;nbsp;|&amp;nbsp;
+                                        Advice Date: <t t-esc="advice.advice_date"/>
+                                    </p>
+                                    <p t-if="advice.committee_date or advice.committee_reference">
+                                        Payment Committee Meeting:
+                                        <t t-esc="advice.committee_date or ''"/>
+                                        <t t-if="advice.committee_reference">
+                                            &amp;nbsp;|&amp;nbsp; Ref: <t t-esc="advice.committee_reference"/>
+                                        </t>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Collections Pool -->
+                            <div class="row mt16">
+                                <div class="col-12">
+                                    <h5>Collections Pool</h5>
+                                    <table class="table table-sm table-bordered">
+                                        <tr>
+                                            <td><strong>Collections Received (₦)</strong></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(advice.pool_collections_received)"/></td>
+                                            <td><strong>Previously Advised (₦)</strong></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(advice.pool_previously_advised)"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Available Pool (₦)</strong></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(advice.pool_available)"/></td>
+                                            <td><strong>Pool Balance After This Advice (₦)</strong></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(advice.pool_balance_after)"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Advice Lines -->
+                            <div class="row mt16">
+                                <div class="col-12">
+                                    <h5>GENCOs to be Paid</h5>
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>GENCO</th>
+                                                <th>Outstanding (₦)</th>
+                                                <th>Pro-rata Share (₦)</th>
+                                                <th>Amount to Pay (₦)</th>
+                                                <th>Remarks</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="advice.line_ids" t-as="line">
+                                                <tr>
+                                                    <td><t t-esc="line_index + 1"/></td>
+                                                    <td><t t-esc="line.participant_id.display_name"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(line.outstanding_amount)"/></td>
+                                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(line.pro_rata_share)"/></td>
+                                                    <td class="text-end"><strong><t t-esc="'{:,.2f}'.format(line.advice_amount)"/></strong></td>
+                                                    <td><t t-esc="line.remarks or ''"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-secondary">
+                                                <td colspan="2"><strong>TOTAL</strong></td>
+                                                <td class="text-end">
+                                                    <strong><t t-esc="'{:,.2f}'.format(advice.total_outstanding_amount)"/></strong>
+                                                </td>
+                                                <td class="text-end">
+                                                    <strong><t t-esc="'{:,.2f}'.format(sum(l.pro_rata_share for l in advice.line_ids))"/></strong>
+                                                </td>
+                                                <td class="text-end">
+                                                    <strong><t t-esc="'{:,.2f}'.format(advice.total_advice_amount)"/></strong>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Signature Blocks -->
+                            <div class="row mt32">
+                                <div class="col-4 text-center">
+                                    <p style="margin-bottom:48px;"><strong>Prepared By</strong></p>
+                                    <p style="border-top:1px solid #000; padding-top:4px; margin-bottom:0;">
+                                        <t t-esc="advice.submitted_by_id.name or ''"/>
+                                    </p>
+                                    <small t-if="advice.submitted_date">
+                                        <t t-esc="advice.submitted_date.strftime('%Y-%m-%d')"/>
+                                    </small>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <p style="margin-bottom:48px;"><strong>Head of OCMA</strong></p>
+                                    <p style="border-top:1px solid #000; padding-top:4px; margin-bottom:0;">
+                                        <t t-esc="advice.ocma_approver_id.name or ''"/>
+                                    </p>
+                                    <small t-if="advice.ocma_approval_date">
+                                        <t t-esc="advice.ocma_approval_date.strftime('%Y-%m-%d')"/>
+                                    </small>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <p style="margin-bottom:48px;"><strong>Managing Director</strong></p>
+                                    <p style="border-top:1px solid #000; padding-top:4px; margin-bottom:0;">
+                                        <t t-esc="advice.md_approver_id.name or ''"/>
+                                    </p>
+                                    <small t-if="advice.md_approval_date">
+                                        <t t-esc="advice.md_approval_date.strftime('%Y-%m-%d')"/>
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="row mt32">
+                                <div class="col-6">
+                                    <p><em>Prepared by NBET Settlement Department</em></p>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <p><em>Status: <t t-esc="dict(advice._fields['state'].selection).get(advice.state)"/></em></p>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>

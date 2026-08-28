@@ -71,6 +71,12 @@
                   action="action_nbet_billing_adjustment"
                   sequence="40"/>
 
+        <menuitem id="menu_nbet_payment_advice"
+                  name="Payment Advices"
+                  parent="menu_nbet_settlement"
+                  action="action_nbet_payment_advice"
+                  sequence="50"/>
+
         <!-- ══ Market Participants ═══════════════════════════════════════════ -->
         <menuitem id="menu_nbet_participants"
                   name="Market Participants"

@@ -47,3 +47,16 @@ access_nbet_billing_adjustment_admin,nbet.billing.adjustment admin,model_nbet_bi
 access_nbet_billing_config_admin,nbet.billing.config admin,model_nbet_billing_config,group_nbet_admin,1,1,1,1
 access_nbet_billing_config_officer,nbet.billing.config officer,model_nbet_billing_config,group_nbet_billing_officer,1,0,0,0
 access_nbet_accounting_service_officer,nbet.accounting.service officer,model_nbet_accounting_service,group_nbet_accounting_officer,1,1,1,1
+access_nbet_payment_advice_officer,nbet.payment.advice officer,model_nbet_payment_advice,group_nbet_billing_officer,1,1,1,0
+access_nbet_payment_advice_manager,nbet.payment.advice manager,model_nbet_payment_advice,group_nbet_settlement_manager,1,1,1,0
+access_nbet_payment_advice_admin,nbet.payment.advice admin,model_nbet_payment_advice,group_nbet_admin,1,1,1,1
+access_nbet_payment_advice_line_officer,nbet.payment.advice.line officer,model_nbet_payment_advice_line,group_nbet_billing_officer,1,1,1,1
+access_nbet_payment_advice_line_admin,nbet.payment.advice.line admin,model_nbet_payment_advice_line,group_nbet_admin,1,1,1,1
+access_nbet_payment_advice_ocma,nbet.payment.advice ocma,model_nbet_payment_advice,group_nbet_ocma_head,1,1,0,0
+access_nbet_payment_advice_line_ocma,nbet.payment.advice.line ocma,model_nbet_payment_advice_line,group_nbet_ocma_head,1,0,0,0
+access_nbet_payment_advice_md,nbet.payment.advice md,model_nbet_payment_advice,group_nbet_md,1,1,0,0
+access_nbet_payment_advice_line_md,nbet.payment.advice.line md,model_nbet_payment_advice_line,group_nbet_md,1,0,0,0
+access_nbet_billing_cycle_ocma,nbet.billing.cycle ocma,model_nbet_billing_cycle,group_nbet_ocma_head,1,0,0,0
+access_nbet_billing_cycle_md,nbet.billing.cycle md,model_nbet_billing_cycle,group_nbet_md,1,0,0,0
+access_nbet_market_participant_ocma,nbet.market.participant ocma,model_nbet_market_participant,group_nbet_ocma_head,1,0,0,0
+access_nbet_market_participant_md,nbet.market.participant md,model_nbet_market_participant,group_nbet_md,1,0,0,0

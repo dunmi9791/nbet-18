@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="seq_nbet_payment_advice" model="ir.sequence">
+            <field name="name">GENCO Payment Advice</field>
+            <field name="code">nbet.payment.advice</field>
+            <field name="prefix">PA/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+
+    </data>
+</odoo>

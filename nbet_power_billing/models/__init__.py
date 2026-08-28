@@ -19,3 +19,4 @@ from . import billing_adjustment
 from . import billing_config
 from . import accounting_service
 from . import account_move
+from . import payment_advice

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NBET Treasury',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.1.0',
     'category': 'Accounting/NBET',
     'summary': 'Treasury payment scheduling and management for NBET',
     'description': """

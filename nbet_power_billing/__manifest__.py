@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NBET Power Billing',
-    'version': '18.0.1.3.0',
+    'version': '18.0.1.4.0',
     'category': 'Accounting/NBET',
     'summary': 'NBET Monthly Power Settlement and Billing Management',
     'description': """
@@ -29,6 +29,7 @@
         'security/ir.model.access.csv',
         'data/billing_input_types.xml',
         'data/genco_component_types.xml',
+        'data/payment_advice_data.xml',
         'views/market_participant_views.xml',
         'views/genco_component_type_views.xml',
         'views/genco_contract_views.xml',
@@ -44,9 +45,11 @@
         'views/billing_adjustment_views.xml',
         'views/billing_config_views.xml',
         'views/account_move_views.xml',
+        'views/payment_advice_views.xml',
         'reports/report_genco_settlement.xml',
         'reports/report_disco_billing.xml',
         'reports/report_cycle_summary.xml',
+        'reports/report_payment_advice.xml',
         'views/menus.xml',
     ],
     'demo': [

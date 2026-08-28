@@ -98,6 +98,9 @@ class NbetBillingCycle(models.Model):
         compute='_compute_payment_ids',
         help='Payments reconciled against the invoices and bills of this cycle.',
     )
+    payment_advice_ids = fields.One2many(
+        'nbet.payment.advice', 'billing_cycle_id', string='Payment Advices',
+    )
 
     # ── Smart Button Counts ────────────────────────────────────────────────────
     count_genco_data = fields.Integer(compute='_compute_counts', string='GENCO Data')
@@ -110,6 +113,7 @@ class NbetBillingCycle(models.Model):
     count_disco_invoices = fields.Integer(compute='_compute_counts', string='DISCO Invoices')
     count_genco_vendor_bills = fields.Integer(compute='_compute_counts', string='GENCO Vendor Bills')
     count_payments = fields.Integer(compute='_compute_payment_ids', string='Payments')
+    count_payment_advices = fields.Integer(compute='_compute_counts', string='Payment Advices')
 
     def _compute_counts(self):
         for rec in self:
@@ -122,6 +126,7 @@ class NbetBillingCycle(models.Model):
             rec.count_accounting_moves = len(rec.move_ids)
             rec.count_disco_invoices = len(rec._get_receivable_moves(posted_only=False))
             rec.count_genco_vendor_bills = len(rec._get_payable_moves(posted_only=False))
+            rec.count_payment_advices = len(rec.payment_advice_ids)
 
     @api.depends('move_ids', 'move_ids.matched_payment_ids')
     def _compute_payment_ids(self):
@@ -404,6 +409,10 @@ class NbetBillingCycle(models.Model):
     def action_view_adjustments(self):
         self.ensure_one()
         return self._smart_button_action('nbet.billing.adjustment', 'billing_cycle_id')
+
+    def action_view_payment_advices(self):
+        self.ensure_one()
+        return self._smart_button_action('nbet.payment.advice', 'billing_cycle_id')
 
     def action_view_disco_invoices(self):
         self.ensure_one()

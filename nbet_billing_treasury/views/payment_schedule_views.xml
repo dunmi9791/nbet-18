@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_payment_schedule_form_billing" model="ir.ui.view">
+        <field name="name">nbet.payment.schedule.form.billing</field>
+        <field name="model">nbet.payment.schedule</field>
+        <field name="inherit_id" ref="nbet_treasury.view_payment_schedule_form"/>
+        <field name="arch" type="xml">
+            <field name="source_type" position="after">
+                <field name="payment_advice_id" invisible="source_type != 'power_billing'"/>
+            </field>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_advice_lines" type="object"
+                        class="oe_stat_button" icon="fa-bolt"
+                        invisible="source_type != 'power_billing' or advice_line_count == 0">
+                    <field name="advice_line_count" widget="statinfo" string="GENCOs"/>
+                </button>
+            </xpath>
+            <!-- A payment advice carries no rule-based deductions: the advised
+                 amounts are paid as decided by the committee. The attribute is
+                 rewritten wholesale, so the expression stays correct whether or
+                 not other source modules (e.g. payroll) are installed. -->
+            <xpath expr="//button[@name='action_load_default_deductions']" position="attributes">
+                <attribute name="invisible">source_type != 'procurement' or state not in ('pending', 'scheduled', 'cfo_approved', 'fm_approved', 'voucher_generated')</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_payment_schedule_list_billing" model="ir.ui.view">
+        <field name="name">nbet.payment.schedule.list.billing</field>
+        <field name="model">nbet.payment.schedule</field>
+        <field name="inherit_id" ref="nbet_treasury.view_payment_schedule_list"/>
+        <field name="arch" type="xml">
+            <field name="payment_request_id" position="after">
+                <field name="payment_advice_id" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

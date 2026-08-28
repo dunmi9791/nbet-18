@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_payment_voucher_form_billing" model="ir.ui.view">
+        <field name="name">nbet.payment.voucher.form.billing</field>
+        <field name="model">nbet.payment.voucher</field>
+        <field name="inherit_id" ref="nbet_treasury.view_payment_voucher_form"/>
+        <field name="arch" type="xml">
+            <field name="tax_line_id" position="after">
+                <field name="payment_advice_id" invisible="voucher_type != 'genco'"/>
+                <field name="participant_id" invisible="voucher_type != 'genco'"/>
+            </field>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_advice" type="object"
+                        class="oe_stat_button" icon="fa-bolt"
+                        invisible="not payment_advice_id">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Payment Advice</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_payment_voucher_list_billing" model="ir.ui.view">
+        <field name="name">nbet.payment.voucher.list.billing</field>
+        <field name="model">nbet.payment.voucher</field>
+        <field name="inherit_id" ref="nbet_treasury.view_payment_voucher_list"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="participant_id" optional="hide"/>
+                <field name="payment_advice_id" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

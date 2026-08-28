@@ -122,6 +122,10 @@
                                     class="oe_stat_button" icon="fa-credit-card">
                                 <field name="count_payments" widget="statinfo" string="Payments"/>
                             </button>
+                            <button name="action_view_payment_advices" type="object"
+                                    class="oe_stat_button" icon="fa-list-alt">
+                                <field name="count_payment_advices" widget="statinfo" string="Payment Advices"/>
+                            </button>
                         </div>
 
                         <!-- Cash Position Mini Dashboard -->
