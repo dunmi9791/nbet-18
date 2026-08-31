@@ -77,6 +77,12 @@
                   action="action_nbet_payment_advice"
                   sequence="50"/>
 
+        <menuitem id="menu_nbet_collection_advice"
+                  name="DISCO Collection Advices"
+                  parent="menu_nbet_settlement"
+                  action="action_nbet_collection_advice"
+                  sequence="55"/>
+
         <!-- ══ Market Participants ═══════════════════════════════════════════ -->
         <menuitem id="menu_nbet_participants"
                   name="Market Participants"

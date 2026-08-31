@@ -207,6 +207,11 @@ class NbetDiscoBillLine(models.Model):
         string='Subsidy Line', default=False,
         help='Marks lines representing subsidy exposure (excluded from gross bill).',
     )
+    formula_trace = fields.Text(
+        string='Formula Trace',
+        help='JSON dump of how this line\'s amount was derived (rate source, '
+             'allocation %, quantities).',
+    )
     currency_id = fields.Many2one(
         'res.currency', related='disco_bill_id.currency_id',
     )

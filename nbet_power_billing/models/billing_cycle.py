@@ -101,6 +101,10 @@ class NbetBillingCycle(models.Model):
     payment_advice_ids = fields.One2many(
         'nbet.payment.advice', 'billing_cycle_id', string='Payment Advices',
     )
+    collection_advice_ids = fields.One2many(
+        'nbet.collection.advice', 'billing_cycle_id',
+        string='Collection Advices',
+    )
 
     # ── Smart Button Counts ────────────────────────────────────────────────────
     count_genco_data = fields.Integer(compute='_compute_counts', string='GENCO Data')
@@ -114,6 +118,7 @@ class NbetBillingCycle(models.Model):
     count_genco_vendor_bills = fields.Integer(compute='_compute_counts', string='GENCO Vendor Bills')
     count_payments = fields.Integer(compute='_compute_payment_ids', string='Payments')
     count_payment_advices = fields.Integer(compute='_compute_counts', string='Payment Advices')
+    count_collection_advices = fields.Integer(compute='_compute_counts', string='Collection Advices')
 
     def _compute_counts(self):
         for rec in self:
@@ -127,6 +132,7 @@ class NbetBillingCycle(models.Model):
             rec.count_disco_invoices = len(rec._get_receivable_moves(posted_only=False))
             rec.count_genco_vendor_bills = len(rec._get_payable_moves(posted_only=False))
             rec.count_payment_advices = len(rec.payment_advice_ids)
+            rec.count_collection_advices = len(rec.collection_advice_ids)
 
     @api.depends('move_ids', 'move_ids.matched_payment_ids')
     def _compute_payment_ids(self):
@@ -264,6 +270,52 @@ class NbetBillingCycle(models.Model):
                 if rec.total_genco_billed else 0.0
             )
 
+    # ── Meristem Collections Position ──────────────────────────────────────────
+    total_collection_advised = fields.Monetary(
+        compute='_compute_collection_position', string='Collections Advised',
+        currency_field='currency_id',
+        help='Total advised by Meristem for this cycle across all collection advices.',
+    )
+    total_collection_in_bank = fields.Monetary(
+        compute='_compute_collection_position', string='Collections in Bank',
+        currency_field='currency_id',
+        help='Advised amounts finance has confirmed in the bank.',
+    )
+    total_collection_with_remita = fields.Monetary(
+        compute='_compute_collection_position', string='Collections with Remita',
+        currency_field='currency_id',
+        help='Advised amounts still with Remita, not yet at the bank.',
+    )
+    total_collection_not_seen = fields.Monetary(
+        compute='_compute_collection_position', string='Collections Not Seen',
+        currency_field='currency_id',
+        help='Advised amounts finance checked for and found nowhere.',
+    )
+    collection_confirmed_percent = fields.Float(
+        compute='_compute_collection_position',
+        string='Confirmed in Bank (%)', digits=(5, 2),
+    )
+
+    @api.depends('collection_advice_ids.state',
+                 'collection_advice_ids.total_advised',
+                 'collection_advice_ids.total_in_bank',
+                 'collection_advice_ids.total_with_remita',
+                 'collection_advice_ids.total_not_seen')
+    def _compute_collection_position(self):
+        for rec in self:
+            advices = rec.collection_advice_ids.filtered(
+                lambda a: a.state != 'cancelled')
+            rec.total_collection_advised = sum(advices.mapped('total_advised'))
+            rec.total_collection_in_bank = sum(advices.mapped('total_in_bank'))
+            rec.total_collection_with_remita = sum(
+                advices.mapped('total_with_remita'))
+            rec.total_collection_not_seen = sum(
+                advices.mapped('total_not_seen'))
+            rec.collection_confirmed_percent = (
+                rec.total_collection_in_bank / rec.total_collection_advised * 100.0
+                if rec.total_collection_advised else 0.0
+            )
+
     # ── Constraints ────────────────────────────────────────────────────────────
     _sql_constraints = [
         ('code_company_uniq', 'unique(code, company_id)', 'Cycle code must be unique per company.'),
@@ -337,16 +389,24 @@ class NbetBillingCycle(models.Model):
                 rec.state = 'calculated'
 
     def action_review(self):
+        if not self.env.user.has_group('nbet_power_billing.group_nbet_billing_reviewer'):
+            raise UserError('Only Billing Reviewers can mark billing cycles as reviewed.')
         self._check_not_locked()
-        self.write({'state': 'reviewed'})
-        self.message_post(body='Cycle moved to Reviewed status.')
+        for rec in self:
+            if rec.state != 'calculated':
+                raise UserError('Billing cycle must be Calculated before it can be reviewed.')
+            rec.state = 'reviewed'
+            rec.message_post(body=f'Cycle reviewed by {self.env.user.name}.')
 
     def action_approve(self):
         if not self.env.user.has_group('nbet_power_billing.group_nbet_settlement_manager'):
             raise UserError('Only Settlement Managers can approve billing cycles.')
         self._check_not_locked()
-        self.write({'state': 'approved'})
-        self.message_post(body=f'Cycle approved by {self.env.user.name}.')
+        for rec in self:
+            if rec.state != 'reviewed':
+                raise UserError('Billing cycle must be Reviewed before it can be approved.')
+            rec.state = 'approved'
+            rec.message_post(body=f'Cycle approved by {self.env.user.name}.')
 
     def action_post(self):
         if not self.env.user.has_group('nbet_power_billing.group_nbet_accounting_officer'):
@@ -413,6 +473,10 @@ class NbetBillingCycle(models.Model):
     def action_view_payment_advices(self):
         self.ensure_one()
         return self._smart_button_action('nbet.payment.advice', 'billing_cycle_id')
+
+    def action_view_collection_advices(self):
+        self.ensure_one()
+        return self._smart_button_action('nbet.collection.advice', 'billing_cycle_id')
 
     def action_view_disco_invoices(self):
         self.ensure_one()

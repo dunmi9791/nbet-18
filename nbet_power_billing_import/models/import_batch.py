@@ -82,6 +82,7 @@ class NbetImportBatchLine(models.Model):
             ('cycle_input', 'Cycle Input'),
             ('genco_data', 'GENCO Operational Data'),
             ('disco_data', 'DISCO Data'),
+            ('disco_allocation', 'DISCO GENCO Allocation'),
             ('rate_data', 'Rate Data'),
             ('other', 'Other'),
         ],
@@ -92,6 +93,10 @@ class NbetImportBatchLine(models.Model):
     parsed_value_float = fields.Float(string='Parsed Float', digits=(16, 6))
     parsed_value_char = fields.Char(string='Parsed Text')
     participant_code = fields.Char(string='Participant Code')
+    genco_code = fields.Char(
+        string='GENCO Code',
+        help='For DISCO allocation lines: the GENCO whose rate the percentage applies to.',
+    )
     input_type_code = fields.Char(string='Input Type Code')
     status = fields.Selection(
         selection=[

@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_nbet_collection_advice_list" model="ir.ui.view">
+            <field name="name">nbet.collection.advice.list</field>
+            <field name="model">nbet.collection.advice</field>
+            <field name="arch" type="xml">
+                <list string="Collection Advices"
+                      decoration-success="state == 'done'"
+                      decoration-info="state == 'confirmed'"
+                      decoration-muted="state == 'cancelled'">
+                    <field name="name"/>
+                    <field name="billing_cycle_id"/>
+                    <field name="advice_date"/>
+                    <field name="meristem_reference" optional="show"/>
+                    <field name="line_count" string="DISCOs" optional="hide"/>
+                    <field name="total_advised" string="Advised"/>
+                    <field name="total_in_bank" string="In Bank"/>
+                    <field name="total_with_remita" string="With Remita"/>
+                    <field name="total_not_seen" string="Not Seen"/>
+                    <field name="total_pending" string="Pending" optional="show"/>
+                    <field name="currency_id" column_invisible="1"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'done'"
+                           decoration-info="state == 'confirmed'"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_nbet_collection_advice_form" model="ir.ui.view">
+            <field name="name">nbet.collection.advice.form</field>
+            <field name="model">nbet.collection.advice</field>
+            <field name="arch" type="xml">
+                <form string="Collection Advice">
+                    <header>
+                        <button name="action_confirm" type="object"
+                                string="Confirm Advice" class="btn-primary"
+                                invisible="state != 'draft'"
+                                help="Freeze the advised amounts and open the advice for verification."/>
+                        <button name="action_reset_to_draft" type="object"
+                                string="Reset to Draft"
+                                invisible="state not in ('confirmed','cancelled')"/>
+                        <button name="action_cancel" type="object"
+                                string="Cancel"
+                                invisible="state in ('done','cancelled')"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,confirmed,done"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box"/>
+
+                        <div class="oe_title">
+                            <h1><field name="name" readonly="1"/></h1>
+                        </div>
+
+                        <!-- Verification Position -->
+                        <div class="o_horizontal_separator mt16">Verification Position</div>
+                        <div class="row">
+                            <div class="col-sm-6 col-md-3">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-primary" style="font-size:1.4rem;">
+                                        <field name="total_advised" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Total Advised</span>
+                                    <small class="d-block text-muted">
+                                        pending <field name="total_pending" widget="monetary" class="d-inline"/>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-success" style="font-size:1.4rem;">
+                                        <field name="total_in_bank" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Confirmed in Bank</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-warning" style="font-size:1.4rem;">
+                                        <field name="total_with_remita" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">With Remita</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-danger" style="font-size:1.4rem;">
+                                        <field name="total_not_seen" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Not Seen</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <group>
+                            <group string="Reference">
+                                <field name="billing_cycle_id"
+                                       readonly="state != 'draft'"
+                                       domain="[('state', 'in', ('posted', 'locked'))]"/>
+                                <field name="advice_date" readonly="state != 'draft'"/>
+                                <field name="company_id" groups="base.group_multi_company"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                            <group string="Meristem">
+                                <field name="meristem_reference" readonly="state != 'draft'"/>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="Advice Lines" name="lines">
+                                <field name="line_ids" readonly="state != 'draft'">
+                                    <list editable="bottom">
+                                        <field name="participant_id"/>
+                                        <field name="partner_id" optional="hide"/>
+                                        <field name="amount_advised" sum="Total Advised"/>
+                                        <field name="amount_in_bank" sum="Total in Bank"/>
+                                        <field name="amount_with_remita" sum="Total with Remita"/>
+                                        <field name="amount_not_seen" sum="Total Not Seen"/>
+                                        <field name="amount_pending" sum="Total Pending"/>
+                                        <field name="verification_status" widget="badge"
+                                               decoration-success="verification_status == 'full'"
+                                               decoration-warning="verification_status == 'partial'"/>
+                                        <field name="remarks" optional="show"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                    </list>
+                                </field>
+                                <group class="oe_subtotal_footer">
+                                    <field name="total_advised"/>
+                                    <field name="total_in_bank" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </page>
+                            <page string="Confirmations" name="confirmations"
+                                  invisible="state == 'draft'">
+                                <field name="confirmation_ids"
+                                       readonly="state not in ('confirmed','done')">
+                                    <list editable="bottom"
+                                          decoration-success="state == 'posted' and status == 'in_bank'"
+                                          decoration-warning="state == 'posted' and status == 'with_remita'"
+                                          decoration-danger="state == 'posted' and status == 'not_seen'"
+                                          decoration-muted="state == 'cancelled'">
+                                        <field name="name"/>
+                                        <field name="line_id"
+                                               domain="[('advice_id', '=', parent.id)]"
+                                               options="{'no_create': True}"
+                                               readonly="state != 'draft'"/>
+                                        <field name="status" readonly="state != 'draft'"/>
+                                        <field name="amount" readonly="state != 'draft'"/>
+                                        <field name="confirmation_date" readonly="state != 'draft'"/>
+                                        <field name="journal_id"
+                                               readonly="state != 'draft'"
+                                               required="status == 'in_bank'"/>
+                                        <field name="payment_reference"
+                                               readonly="state != 'draft'"
+                                               required="status == 'in_bank'"/>
+                                        <field name="remita_reference"
+                                               readonly="state != 'draft'" optional="show"/>
+                                        <field name="payment_id" optional="show"/>
+                                        <field name="state" widget="badge"
+                                               decoration-success="state == 'posted'"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                        <field name="company_id" column_invisible="1"/>
+                                        <button name="action_post" type="object"
+                                                string="Post" icon="fa-check"
+                                                invisible="state != 'draft'"
+                                                groups="nbet_power_billing.group_nbet_accounting_officer"/>
+                                        <button name="action_cancel" type="object"
+                                                string="Cancel" icon="fa-times"
+                                                invisible="state == 'cancelled' or (state == 'posted' and status == 'in_bank')"/>
+                                        <button name="action_reset_to_draft" type="object"
+                                                string="Reset to Draft" icon="fa-undo"
+                                                invisible="state != 'cancelled'"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Notes" name="notes">
+                                <field name="notes"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_nbet_collection_confirmation_form" model="ir.ui.view">
+            <field name="name">nbet.collection.confirmation.form</field>
+            <field name="model">nbet.collection.confirmation</field>
+            <field name="arch" type="xml">
+                <form string="Collection Confirmation">
+                    <header>
+                        <button name="action_post" type="object"
+                                string="Post" class="btn-primary"
+                                invisible="state != 'draft'"
+                                groups="nbet_power_billing.group_nbet_accounting_officer"/>
+                        <button name="action_cancel" type="object"
+                                string="Cancel"
+                                invisible="state == 'cancelled' or (state == 'posted' and status == 'in_bank')"/>
+                        <button name="action_reset_to_draft" type="object"
+                                string="Reset to Draft"
+                                invisible="state != 'cancelled'"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,posted"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_payment" type="object"
+                                    class="oe_stat_button" icon="fa-credit-card"
+                                    invisible="not payment_id">
+                                <div class="o_stat_info">
+                                    <span class="o_stat_text">Payment</span>
+                                </div>
+                            </button>
+                        </div>
+                        <div class="oe_title">
+                            <h1><field name="name" readonly="1"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="line_id" readonly="state != 'draft'"
+                                       options="{'no_create': True}"/>
+                                <field name="participant_id"/>
+                                <field name="billing_cycle_id"/>
+                                <field name="amount_advised"/>
+                                <field name="amount_pending"/>
+                            </group>
+                            <group>
+                                <field name="status" readonly="state != 'draft'"/>
+                                <field name="amount" readonly="state != 'draft'"/>
+                                <field name="confirmation_date" readonly="state != 'draft'"/>
+                                <field name="journal_id" readonly="state != 'draft'"
+                                       invisible="status != 'in_bank'"
+                                       required="status == 'in_bank'"/>
+                                <field name="payment_reference" readonly="state != 'draft'"
+                                       invisible="status != 'in_bank'"
+                                       required="status == 'in_bank'"/>
+                                <field name="remita_reference" readonly="state != 'draft'"
+                                       invisible="status != 'with_remita'"/>
+                                <field name="payment_id" invisible="not payment_id"/>
+                                <field name="note"/>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="company_id" invisible="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_nbet_collection_advice_search" model="ir.ui.view">
+            <field name="name">nbet.collection.advice.search</field>
+            <field name="model">nbet.collection.advice</field>
+            <field name="arch" type="xml">
+                <search string="Collection Advices">
+                    <field name="name"/>
+                    <field name="billing_cycle_id"/>
+                    <field name="meristem_reference"/>
+                    <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                    <filter string="Under Verification" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
+                    <filter string="Fully Verified" name="done" domain="[('state', '=', 'done')]"/>
+                    <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Billing Cycle" name="group_cycle"
+                                context="{'group_by': 'billing_cycle_id'}"/>
+                        <filter string="Status" name="group_state"
+                                context="{'group_by': 'state'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_nbet_collection_advice" model="ir.actions.act_window">
+            <field name="name">Collection Advices</field>
+            <field name="res_model">nbet.collection.advice</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Capture a Meristem collection advice
+                </p>
+                <p>
+                    It lists what Meristem advises was received from each DISCO
+                    on a posted billing cycle. Finance then verifies each amount
+                    as in the bank, with Remita, or not seen — bank confirmations
+                    become payments matched to the cycle's invoices.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

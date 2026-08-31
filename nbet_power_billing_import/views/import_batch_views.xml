@@ -85,6 +85,7 @@
                                         <field name="row_number"/>
                                         <field name="record_type"/>
                                         <field name="participant_code"/>
+                                        <field name="genco_code" optional="show"/>
                                         <field name="field_label"/>
                                         <field name="input_type_code"/>
                                         <field name="raw_value"/>

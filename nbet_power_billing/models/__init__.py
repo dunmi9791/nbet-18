@@ -10,6 +10,7 @@ from . import billing_cycle_input
 from . import billing_run_log
 from . import genco_monthly_data
 from . import disco_monthly_data
+from . import disco_genco_allocation
 from . import rate_snapshot
 from . import calculation_service
 from . import genco_expected_bill
@@ -20,3 +21,4 @@ from . import billing_config
 from . import accounting_service
 from . import account_move
 from . import payment_advice
+from . import collection_advice

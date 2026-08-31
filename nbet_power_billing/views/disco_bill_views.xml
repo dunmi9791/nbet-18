@@ -90,6 +90,7 @@
                                         <field name="rate" optional="show"/>
                                         <field name="amount"/>
                                         <field name="is_subsidy_line" optional="show"/>
+                                        <field name="formula_trace" optional="hide"/>
                                     </list>
                                 </field>
                             </page>

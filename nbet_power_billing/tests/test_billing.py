@@ -336,6 +336,179 @@ class TestNbetDiscoBillCalculation(TransactionCase):
         self.assertAlmostEqual(disco_data.applied_dro_percent, 48.0)
 
 
+class TestNbetDiscoGencoAllocationBilling(TransactionCase):
+    """DISCO bills computed from GENCO rate allocations + weighted average"""
+
+    def setUp(self):
+        super().setUp()
+        Participant = self.env['nbet.market.participant']
+        self.disco = Participant.create({
+            'name': 'Alloc DISCO', 'code': 'ALDISCO',
+            'participant_type': 'disco',
+            'partner_id': self.env['res.partner'].create({'name': 'Alloc DISCO'}).id,
+        })
+        self.genco_a = Participant.create({
+            'name': 'Genco A', 'code': 'GA',
+            'participant_type': 'genco',
+            'partner_id': self.env['res.partner'].create({'name': 'Genco A'}).id,
+        })
+        self.genco_b = Participant.create({
+            'name': 'Genco B', 'code': 'GB',
+            'participant_type': 'genco',
+            'partner_id': self.env['res.partner'].create({'name': 'Genco B'}).id,
+        })
+        self.cycle = self.env['nbet.billing.cycle'].create({
+            'name': 'Alloc Cycle', 'code': 'ALLOC-01',
+            'date_start': '2024-04-01', 'date_end': '2024-04-30',
+            'hours_in_period': 720.0,
+        })
+        self.env['nbet.disco.dro'].create({
+            'participant_id': self.disco.id,
+            'effective_from': '2024-01-01',
+            'dro_percent': 48.0,
+            'approval_state': 'approved',
+        })
+        # GENCO operational data provides the weights for the weighted average
+        self.env['nbet.genco.monthly.data'].create({
+            'billing_cycle_id': self.cycle.id,
+            'participant_id': self.genco_a.id,
+            'invoiced_capacity_mw': 200.0,
+            'invoiced_energy_kwh': 100_000_000.0,
+        })
+        self.env['nbet.genco.monthly.data'].create({
+            'billing_cycle_id': self.cycle.id,
+            'participant_id': self.genco_b.id,
+            'invoiced_capacity_mw': 100.0,
+            'invoiced_energy_kwh': 50_000_000.0,
+        })
+        Snapshot = self.env['nbet.rate.snapshot']
+        Snapshot.create({
+            'billing_cycle_id': self.cycle.id,
+            'participant_id': self.genco_a.id,
+            'capacity_rate': 1000.0, 'energy_rate': 5.0,
+            'is_current': True,
+        })
+        Snapshot.create({
+            'billing_cycle_id': self.cycle.id,
+            'participant_id': self.genco_b.id,
+            'capacity_rate': 2000.0, 'energy_rate': 10.0,
+            'is_current': True,
+        })
+        self.disco_data = self.env['nbet.disco.monthly.data'].create({
+            'billing_cycle_id': self.cycle.id,
+            'participant_id': self.disco.id,
+            'capacity_delivered_mw': 90.0,
+            'energy_delivered_kwh': 30_000_000.0,
+        })
+        self.svc = self.env['nbet.calculation.service'].create({})
+
+    def _bill(self):
+        return self.env['nbet.disco.bill'].search([
+            ('billing_cycle_id', '=', self.cycle.id),
+            ('participant_id', '=', self.disco.id),
+        ], limit=1)
+
+    def test_full_allocation_single_genco(self):
+        """100% to one GENCO bills entirely at that GENCO's snapshot rates"""
+        self.env['nbet.disco.genco.allocation'].create({
+            'disco_data_id': self.disco_data.id,
+            'genco_id': self.genco_a.id,
+            'allocation_percent': 100.0,
+        })
+        self.svc.compute_disco_bills_for_cycle(self.cycle.id)
+        bill = self._bill()
+        # cap: 90 MW × 720 h × ₦1000 = 64.8M; energy: 30M kWh × ₦5 = 150M
+        self.assertAlmostEqual(bill.gross_bill_amount, 214_800_000.0, delta=1.0)
+        self.assertAlmostEqual(bill.expected_payable_amount, 214_800_000.0 * 0.48, delta=1.0)
+
+    def test_partial_allocation_remainder_at_weighted_average(self):
+        """60% A + 25% B, remaining 15% at the weighted average of GENCO rates"""
+        self.env['nbet.disco.genco.allocation'].create([
+            {'disco_data_id': self.disco_data.id, 'genco_id': self.genco_a.id,
+             'allocation_percent': 60.0},
+            {'disco_data_id': self.disco_data.id, 'genco_id': self.genco_b.id,
+             'allocation_percent': 25.0},
+        ])
+        self.svc.compute_disco_bills_for_cycle(self.cycle.id)
+        bill = self._bill()
+        # wavg cap rate = (1000×200 + 2000×100)/300 = 1333.33; wavg energy = (5×100M + 10×50M)/150M = 6.6667
+        # cap: 90×720 × (0.6×1000 + 0.25×2000 + 0.15×1333.33) = 64800 × 1300 = 84.24M
+        # eng: 30M × (0.6×5 + 0.25×10 + 0.15×6.6667) = 30M × 6.5 = 195M
+        self.assertAlmostEqual(bill.gross_bill_amount, 279_240_000.0, delta=10.0)
+        # 6 charge lines (cap+energy per allocation and remainder) + 1 subsidy line
+        self.assertEqual(len(bill.line_ids), 7)
+
+    def test_no_allocation_uses_weighted_average(self):
+        """A DISCO without allocation lines bills 100% at the weighted average"""
+        self.svc.compute_disco_bills_for_cycle(self.cycle.id)
+        bill = self._bill()
+        # cap: 90×720 × 1333.33 = 86.4M; eng: 30M × 6.6667 = 200M
+        self.assertAlmostEqual(bill.gross_bill_amount, 286_400_000.0, delta=10.0)
+        self.assertAlmostEqual(bill.subsidy_amount, 286_400_000.0 * 0.52, delta=10.0)
+
+    def test_allocation_sum_over_100_rejected(self):
+        """Allocation lines totalling more than 100% raise ValidationError"""
+        self.env['nbet.disco.genco.allocation'].create({
+            'disco_data_id': self.disco_data.id,
+            'genco_id': self.genco_a.id,
+            'allocation_percent': 70.0,
+        })
+        with self.assertRaises(ValidationError):
+            self.env['nbet.disco.genco.allocation'].create({
+                'disco_data_id': self.disco_data.id,
+                'genco_id': self.genco_b.id,
+                'allocation_percent': 40.0,
+            })
+
+    def test_allocation_percent_range(self):
+        """Zero/negative or >100 percentages are rejected"""
+        with self.assertRaises(ValidationError):
+            self.env['nbet.disco.genco.allocation'].create({
+                'disco_data_id': self.disco_data.id,
+                'genco_id': self.genco_a.id,
+                'allocation_percent': 0.0,
+            })
+        with self.assertRaises(ValidationError):
+            self.env['nbet.disco.genco.allocation'].create({
+                'disco_data_id': self.disco_data.id,
+                'genco_id': self.genco_a.id,
+                'allocation_percent': 101.0,
+            })
+
+    def test_duplicate_genco_allocation_rejected(self):
+        """Two allocation lines for the same GENCO on one data record must fail"""
+        self.env['nbet.disco.genco.allocation'].create({
+            'disco_data_id': self.disco_data.id,
+            'genco_id': self.genco_a.id,
+            'allocation_percent': 30.0,
+        })
+        with self.assertRaises(Exception), self.cr.savepoint():
+            self.env['nbet.disco.genco.allocation'].create({
+                'disco_data_id': self.disco_data.id,
+                'genco_id': self.genco_a.id,
+                'allocation_percent': 20.0,
+            })
+            self.env['nbet.disco.genco.allocation'].flush_model()
+
+    def test_missing_snapshots_raises(self):
+        """Billing without rate snapshots raises a UserError"""
+        cycle2 = self.env['nbet.billing.cycle'].create({
+            'name': 'No Rates Cycle', 'code': 'ALLOC-02',
+            'date_start': '2024-05-01', 'date_end': '2024-05-31',
+            'hours_in_period': 744.0,
+        })
+        disco_data2 = self.env['nbet.disco.monthly.data'].create({
+            'billing_cycle_id': cycle2.id,
+            'participant_id': self.disco.id,
+            'capacity_delivered_mw': 50.0,
+            'energy_delivered_kwh': 10_000_000.0,
+        })
+        with self.assertRaises(UserError):
+            self.svc._compute_disco_bill(
+                cycle2, self.disco, {}, disco_data2,
+            )
+
+
 class TestNbetInvoiceComparison(TransactionCase):
     """GENCO invoice comparison and variance flagging"""
 

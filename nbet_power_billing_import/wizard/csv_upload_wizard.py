@@ -66,6 +66,19 @@ DISCO_SAMPLE_ROWS = [
     ['EKEDC', '600.00', '410000000', 'Metered', ''],
 ]
 
+ALLOCATION_COLUMNS = [
+    ('participant_code', 'DISCO Code'),
+    ('genco_code', 'GENCO Code'),
+    ('allocation_percent', 'Allocation (%)'),
+    ('remarks', 'Remarks'),
+]
+
+ALLOCATION_SAMPLE_ROWS = [
+    ['IBEDC', 'EGBIN', '60', ''],
+    ['IBEDC', 'AFAM_VI', '25', 'Remainder billed at weighted avg'],
+    ['EKEDC', 'EGBIN', '100', ''],
+]
+
 
 class NbetCsvUploadWizard(models.TransientModel):
     _name = 'nbet.csv.upload.wizard'
@@ -79,6 +92,7 @@ class NbetCsvUploadWizard(models.TransientModel):
             ('inputs', 'Billing Cycle Inputs'),
             ('genco_data', 'GENCO Operational Data'),
             ('disco_data', 'DISCO Data'),
+            ('disco_allocations', 'DISCO GENCO Rate Allocations'),
         ],
         string='Data Type', required=True, default='inputs',
     )
@@ -124,6 +138,7 @@ class NbetCsvUploadWizard(models.TransientModel):
             'inputs': (INPUTS_COLUMNS, INPUTS_SAMPLE_ROWS),
             'genco_data': (GENCO_COLUMNS, GENCO_SAMPLE_ROWS),
             'disco_data': (DISCO_COLUMNS, DISCO_SAMPLE_ROWS),
+            'disco_allocations': (ALLOCATION_COLUMNS, ALLOCATION_SAMPLE_ROWS),
         }
         return specs[self.data_type]
 
@@ -199,12 +214,19 @@ class NbetCsvUploadWizard(models.TransientModel):
         imported = 0
         errors = 0
 
+        # The allocation file is the source of truth for every DISCO it
+        # mentions: clear those DISCOs' existing allocation lines up front so
+        # re-imports replace rather than merge (merging could transiently
+        # exceed the 100% total and trip the constraint).
+        self._clear_existing_allocations(batch, cycle)
+
         for line in batch.line_ids.filtered(lambda l: l.status == 'mapped'):
             try:
                 handler = {
                     'cycle_input': self._commit_input_line,
                     'genco_data': self._commit_genco_line,
                     'disco_data': self._commit_disco_line,
+                    'disco_allocation': self._commit_allocation_line,
                 }
                 handler[line.record_type](line, cycle)
                 line.status = 'imported'
@@ -289,6 +311,8 @@ class NbetCsvUploadWizard(models.TransientModel):
             required_keys = {'participant_code'}
         elif self.data_type == 'disco_data':
             required_keys = {'participant_code'}
+        elif self.data_type == 'disco_allocations':
+            required_keys = {'participant_code', 'genco_code', 'allocation_percent'}
 
         if not required_keys.issubset(col_map.keys()):
             return None
@@ -311,6 +335,8 @@ class NbetCsvUploadWizard(models.TransientModel):
             self._stage_genco_row(batch, row, row_idx, col_map)
         elif self.data_type == 'disco_data':
             self._stage_disco_row(batch, row, row_idx, col_map)
+        elif self.data_type == 'disco_allocations':
+            self._stage_allocation_row(batch, row, row_idx, col_map)
 
     def _stage_input_row(self, batch, row, row_idx, col_map):
         code = self._get_cell(row, col_map, 'input_type_code')
@@ -394,6 +420,27 @@ class NbetCsvUploadWizard(models.TransientModel):
                 'status': 'mapped',
             })
 
+    def _stage_allocation_row(self, batch, row, row_idx, col_map):
+        disco_code = self._get_cell(row, col_map, 'participant_code')
+        genco_code = self._get_cell(row, col_map, 'genco_code')
+        if not disco_code and not genco_code:
+            return
+        if not disco_code or not genco_code:
+            raise ValueError('Both DISCO Code and GENCO Code are required.')
+        raw = self._get_cell(row, col_map, 'allocation_percent')
+        self.env['nbet.import.batch.line'].create({
+            'batch_id': batch.id,
+            'sheet_name': 'CSV',
+            'row_number': row_idx,
+            'record_type': 'disco_allocation',
+            'field_label': 'allocation_percent',
+            'raw_value': raw,
+            'parsed_value_float': self._safe_float(raw),
+            'participant_code': disco_code,
+            'genco_code': genco_code,
+            'status': 'mapped',
+        })
+
     # ─────────────────────────────────────────────────────────────────────────
     # Commit to real models
     # ─────────────────────────────────────────────────────────────────────────
@@ -457,6 +504,57 @@ class NbetCsvUploadWizard(models.TransientModel):
         elif hasattr(existing, line.field_label):
             existing.write({line.field_label: line.parsed_value_float})
 
+    def _get_disco_data_for_allocation(self, disco_code, cycle):
+        """Match a DISCO code and return (or create) its monthly data record."""
+        participant = self._match_participant(disco_code)
+        if not participant:
+            raise ValueError(f'Could not match DISCO: {disco_code}')
+        if participant.participant_type != 'disco':
+            raise ValueError(f'{participant.name} is not a DISCO.')
+        disco_data = self.env['nbet.disco.monthly.data'].search([
+            ('billing_cycle_id', '=', cycle.id),
+            ('participant_id', '=', participant.id),
+        ], limit=1)
+        if not disco_data:
+            disco_data = self.env['nbet.disco.monthly.data'].create({
+                'billing_cycle_id': cycle.id,
+                'participant_id': participant.id,
+            })
+        return disco_data
+
+    def _clear_existing_allocations(self, batch, cycle):
+        """Remove current allocation lines for every DISCO named in the batch."""
+        alloc_lines = batch.line_ids.filtered(
+            lambda l: l.status == 'mapped' and l.record_type == 'disco_allocation'
+        )
+        for disco_code in set(alloc_lines.mapped('participant_code')):
+            try:
+                disco_data = self._get_disco_data_for_allocation(disco_code, cycle)
+            except ValueError:
+                continue  # unmatched DISCO — the commit step reports the error
+            disco_data.allocation_line_ids.unlink()
+
+    def _commit_allocation_line(self, line, cycle):
+        disco_data = self._get_disco_data_for_allocation(line.participant_code, cycle)
+        genco = self._match_participant(line.genco_code)
+        if not genco:
+            raise ValueError(f'Could not match GENCO: {line.genco_code}')
+        if genco.participant_type != 'genco':
+            raise ValueError(f'{genco.name} is not a GENCO.')
+        existing = self.env['nbet.disco.genco.allocation'].search([
+            ('disco_data_id', '=', disco_data.id),
+            ('genco_id', '=', genco.id),
+        ], limit=1)
+        vals = {'allocation_percent': line.parsed_value_float}
+        if existing:
+            existing.write(vals)
+        else:
+            self.env['nbet.disco.genco.allocation'].create(dict(
+                vals,
+                disco_data_id=disco_data.id,
+                genco_id=genco.id,
+            ))
+
     # ─────────────────────────────────────────────────────────────────────────
     # Helpers
     # ─────────────────────────────────────────────────────────────────────────
@@ -488,11 +586,14 @@ class NbetCsvUploadWizard(models.TransientModel):
         rows_html = ''
         for line in lines:
             badge_cls = 'success' if line.status == 'mapped' else 'warning'
+            participant_label = line.participant_code or ''
+            if line.genco_code:
+                participant_label += f' → {line.genco_code}'
             rows_html += (
                 f'<tr>'
                 f'<td>{line.row_number}</td>'
                 f'<td>{line.record_type}</td>'
-                f'<td>{line.participant_code or ""}</td>'
+                f'<td>{participant_label}</td>'
                 f'<td>{line.field_label or ""}</td>'
                 f'<td>{line.raw_value or ""}</td>'
                 f'<td>{line.parsed_value_float:.4f}</td>'

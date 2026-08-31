@@ -37,6 +37,26 @@ class NbetDiscoMonthlyData(models.Model):
         help='Description of how this DISCO\'s share was allocated (e.g. ATC-based, metered).',
     )
 
+    # ── GENCO Rate Allocations ────────────────────────────────────────────────
+    allocation_line_ids = fields.One2many(
+        'nbet.disco.genco.allocation', 'disco_data_id',
+        string='GENCO Rate Allocations',
+        help='What percentage of this DISCO\'s bill is billed at each GENCO\'s '
+             'rates. The unallocated remainder is billed at the weighted '
+             'average of GENCO rates for the cycle.',
+    )
+    total_allocation_percent = fields.Float(
+        string='Total Allocated (%)', digits=(5, 2),
+        compute='_compute_total_allocation_percent',
+    )
+
+    @api.depends('allocation_line_ids.allocation_percent')
+    def _compute_total_allocation_percent(self):
+        for rec in self:
+            rec.total_allocation_percent = sum(
+                rec.allocation_line_ids.mapped('allocation_percent')
+            )
+
     # ── Applied DRO (frozen at billing time) ──────────────────────────────────
     applied_dro_id = fields.Many2one(
         'nbet.disco.dro', string='Applied DRO Record', tracking=True,

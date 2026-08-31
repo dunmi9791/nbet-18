@@ -55,8 +55,9 @@
                                 string="Compute All" class="btn-secondary"
                                 invisible="state not in ('input_loaded','calculated')"/>
                         <button name="action_review" type="object"
-                                string="Mark Reviewed"
-                                invisible="state != 'calculated'"/>
+                                string="Mark Reviewed" class="btn-primary"
+                                invisible="state != 'calculated'"
+                                groups="nbet_power_billing.group_nbet_billing_reviewer"/>
                         <button name="action_approve" type="object"
                                 string="Approve" class="btn-primary"
                                 invisible="state != 'reviewed'"
@@ -126,6 +127,10 @@
                                     class="oe_stat_button" icon="fa-list-alt">
                                 <field name="count_payment_advices" widget="statinfo" string="Payment Advices"/>
                             </button>
+                            <button name="action_view_collection_advices" type="object"
+                                    class="oe_stat_button" icon="fa-inbox">
+                                <field name="count_collection_advices" widget="statinfo" string="Collection Advices"/>
+                            </button>
                         </div>
 
                         <!-- Cash Position Mini Dashboard -->
@@ -167,6 +172,46 @@
                                         · out
                                         <field name="total_payable_outstanding" widget="monetary" class="d-inline"/>
                                     </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Meristem Collections Position -->
+                        <div class="o_horizontal_separator mt16">Meristem Collections</div>
+                        <div class="row">
+                            <div class="col-sm-6 col-md-3">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-primary" style="font-size:1.4rem;">
+                                        <field name="total_collection_advised" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Payments Advised</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-success" style="font-size:1.4rem;">
+                                        <field name="total_collection_in_bank" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Confirmed in Bank</span>
+                                    <small class="d-block text-muted">
+                                        <field name="collection_confirmed_percent" class="d-inline"/>% of advised
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-warning" style="font-size:1.4rem;">
+                                        <field name="total_collection_with_remita" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">With Remita</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="o_stat_info text-center p-3 border rounded">
+                                    <span class="o_stat_value text-danger" style="font-size:1.4rem;">
+                                        <field name="total_collection_not_seen" widget="monetary"/>
+                                    </span>
+                                    <span class="o_stat_text d-block text-muted">Not Seen</span>
                                 </div>
                             </div>
                         </div>

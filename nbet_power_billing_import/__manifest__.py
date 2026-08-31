@@ -8,8 +8,8 @@
         1. Legacy Excel Workbook Import — parses the full NBET billing workbook
            (Inputs + Rates sheets) via openpyxl with fuzzy header matching.
         2. CSV/Excel Upload — structured upload using downloadable templates
-           for three data categories: Billing Cycle Inputs, GENCO Operational
-           Data, and DISCO Data.
+           for four data categories: Billing Cycle Inputs, GENCO Operational
+           Data, DISCO Data, and DISCO GENCO Rate Allocations.
         Both wizards stage data into a reviewable batch before committing.
     """,
     'author': 'NBET IT',

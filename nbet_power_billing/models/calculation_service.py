@@ -85,11 +85,16 @@ class NbetCalculationService(models.TransientModel):
         t0 = time.time()
         cycle = self.env['nbet.billing.cycle'].browse(cycle_id)
         billing_inputs = self._get_billing_inputs(cycle)
+        snapshots = cycle.rate_snapshot_ids.filtered(lambda s: s.is_current)
+        wavg = self._compute_weighted_avg_rates(cycle, snapshots)
         count = 0
         errors = []
         for dd in cycle.disco_data_ids:
             try:
-                self._compute_disco_bill(cycle, dd.participant_id, billing_inputs, dd)
+                self._compute_disco_bill(
+                    cycle, dd.participant_id, billing_inputs, dd,
+                    snapshots=snapshots, wavg=wavg,
+                )
                 count += 1
             except Exception as e:
                 _logger.exception('DISCO bill computation failed for %s', dd.participant_id.name)
@@ -557,8 +562,70 @@ class NbetCalculationService(models.TransientModel):
     # DISCO Bill
     # ──────────────────────────────────────────────────────────────────────────
 
-    def _compute_disco_bill(self, cycle, participant, billing_inputs, disco_data):
-        """Compute or update the DISCO bill for one DISCO."""
+    def _compute_weighted_avg_rates(self, cycle, snapshots=None):
+        """Compute the weighted average of current GENCO rates for the cycle.
+
+        Weights come from GENCO monthly operational data:
+          - capacity rate weighted by invoiced_capacity_mw
+          - energy rate weighted by invoiced_energy_kwh
+
+        Returns:
+            dict: {
+                'capacity_rate': float, 'energy_rate': float,
+                'cap_weight_total': float, 'eng_weight_total': float,
+                'trace': dict,
+            }
+        Never raises: callers must check the weight totals before relying on
+        a rate (a zero weight total means the rate is unavailable).
+        """
+        if snapshots is None:
+            snapshots = cycle.rate_snapshot_ids.filtered(lambda s: s.is_current)
+        cap_weighted_sum = 0.0
+        cap_weight_total = 0.0
+        eng_weighted_sum = 0.0
+        eng_weight_total = 0.0
+        components = []
+        for snap in snapshots:
+            gd = cycle.genco_data_ids.filtered(
+                lambda d: d.participant_id == snap.participant_id
+            )[:1]
+            if not gd:
+                continue
+            cap_weighted_sum += snap.capacity_rate * gd.invoiced_capacity_mw
+            cap_weight_total += gd.invoiced_capacity_mw
+            eng_weighted_sum += snap.energy_rate * gd.invoiced_energy_kwh
+            eng_weight_total += gd.invoiced_energy_kwh
+            components.append({
+                'genco': snap.participant_id.name,
+                'capacity_rate': snap.capacity_rate,
+                'invoiced_capacity_mw': gd.invoiced_capacity_mw,
+                'energy_rate': snap.energy_rate,
+                'invoiced_energy_kwh': gd.invoiced_energy_kwh,
+            })
+        cap_rate = cap_weighted_sum / cap_weight_total if cap_weight_total else 0.0
+        eng_rate = eng_weighted_sum / eng_weight_total if eng_weight_total else 0.0
+        return {
+            'capacity_rate': cap_rate,
+            'energy_rate': eng_rate,
+            'cap_weight_total': cap_weight_total,
+            'eng_weight_total': eng_weight_total,
+            'trace': {
+                'method': 'weighted_average_by_invoiced_quantities',
+                'capacity_rate': cap_rate,
+                'energy_rate': eng_rate,
+                'components': components,
+            },
+        }
+
+    def _compute_disco_bill(self, cycle, participant, billing_inputs, disco_data,
+                            snapshots=None, wavg=None):
+        """Compute or update the DISCO bill for one DISCO.
+
+        The gross bill is split by the DISCO's GENCO allocation lines: each
+        allocated percentage is billed at that GENCO's current snapshot rates,
+        and any unallocated remainder is billed at the weighted average of
+        GENCO rates for the cycle.
+        """
         # Fetch applicable DRO and freeze it
         dro = self._compute_dro_allocation(participant, cycle.date_start)
         dro_pct = dro.dro_percent
@@ -569,21 +636,110 @@ class NbetCalculationService(models.TransientModel):
             'applied_dro_percent': dro_pct,
         })
 
-        # MAPPING NOTE: DISCO gross bill rate derivation — confirm with NBET team:
-        # Option A: Use average of GENCO rates weighted by allocated energy
-        # Option B: Use a NERC-published DISCO bulk supply tariff
-        # Current implementation: use a simple tariff of ₦1/kWh capacity + ₦2/kWh energy
-        # as a placeholder; REPLACE with actual DISCO bulk tariff logic.
-        # This is clearly marked for replacement.
-        # PLACEHOLDER RATES — replace with actual bulk supply tariff
-        PLACEHOLDER_CAPACITY_RATE = 1000.0  # ₦/MW/h — REPLACE
-        PLACEHOLDER_ENERGY_RATE = 3.5       # ₦/kWh — REPLACE
+        if snapshots is None:
+            snapshots = cycle.rate_snapshot_ids.filtered(lambda s: s.is_current)
+        if wavg is None:
+            wavg = self._compute_weighted_avg_rates(cycle, snapshots)
 
         hours = cycle.hours_in_period
-        cap_charge = disco_data.capacity_delivered_mw * hours * PLACEHOLDER_CAPACITY_RATE
-        eng_charge = disco_data.energy_delivered_kwh * PLACEHOLDER_ENERGY_RATE
-        gross_bill = cap_charge + eng_charge
+        charge_lines = []
+        seq = 10
+        total_pct = 0.0
 
+        def _add_charge(line_type, description, quantity, rate, trace):
+            nonlocal seq
+            amount = quantity * rate
+            if not amount:
+                return 0.0
+            charge_lines.append({
+                'line_type': line_type,
+                'description': description,
+                'quantity': quantity,
+                'rate': rate,
+                'amount': amount,
+                'formula_trace': json.dumps(trace, indent=2, default=str),
+                'sequence': seq,
+            })
+            seq += 10
+            return amount
+
+        # Portions billed at specific GENCO rates
+        for alloc in disco_data.allocation_line_ids:
+            snap = snapshots.filtered(
+                lambda s: s.participant_id == alloc.genco_id
+            )[:1]
+            if not snap:
+                raise UserError(
+                    f'No current rate snapshot for {alloc.genco_id.name} in cycle '
+                    f'"{cycle.name}". Compute rates before computing DISCO bills.'
+                )
+            pct = alloc.allocation_percent
+            total_pct += pct
+            frac = pct / 100.0
+            base_trace = {
+                'rate_source': 'genco_snapshot',
+                'genco': alloc.genco_id.name,
+                'rate_snapshot_id': snap.id,
+                'allocation_percent': pct,
+            }
+            _add_charge(
+                'capacity',
+                f'Capacity Charge — {pct:.2f}% @ {alloc.genco_id.name} rate',
+                disco_data.capacity_delivered_mw * frac * hours,
+                snap.capacity_rate,
+                dict(base_trace,
+                     capacity_delivered_mw=disco_data.capacity_delivered_mw,
+                     hours=hours),
+            )
+            _add_charge(
+                'energy',
+                f'Energy Charge — {pct:.2f}% @ {alloc.genco_id.name} rate',
+                disco_data.energy_delivered_kwh * frac,
+                snap.energy_rate,
+                dict(base_trace,
+                     energy_delivered_kwh=disco_data.energy_delivered_kwh),
+            )
+
+        # Unallocated remainder billed at the weighted average of GENCO rates
+        remainder_pct = max(0.0, 100.0 - total_pct)
+        if remainder_pct > 1e-6:
+            frac = remainder_pct / 100.0
+            wavg_trace = dict(wavg['trace'], allocation_percent=remainder_pct)
+            if disco_data.capacity_delivered_mw:
+                if not wavg['cap_weight_total']:
+                    raise UserError(
+                        f'Cannot bill {participant.name}: the weighted average '
+                        f'capacity rate is unavailable for cycle "{cycle.name}" '
+                        '(no current GENCO rate snapshots with invoiced capacity). '
+                        'Compute rates and load GENCO data first.'
+                    )
+                _add_charge(
+                    'capacity',
+                    f'Capacity Charge — {remainder_pct:.2f}% @ weighted avg GENCO rate',
+                    disco_data.capacity_delivered_mw * frac * hours,
+                    wavg['capacity_rate'],
+                    dict(wavg_trace,
+                         capacity_delivered_mw=disco_data.capacity_delivered_mw,
+                         hours=hours),
+                )
+            if disco_data.energy_delivered_kwh:
+                if not wavg['eng_weight_total']:
+                    raise UserError(
+                        f'Cannot bill {participant.name}: the weighted average '
+                        f'energy rate is unavailable for cycle "{cycle.name}" '
+                        '(no current GENCO rate snapshots with invoiced energy). '
+                        'Compute rates and load GENCO data first.'
+                    )
+                _add_charge(
+                    'energy',
+                    f'Energy Charge — {remainder_pct:.2f}% @ weighted avg GENCO rate',
+                    disco_data.energy_delivered_kwh * frac,
+                    wavg['energy_rate'],
+                    dict(wavg_trace,
+                         energy_delivered_kwh=disco_data.energy_delivered_kwh),
+                )
+
+        gross_bill = sum(l['amount'] for l in charge_lines)
         expected_payable = gross_bill * dro_pct / 100.0
         subsidy_amount = gross_bill - expected_payable
 
@@ -601,8 +757,6 @@ class NbetCalculationService(models.TransientModel):
             'energy_delivered_kwh': disco_data.energy_delivered_kwh,
             'applied_dro_id': dro.id,
             'applied_dro_percent': dro_pct,
-            'expected_payable_amount': expected_payable,
-            'subsidy_amount': subsidy_amount,
             'grant_amount': 0.0,
             'adjustment_amount': 0.0,
             'compute_date': fields.Datetime.now(),
@@ -618,27 +772,7 @@ class NbetCalculationService(models.TransientModel):
 
         # Rebuild bill lines
         bill.line_ids.unlink()
-        lines = []
-        if cap_charge:
-            lines.append({
-                'disco_bill_id': bill.id,
-                'line_type': 'capacity',
-                'description': 'Capacity Charge',
-                'quantity': disco_data.capacity_delivered_mw * hours,
-                'rate': PLACEHOLDER_CAPACITY_RATE,
-                'amount': cap_charge,
-                'sequence': 10,
-            })
-        if eng_charge:
-            lines.append({
-                'disco_bill_id': bill.id,
-                'line_type': 'energy',
-                'description': 'Energy Charge',
-                'quantity': disco_data.energy_delivered_kwh,
-                'rate': PLACEHOLDER_ENERGY_RATE,
-                'amount': eng_charge,
-                'sequence': 20,
-            })
+        lines = [dict(l, disco_bill_id=bill.id) for l in charge_lines]
         if subsidy_amount:
             lines.append({
                 'disco_bill_id': bill.id,
@@ -648,7 +782,7 @@ class NbetCalculationService(models.TransientModel):
                 'rate': -subsidy_amount,
                 'amount': -subsidy_amount,
                 'is_subsidy_line': True,
-                'sequence': 50,
+                'sequence': 50 + seq,
             })
         if lines:
             self.env['nbet.disco.bill.line'].create(lines)

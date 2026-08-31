@@ -10,6 +10,7 @@
                     <field name="participant_id"/>
                     <field name="capacity_delivered_mw" string="Cap. Delivered (MW)"/>
                     <field name="energy_delivered_kwh" string="Energy Del. (kWh)" optional="show"/>
+                    <field name="total_allocation_percent" string="Allocated %" optional="show"/>
                     <field name="applied_dro_percent" string="DRO %" widget="percentage"/>
                     <field name="expected_payable_amount" string="Expected Payable" optional="show"/>
                     <field name="subsidy_amount" string="Subsidy" optional="show"/>
@@ -45,6 +46,20 @@
                                 <field name="grant_amount"/>
                             </group>
                         </group>
+                        <group string="GENCO Rate Allocations">
+                            <field name="allocation_line_ids" nolabel="1" colspan="2">
+                                <list editable="bottom">
+                                    <field name="genco_id"/>
+                                    <field name="allocation_percent"/>
+                                </list>
+                            </field>
+                            <field name="total_allocation_percent" readonly="1"/>
+                        </group>
+                        <div class="text-muted" colspan="2">
+                            Each allocated percentage is billed at that GENCO's rates;
+                            the unallocated remainder is billed at the weighted average
+                            of GENCO rates for the cycle.
+                        </div>
                         <field name="remarks"/>
                     </sheet>
                     <chatter/>
