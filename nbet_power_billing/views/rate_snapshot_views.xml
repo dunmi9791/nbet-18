@@ -5,7 +5,8 @@
             <field name="name">nbet.rate.snapshot.list</field>
             <field name="model">nbet.rate.snapshot</field>
             <field name="arch" type="xml">
-                <list string="Rate Snapshots" decoration-muted="not is_current">
+                <list string="Rate Snapshots" decoration-muted="not is_current"
+                      decoration-danger="is_current and has_input_gaps">
                     <field name="billing_cycle_id"/>
                     <field name="participant_id"/>
                     <field name="contract_id" optional="show"/>
@@ -16,6 +17,7 @@
                     <field name="index_value_used" optional="show"/>
                     <field name="version" optional="show"/>
                     <field name="is_current" string="Current" widget="boolean"/>
+                    <field name="has_input_gaps" string="Fallbacks?" widget="boolean" optional="show"/>
                     <field name="compute_date" optional="show"/>
                 </list>
             </field>
@@ -52,6 +54,11 @@
                                 <field name="is_current" readonly="1"/>
                             </group>
                         </group>
+                        <field name="has_input_gaps" invisible="1"/>
+                        <div class="alert alert-danger" role="alert" invisible="not has_input_gaps">
+                            <strong>This rate was computed with input fallbacks:</strong>
+                            <field name="input_gap_notes" readonly="1" class="d-block"/>
+                        </div>
                         <separator string="Formula Trace (JSON)"/>
                         <field name="formula_trace_json" readonly="1" widget="ace" options="{'mode': 'json'}"/>
                         <field name="notes"/>

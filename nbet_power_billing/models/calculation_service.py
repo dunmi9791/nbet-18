@@ -55,14 +55,18 @@ class NbetCalculationService(models.TransientModel):
         genco_data_recs = cycle.genco_data_ids
         count = 0
         errors = []
+        warnings = []
         for gd in genco_data_recs:
             try:
-                self._compute_rate_snapshot(cycle, gd.participant_id, billing_inputs)
+                snapshot = self._compute_rate_snapshot(cycle, gd.participant_id, billing_inputs)
                 count += 1
+                if snapshot.has_input_gaps:
+                    warnings.append(f'{gd.participant_id.name}: {snapshot.input_gap_notes}')
             except Exception as e:
                 _logger.exception('Rate computation failed for %s', gd.participant_id.name)
                 errors.append(f'{gd.participant_id.name}: {e}')
-        self._log_run(cycle, 'rate_compute', count, 0, errors, time.time() - t0)
+        self._log_run(cycle, 'rate_compute', count, 0, errors, time.time() - t0,
+                      warnings=warnings)
 
     def compute_genco_bills_for_cycle(self, cycle_id):
         """Compute expected bills for all GENCOs with rate snapshots."""
@@ -200,6 +204,17 @@ class NbetCalculationService(models.TransientModel):
             'index_used': index_used,
         }
 
+        # Fallbacks the engine took (missing input → base value, formula
+        # error → 0 / base tariff), so a silently-wrong rate is visible.
+        gaps = []
+        for part in (cap_trace, eng_trace):
+            gaps += part.get('input_gaps', []) + part.get('eval_errors', [])
+            if part.get('eval_error'):
+                gaps.append(f"Formula error: {part['eval_error']}")
+            if part.get('error'):
+                gaps.append(part['error'])
+        gaps = list(dict.fromkeys(gaps))
+
         snapshot = self.env['nbet.rate.snapshot'].create_or_update(
             cycle.id, participant.id,
             {
@@ -210,6 +225,8 @@ class NbetCalculationService(models.TransientModel):
                 'index_value_used': index_used,
                 'tlf_used': tlf_used,
                 'formula_trace_json': json.dumps(trace, indent=2, default=str),
+                'has_input_gaps': bool(gaps),
+                'input_gap_notes': '\n'.join(gaps) or False,
             }
         )
         return snapshot
@@ -264,6 +281,7 @@ class NbetCalculationService(models.TransientModel):
 
         if contract.uses_fx_adjustment and contract.base_fx_rate:
             # MAPPING NOTE: verify whether CBN_FX_CENTRAL or CBN_FX_SELLING applies here
+            self._note_missing_input(trace, billing_inputs, 'CBN_FX_CENTRAL', 'FX adjustment')
             fx_rate = billing_inputs.get('CBN_FX_CENTRAL', contract.base_fx_rate)
             adj = fx_rate / contract.base_fx_rate
             steps.append({
@@ -278,6 +296,7 @@ class NbetCalculationService(models.TransientModel):
 
         if contract.uses_tlf_adjustment and contract.base_tlf:
             # MAPPING NOTE: old_tlf vs new_tlf depends on contract — confirm with NBET team
+            self._note_missing_input(trace, billing_inputs, 'TLF_NEW', 'TLF adjustment')
             tlf = billing_inputs.get('TLF_NEW', contract.base_tlf)
             adj = tlf / contract.base_tlf
             steps.append({
@@ -292,6 +311,7 @@ class NbetCalculationService(models.TransientModel):
 
         if contract.uses_index_adjustment and contract.base_index_value:
             # MAPPING NOTE: Agip index only for gas GENCOs — verify applicability
+            self._note_missing_input(trace, billing_inputs, 'AGIP_INDEX', 'Index adjustment')
             index = billing_inputs.get('AGIP_INDEX', contract.base_index_value)
             adj = index / contract.base_index_value
             steps.append({
@@ -369,6 +389,7 @@ class NbetCalculationService(models.TransientModel):
             rate = contract.base_energy_tariff
             steps = []
             if contract.uses_fx_adjustment and contract.base_fx_rate:
+                self._note_missing_input(trace, billing_inputs, 'CBN_FX_CENTRAL', 'FX adjustment')
                 fx_rate = billing_inputs.get('CBN_FX_CENTRAL', contract.base_fx_rate)
                 adj = fx_rate / contract.base_fx_rate
                 rate *= adj
@@ -817,15 +838,23 @@ class NbetCalculationService(models.TransientModel):
         # Build param context from contract's rate parameter table
         ctx = {}
         param_trace = []
+        input_gaps = []
+        eval_errors = []
         for param in contract.rate_param_ids:
             if not param.code:
                 continue
             base_val = param.base_value
+            missing = bool(param.billing_input_code) and param.billing_input_code not in billing_inputs
             current_val = (
                 billing_inputs.get(param.billing_input_code, base_val)
                 if param.billing_input_code
                 else base_val
             )
+            if missing:
+                input_gaps.append(
+                    f'{param.billing_input_code} missing — rate parameter '
+                    f'"{param.code}" used its base value {base_val}'
+                )
             ctx[f'base_{param.code}'] = base_val
             ctx[f'current_{param.code}'] = current_val
             param_trace.append({
@@ -834,6 +863,7 @@ class NbetCalculationService(models.TransientModel):
                 'base': base_val,
                 'current': current_val,
                 'input_code': param.billing_input_code,
+                'fallback_to_base': missing,
             })
 
         # Evaluate component lines in sequence order
@@ -857,6 +887,7 @@ class NbetCalculationService(models.TransientModel):
                     'MYTO component eval failed — line: %r | expr: %r | error: %s',
                     line.name, line.formula_expression, exc,
                 )
+                eval_errors.append(f'{line.name}: formula failed ({exc}) — used 0')
                 result = 0.0
 
             # Accumulate under the component code so subsequent lines can reference it
@@ -891,6 +922,8 @@ class NbetCalculationService(models.TransientModel):
                 'mode': 'myto_components',
                 'params': param_trace,
                 'components': component_trace,
+                'input_gaps': input_gaps,
+                'eval_errors': eval_errors,
             },
         }
 
@@ -925,16 +958,27 @@ class NbetCalculationService(models.TransientModel):
                 return 0.0
         return 0.0
 
-    def _log_run(self, cycle, run_type, genco_count, disco_count, errors, duration):
+    def _note_missing_input(self, trace, billing_inputs, code, label):
+        """Record in the trace that an input was absent and a base value used."""
+        if code not in billing_inputs:
+            trace.setdefault('input_gaps', []).append(
+                f'{code} missing — {label} used the contract base value (no adjustment)'
+            )
+
+    def _log_run(self, cycle, run_type, genco_count, disco_count, errors, duration,
+                 warnings=None):
         """Create a billing run log entry."""
         status = 'success' if not errors else ('partial' if genco_count + disco_count > 0 else 'failed')
+        notes = f'Processed {genco_count} GENCO + {disco_count} DISCO records.'
+        if warnings:
+            notes += '\n\nComputed with input fallbacks:\n' + '\n'.join(warnings)
         self.env['nbet.billing.run.log'].create({
             'billing_cycle_id': cycle.id,
             'run_type': run_type,
             'status': status,
             'genco_records_affected': genco_count,
             'disco_records_affected': disco_count,
-            'notes': f'Processed {genco_count} GENCO + {disco_count} DISCO records.',
+            'notes': notes,
             'error_log': '\n'.join(errors) if errors else False,
             'duration_seconds': duration,
         })

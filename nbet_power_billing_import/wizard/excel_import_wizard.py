@@ -187,10 +187,13 @@ class NbetExcelImportWizard(models.TransientModel):
         self.state = 'done'
 
         # Post to cycle chatter
+        # Re-check contract inputs for the GENCOs now in the cycle
+        cycle._refresh_readiness()
         cycle.message_post(
             body=(
                 f'Excel import completed: {imported} records imported, '
                 f'{errors} errors. Batch: {batch.name}'
+                f'{cycle._get_readiness_note()}'
             )
         )
 

@@ -42,6 +42,10 @@
                         <button name="action_load_inputs" type="object"
                                 string="Mark Inputs Loaded" class="btn-primary"
                                 invisible="state != 'draft'"/>
+                        <button name="action_check_inputs" type="object"
+                                string="Check Inputs" icon="fa-check-square-o"
+                                invisible="state not in ('draft','input_loaded','calculated','reviewed')"
+                                help="Check the GENCOs in this cycle against their contract formulas and list any missing inputs."/>
                         <button name="action_compute_rates" type="object"
                                 string="Compute Rates"
                                 invisible="state not in ('input_loaded','calculated','reviewed')"/>
@@ -131,6 +135,28 @@
                                     class="oe_stat_button" icon="fa-inbox">
                                 <field name="count_collection_advices" widget="statinfo" string="Collection Advices"/>
                             </button>
+                        </div>
+
+                        <!-- Input Readiness Banner -->
+                        <div class="alert alert-danger" role="alert"
+                             invisible="not readiness_blocking_count or state in ('posted','locked','cancelled')">
+                            <strong>
+                                <field name="readiness_blocking_count" class="oe_inline"/> blocking input issue(s)
+                            </strong>
+                            — calculation and review are blocked until these are fixed.
+                            <field name="readiness_summary" readonly="1" class="d-block mt-2"/>
+                        </div>
+                        <div class="alert alert-warning" role="alert"
+                             invisible="readiness_blocking_count or not readiness_warning_count or state in ('posted','locked','cancelled')">
+                            <strong>
+                                <field name="readiness_warning_count" class="oe_inline"/> input warning(s)
+                            </strong>
+                            — calculation can proceed, but check these values.
+                            <field name="readiness_summary" readonly="1" class="d-block mt-2"/>
+                        </div>
+                        <div class="alert alert-success" role="status"
+                             invisible="not readiness_checked_at or readiness_blocking_count or readiness_warning_count or state in ('posted','locked','cancelled')">
+                            All contract inputs are present for the GENCOs in this cycle.
                         </div>
 
                         <!-- Cash Position Mini Dashboard -->
@@ -309,6 +335,26 @@
                                     </list>
                                 </field>
                             </page>
+                            <page string="Input Readiness" name="readiness">
+                                <p class="text-muted">
+                                    Checked against the active contract of every GENCO with operational
+                                    data in this cycle. Last checked: <field name="readiness_checked_at" readonly="1" class="oe_inline"/>
+                                </p>
+                                <field name="readiness_ids" readonly="1">
+                                    <list decoration-danger="severity == 'blocking'"
+                                          decoration-warning="severity == 'warning'">
+                                        <field name="severity" widget="badge"
+                                               decoration-danger="severity == 'blocking'"
+                                               decoration-warning="severity == 'warning'"/>
+                                        <field name="participant_id"/>
+                                        <field name="issue_type"/>
+                                        <field name="input_code"/>
+                                        <field name="input_type_id" optional="hide"/>
+                                        <field name="contract_id" optional="show"/>
+                                        <field name="description"/>
+                                    </list>
+                                </field>
+                            </page>
                             <page string="GENCO Operational Data" name="genco_data">
                                 <field name="genco_data_ids">
                                     <list>
@@ -337,7 +383,7 @@
                             </page>
                             <page string="Rate Snapshots" name="rates">
                                 <field name="rate_snapshot_ids">
-                                    <list>
+                                    <list decoration-danger="is_current and has_input_gaps">
                                         <field name="participant_id"/>
                                         <field name="capacity_rate" string="Cap. Rate (₦/MW/h)"/>
                                         <field name="energy_rate" string="Eng. Rate (₦/kWh)"/>
@@ -346,6 +392,8 @@
                                         <field name="index_value_used" string="Index Used" optional="show"/>
                                         <field name="version" optional="show"/>
                                         <field name="is_current" string="Current?" widget="boolean" optional="show"/>
+                                        <field name="has_input_gaps" string="Fallbacks?" widget="boolean" optional="show"/>
+                                        <field name="input_gap_notes" optional="hide"/>
                                         <field name="compute_date" optional="show"/>
                                     </list>
                                 </field>

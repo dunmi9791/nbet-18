@@ -47,6 +47,12 @@ class NbetRateSnapshot(models.Model):
         help='JSON dump of the full calculation trace dict produced by the rate engine.',
     )
     notes = fields.Text(string='Notes')
+    has_input_gaps = fields.Boolean(
+        string='Input Fallbacks Used', readonly=True,
+        help='The rate engine fell back to a base value (missing input) or hit a '
+             'formula error while computing this snapshot.',
+    )
+    input_gap_notes = fields.Text(string='Input Fallback Details', readonly=True)
 
     # ── Version Tracking ──────────────────────────────────────────────────────
     compute_date = fields.Datetime(

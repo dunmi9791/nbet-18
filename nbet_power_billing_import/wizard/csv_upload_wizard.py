@@ -238,11 +238,14 @@ class NbetCsvUploadWizard(models.TransientModel):
 
         batch.state = 'confirmed'
         self.state = 'done'
+        # Re-check contract inputs for the GENCOs now in the cycle
+        cycle._refresh_readiness()
         cycle.message_post(
             body=(
                 f'CSV/Excel import completed ({self.data_type}): '
                 f'{imported} records imported, {errors} errors. '
                 f'Batch: {batch.name}'
+                f'{cycle._get_readiness_note()}'
             )
         )
         return {

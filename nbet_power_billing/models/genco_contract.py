@@ -5,8 +5,40 @@ Stores the contractual rate structure, MYTO parameters, and formula mode for
 each generation company.  The formula_mode field controls which calculation
 path the rate engine uses for this GENCO.
 """
+import ast
+
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
+from odoo.tools.safe_eval import _BUILTINS
+
+# Formula variables the parametric / python_expression paths read from fixed
+# billing input codes (see nbet.calculation.service._build_eval_context).
+EXPRESSION_INPUT_CODES = {
+    'fx_rate': 'CBN_FX_CENTRAL',
+    'tlf': 'TLF_NEW',
+    'index': 'AGIP_INDEX',
+}
+EXPRESSION_CONTEXT_NAMES = {
+    'base_capacity', 'base_energy', 'fx_rate', 'base_fx', 'tlf', 'base_tlf',
+    'index', 'base_index', 'hours', 'capacity_sent_out', 'net_energy',
+    'invoiced_capacity', 'invoiced_energy',
+}
+
+
+def formula_names(expression):
+    """Return the free variable names a formula reads (builtins excluded).
+
+    Raises SyntaxError when the expression cannot be parsed.
+    """
+    tree = ast.parse(expression.strip(), mode='eval')
+    bound = set()
+    loaded = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name):
+            (loaded if isinstance(node.ctx, ast.Load) else bound).add(node.id)
+        elif isinstance(node, ast.arg):
+            bound.add(node.arg)
+    return loaded - bound - set(_BUILTINS)
 
 
 class NbetGencoContract(models.Model):
@@ -152,6 +184,107 @@ class NbetGencoContract(models.Model):
 
     def action_reset_to_draft(self):
         self.write({'state': 'draft'})
+
+    # ── Input Requirements ─────────────────────────────────────────────────────
+    def _get_input_requirements(self):
+        """Work out what this contract's rate formulas need from a billing cycle.
+
+        Mirrors the lookups nbet.calculation.service performs for each
+        formula_mode, so the billing cycle can flag gaps before calculating.
+
+        Returns:
+            tuple(dict, list):
+              inputs       — {input_code: [reason, ...]} billing inputs read
+              setup_issues — [message, ...] contract set-up problems that make
+                             the engine silently fall back (bad formula, flag
+                             enabled with a zero base value, ...)
+        """
+        self.ensure_one()
+        inputs = {}
+        issues = []
+
+        def need(code, reason):
+            inputs.setdefault(code, []).append(reason)
+
+        def names_of(line):
+            try:
+                return formula_names(line.formula_expression)
+            except SyntaxError as e:
+                issues.append(f'{line.name}: formula has a syntax error ({e.msg}).')
+                return None
+
+        lines = self.line_ids.filtered('active')
+        mode = self.formula_mode
+
+        if mode == 'parametric':
+            for flag, base_field, code, label in (
+                ('uses_fx_adjustment', 'base_fx_rate', 'CBN_FX_CENTRAL', 'FX adjustment'),
+                ('uses_tlf_adjustment', 'base_tlf', 'TLF_NEW', 'TLF adjustment'),
+                ('uses_index_adjustment', 'base_index_value', 'AGIP_INDEX', 'Index adjustment'),
+            ):
+                if not self[flag]:
+                    continue
+                if not self[base_field]:
+                    issues.append(
+                        f'{label} is enabled but {self._fields[base_field].string} '
+                        'is 0, so the adjustment is skipped.'
+                    )
+                else:
+                    need(code, label)
+
+        elif mode == 'python_expression':
+            for line in lines.filtered(
+                lambda l: l.basis == 'formula' and l.formula_expression
+                and l.component_type in ('capacity', 'energy')
+            ):
+                names = names_of(line)
+                if names is None:
+                    continue
+                for name in sorted(names - EXPRESSION_CONTEXT_NAMES):
+                    issues.append(f'{line.name}: formula uses unknown name "{name}".')
+                for var, code in EXPRESSION_INPUT_CODES.items():
+                    if var in names:
+                        need(code, f'{line.name} formula ({var})')
+
+        elif mode == 'structured_components':
+            for line in lines.filtered(lambda l: l.component_type in ('capacity', 'energy')):
+                if line.basis == 'input_reference':
+                    if line.input_type_code:
+                        need(line.input_type_code, line.name)
+                    else:
+                        issues.append(
+                            f'{line.name}: basis is Billing Input Reference '
+                            'but no Input Type Code is set.'
+                        )
+                elif line.basis == 'formula' and line.formula_expression:
+                    # Structured formulas are evaluated directly against the
+                    # billing input dict, so every name is an input code.
+                    for name in sorted(names_of(line) or ()):
+                        need(name, f'{line.name} formula')
+
+        elif mode == 'myto_components':
+            params = self.rate_param_ids.filtered('code')
+            known = {'base_value'}
+            for p in params:
+                known |= {f'base_{p.code}', f'current_{p.code}'}
+            used = set()
+            for line in lines.filtered(lambda l: l.basis == 'formula' and l.formula_expression):
+                names = names_of(line)
+                if names is not None:
+                    used |= names
+                    for name in sorted(names - known):
+                        issues.append(
+                            f'{line.name}: formula uses "{name}", which is not a rate '
+                            'parameter or an earlier component code.'
+                        )
+                if line.component_code:
+                    known.add(line.component_code)
+            # A param without an input code is a deliberate constant (base value).
+            for p in params:
+                if p.billing_input_code and f'current_{p.code}' in used:
+                    need(p.billing_input_code, f'rate parameter "{p.code}" ({p.name})')
+
+        return inputs, issues
 
     # ── Name get ──────────────────────────────────────────────────────────────
     def name_get(self):

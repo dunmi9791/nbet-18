@@ -68,3 +68,6 @@ access_nbet_collection_advice_line_officer,nbet.collection.advice.line officer,m
 access_nbet_collection_advice_line_admin,nbet.collection.advice.line admin,model_nbet_collection_advice_line,group_nbet_admin,1,1,1,1
 access_nbet_collection_confirmation_officer,nbet.collection.confirmation officer,model_nbet_collection_confirmation,group_nbet_billing_officer,1,1,1,0
 access_nbet_collection_confirmation_admin,nbet.collection.confirmation admin,model_nbet_collection_confirmation,group_nbet_admin,1,1,1,1
+access_nbet_billing_cycle_readiness_officer,nbet.billing.cycle.readiness officer,model_nbet_billing_cycle_readiness,group_nbet_billing_officer,1,1,1,1
+access_nbet_billing_cycle_readiness_ocma,nbet.billing.cycle.readiness ocma,model_nbet_billing_cycle_readiness,group_nbet_ocma_head,1,0,0,0
+access_nbet_billing_cycle_readiness_md,nbet.billing.cycle.readiness md,model_nbet_billing_cycle_readiness,group_nbet_md,1,0,0,0

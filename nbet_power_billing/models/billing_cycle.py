@@ -9,6 +9,8 @@ State Machine:
   Any state → cancelled (admin only)
   calculated/reviewed → draft (admin only, for recompute)
 """
+from markupsafe import Markup, escape
+
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
 import logging
@@ -104,6 +106,21 @@ class NbetBillingCycle(models.Model):
     collection_advice_ids = fields.One2many(
         'nbet.collection.advice', 'billing_cycle_id',
         string='Collection Advices',
+    )
+
+    # ── Input Readiness ────────────────────────────────────────────────────────
+    readiness_ids = fields.One2many(
+        'nbet.billing.cycle.readiness', 'billing_cycle_id', string='Input Readiness',
+    )
+    readiness_checked_at = fields.Datetime(string='Inputs Last Checked', readonly=True)
+    readiness_blocking_count = fields.Integer(
+        compute='_compute_readiness', string='Blocking Input Issues',
+    )
+    readiness_warning_count = fields.Integer(
+        compute='_compute_readiness', string='Input Warnings',
+    )
+    readiness_summary = fields.Html(
+        compute='_compute_readiness', string='Readiness Summary', sanitize=False,
     )
 
     # ── Smart Button Counts ────────────────────────────────────────────────────
@@ -353,28 +370,189 @@ class NbetBillingCycle(models.Model):
                     f'Billing cycle "{rec.name}" is {rec.state} and cannot be modified.'
                 )
 
+    # ── Input Readiness ────────────────────────────────────────────────────────
+    @api.depends('readiness_ids.severity', 'readiness_ids.issue_type',
+                 'readiness_ids.input_code', 'readiness_ids.participant_id',
+                 'readiness_ids.description')
+    def _compute_readiness(self):
+        for rec in self:
+            lines = rec.readiness_ids
+            rec.readiness_blocking_count = len(lines.filtered(lambda l: l.severity == 'blocking'))
+            rec.readiness_warning_count = len(lines) - rec.readiness_blocking_count
+            rec.readiness_summary = rec._render_readiness_summary(lines)
+
+    @api.model
+    def _render_readiness_summary(self, lines):
+        """HTML list of issues: input gaps grouped by input code (one entry
+        fixes every GENCO listed), other issues listed per GENCO."""
+        if not lines:
+            return False
+        items = []
+        for issue_type, label in (('missing_input', 'not entered'), ('zero_input', 'entered as 0')):
+            by_code = {}
+            for line in lines.filtered(lambda l: l.issue_type == issue_type):
+                by_code.setdefault(line.input_code, []).append(line.participant_id.name)
+            for code, gencos in sorted(by_code.items()):
+                items.append(Markup('<li><b>%s</b> %s — needed by %s</li>') % (
+                    code, label, ', '.join(sorted(set(gencos)))))
+        for line in lines.filtered(
+            lambda l: l.issue_type not in ('missing_input', 'zero_input')
+        ):
+            items.append(Markup('<li><b>%s</b>: %s</li>') % (
+                line.participant_id.name or '', line.description or ''))
+        return Markup('<ul class="mb-0">%s</ul>') % Markup('').join(items)
+
+    def _collect_readiness_issues(self):
+        """Check every participating GENCO's contract against the cycle's inputs.
+
+        A GENCO participates when it has monthly operational data in the cycle.
+        Returns a list of nbet.billing.cycle.readiness create values.
+        """
+        self.ensure_one()
+        svc = self.env['nbet.calculation.service']
+        inputs = svc._get_billing_inputs(self)
+        input_types = {}
+        issues = []
+        for gd in self.genco_data_ids:
+            genco = gd.participant_id
+            contract = svc._get_active_contract(genco, self)
+            base = {
+                'billing_cycle_id': self.id,
+                'participant_id': genco.id,
+                'contract_id': contract.id,
+            }
+            if not contract:
+                issues.append(dict(
+                    base, severity='blocking', issue_type='no_contract',
+                    description=f'No active contract valid on {self.date_start}; '
+                                'its rates would be computed as 0.',
+                ))
+                continue
+
+            required, setup_issues = contract._get_input_requirements()
+            for message in setup_issues:
+                issues.append(dict(
+                    base, severity='blocking', issue_type='setup_gap',
+                    description=f'{contract.contract_code}: {message}',
+                ))
+
+            for code, reasons in sorted(required.items()):
+                if code not in input_types:
+                    input_types[code] = self.env['nbet.billing.input.type'].search(
+                        [('code', '=', code)], limit=1)
+                vals = dict(
+                    base, input_code=code, input_type_id=input_types[code].id,
+                )
+                needed_for = ', '.join(dict.fromkeys(reasons))
+                if code not in inputs:
+                    note = '' if input_types[code] else ' No Billing Input Type has this code.'
+                    issues.append(dict(
+                        vals, severity='blocking', issue_type='missing_input',
+                        description=f'{code} not entered — needed for {needed_for}.{note}',
+                    ))
+                elif not inputs[code]:
+                    issues.append(dict(
+                        vals, severity='warning', issue_type='zero_input',
+                        description=f'{code} is 0 — used by {needed_for}.',
+                    ))
+
+            if contract.has_capacity_charge and not gd.invoiced_capacity_mw:
+                issues.append(dict(
+                    base, severity='warning', issue_type='missing_monthly_data',
+                    description='Invoiced Capacity (MW) is 0, so the capacity charge will be 0.',
+                ))
+            if contract.has_energy_charge and not gd.invoiced_energy_kwh:
+                issues.append(dict(
+                    base, severity='warning', issue_type='missing_monthly_data',
+                    description='Invoiced Energy (kWh) is 0, so the energy charge will be 0.',
+                ))
+        return issues
+
+    def _refresh_readiness(self):
+        for rec in self:
+            rec.readiness_ids.unlink()
+            self.env['nbet.billing.cycle.readiness'].create(rec._collect_readiness_issues())
+            rec.readiness_checked_at = fields.Datetime.now()
+
+    def _get_readiness_note(self):
+        """One-line chatter suffix summarising the last readiness check."""
+        self.ensure_one()
+        if not (self.readiness_blocking_count or self.readiness_warning_count):
+            return ' Input check: all contract inputs present.'
+        return (
+            f' Input check: {self.readiness_blocking_count} blocking issue(s), '
+            f'{self.readiness_warning_count} warning(s) — see Input Readiness.'
+        )
+
+    def action_check_inputs(self):
+        """Rebuild the readiness list for the GENCOs participating in the cycle."""
+        self._check_not_locked()
+        self._refresh_readiness()
+
+    def _get_blocked_by_inputs_action(self, action_label):
+        """Refresh readiness; if any cycle has blocking gaps, return a
+        notification action explaining them (the caller must then stop).
+        Returns False when every cycle is ready."""
+        self._refresh_readiness()
+        blocking = self.readiness_ids.filtered(lambda l: l.severity == 'blocking')
+        if not blocking:
+            return False
+        gaps = []
+        codes = {}
+        for line in blocking:
+            if line.issue_type == 'missing_input':
+                codes.setdefault(line.input_code, set()).add(line.participant_id.name)
+            else:
+                gaps.append(f'{line.participant_id.name}: {line.description}')
+        gaps = [
+            f'{code} missing ({", ".join(sorted(gencos))})'
+            for code, gencos in sorted(codes.items())
+        ] + gaps
+        shown = '; '.join(gaps[:8]) + (f'; and {len(gaps) - 8} more' if len(gaps) > 8 else '')
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': f'{action_label} blocked — {len(blocking)} input issue(s)',
+                'message': f'{shown}. See the Input Readiness tab.',
+                'type': 'danger',
+                'sticky': True,
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
+        }
+
     # ── State Transitions ──────────────────────────────────────────────────────
     def action_load_inputs(self):
         self._check_not_locked()
+        self._refresh_readiness()
         for rec in self:
             if rec.state == 'draft':
                 rec.state = 'input_loaded'
-                rec.message_post(body='Inputs marked as loaded.')
+                rec.message_post(body=f'Inputs marked as loaded.{rec._get_readiness_note()}')
 
     def action_compute_rates(self):
         self._check_not_locked()
+        blocked = self._get_blocked_by_inputs_action('Rate computation')
+        if blocked:
+            return blocked
         for rec in self:
             svc = self.env['nbet.calculation.service'].create({})
             svc.compute_rates_for_cycle(rec.id)
 
     def action_compute_genco_bills(self):
         self._check_not_locked()
+        blocked = self._get_blocked_by_inputs_action('GENCO bill computation')
+        if blocked:
+            return blocked
         for rec in self:
             svc = self.env['nbet.calculation.service'].create({})
             svc.compute_genco_bills_for_cycle(rec.id)
 
     def action_compute_disco_bills(self):
         self._check_not_locked()
+        blocked = self._get_blocked_by_inputs_action('DISCO bill computation')
+        if blocked:
+            return blocked
         for rec in self:
             svc = self.env['nbet.calculation.service'].create({})
             svc.compute_disco_bills_for_cycle(rec.id)
@@ -382,6 +560,9 @@ class NbetBillingCycle(models.Model):
     def action_calculate(self):
         """Full compute: rates + GENCO bills + DISCO bills."""
         self._check_not_locked()
+        blocked = self._get_blocked_by_inputs_action('Calculation')
+        if blocked:
+            return blocked
         for rec in self:
             svc = self.env['nbet.calculation.service'].create({})
             svc.run_for_cycle(rec.id)
@@ -395,6 +576,10 @@ class NbetBillingCycle(models.Model):
         for rec in self:
             if rec.state != 'calculated':
                 raise UserError('Billing cycle must be Calculated before it can be reviewed.')
+        blocked = self._get_blocked_by_inputs_action('Review')
+        if blocked:
+            return blocked
+        for rec in self:
             rec.state = 'reviewed'
             rec.message_post(body=f'Cycle reviewed by {self.env.user.name}.')
 
