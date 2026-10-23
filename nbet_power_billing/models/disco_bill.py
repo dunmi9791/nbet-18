@@ -153,13 +153,33 @@ class NbetDiscoBill(models.Model):
         self.ensure_one()
         if self.invoice_move_id:
             return self.action_view_invoice()
+        if not self.participant_id.partner_id:
+            raise ValidationError(
+                f'No invoice could be created for {self.participant_id.name}: '
+                'the DISCO has no linked Odoo Contact. Set "Odoo Contact" on the '
+                'market participant and try again.'
+            )
         acct_svc = self.env['nbet.accounting.service'].create({})
-        moves = acct_svc.create_disco_customer_invoice(self)
+        cfg = self.env['nbet.billing.config'].get_config(self.company_id)
+        include_subsidy = cfg.disco_invoice_mode == 'full_with_credit'
+        missing = sorted({
+            dict(l._fields['line_type'].selection).get(l.line_type, l.line_type)
+            for l in self.line_ids
+            if (include_subsidy or not l.is_subsidy_line)
+            and not acct_svc._get_account_for_line_type(l.line_type, 'disco', cfg)
+        })
+        if not self.line_ids:
+            raise ValidationError(
+                f'No invoice could be created for {self.participant_id.name}: '
+                'the bill has no lines. Recompute the DISCO bills for this cycle.'
+            )
+        moves = acct_svc.create_disco_customer_invoice(self, cfg)
         if not moves:
             raise ValidationError(
-                f'No invoice could be created for {self.participant_id.name}. '
-                'Check that the DISCO has a linked partner and that the billing '
-                'accounts are configured.'
+                f'No invoice could be created for {self.participant_id.name}: '
+                f'no revenue account is configured for {", ".join(missing) or "the bill lines"}. '
+                'Set the accounts in NBET Power Billing > Configuration > Billing '
+                'Configuration (or Settings > NBET Power Billing).'
             )
         self.invoice_move_id = moves[0].id
         self.state = 'invoiced'
