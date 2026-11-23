@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NBET HR Leave Portal',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.1.0',
     'category': 'Human Resources/Time Off',
     'summary': 'Let employees request and track their time off from the portal',
     'description': """
@@ -28,6 +28,12 @@ user, so a portal user can only ever see and manage their own time off.
         'views/portal_templates.xml',
         'views/hr_employee_views.xml',
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'nbet_hr_leave_portal/static/src/js/leave_form.js',
+            'nbet_hr_leave_portal/static/src/scss/leave_portal.scss',
+        ],
+    },
     'installable': True,
     'application': False,
     'auto_install': False,
