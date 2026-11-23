@@ -191,6 +191,7 @@
     <!-- ============================================================ -->
     <template id="portal_leave_new" name="New Time Off Request">
         <t t-call="portal.portal_layout">
+            <t t-set="is_half" t-value="form.get('request_unit_half') in ('on', 'true', '1')"/>
             <div class="row">
                 <div class="col-lg-8">
                     <h3>New Time Off Request</h3>
@@ -199,7 +200,8 @@
                         <t t-esc="error"/>
                     </div>
 
-                    <form action="/my/leave/new" method="post" class="mt-3">
+                    <form action="/my/leave/new" method="post" enctype="multipart/form-data"
+                          class="mt-3 o_nbet_leave_form">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
                         <div class="mb-3">
@@ -209,6 +211,9 @@
                                 <option value="">Select a type...</option>
                                 <t t-foreach="leave_types" t-as="lt">
                                     <option t-att-value="lt.id"
+                                            t-att-data-half-day="'1' if lt.request_unit in half_day_units else '0'"
+                                            t-att-data-support-document="'1' if lt.support_document else '0'"
+                                            t-att-data-requires-allocation="'1' if lt.requires_allocation == 'yes' else '0'"
                                             t-att-selected="form.get('holiday_status_id') == str(lt.id) or None">
                                         <t t-esc="lt.display_name"/>
                                     </option>
@@ -216,21 +221,45 @@
                             </select>
                         </div>
 
+                        <div class="mb-3 o_nbet_leave_half_day d-none">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input"
+                                       name="request_unit_half" id="request_unit_half"
+                                       t-att-checked="is_half or None"/>
+                                <label class="form-check-label" for="request_unit_half">Half day</label>
+                            </div>
+                            <select name="request_date_from_period" id="request_date_from_period"
+                                    class="form-select form-select-sm w-auto mt-2 o_nbet_leave_period d-none">
+                                <option value="am" t-att-selected="form.get('request_date_from_period') != 'pm' or None">Morning</option>
+                                <option value="pm" t-att-selected="form.get('request_date_from_period') == 'pm' or None">Afternoon</option>
+                            </select>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label" for="request_date_from">From</label>
+                                <label class="form-label o_nbet_leave_from_label" for="request_date_from">From</label>
                                 <input type="date" name="request_date_from"
                                        id="request_date_from" class="form-control"
                                        t-att-value="form.get('request_date_from')"
                                        required="required"/>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-6 mb-3 o_nbet_leave_to">
                                 <label class="form-label" for="request_date_to">To</label>
                                 <input type="date" name="request_date_to"
                                        id="request_date_to" class="form-control"
                                        t-att-value="form.get('request_date_to')"
                                        required="required"/>
                             </div>
+                        </div>
+
+                        <div class="o_nbet_leave_preview alert alert-light border d-none" role="status"
+                             aria-live="polite"/>
+
+                        <div class="mb-3 o_nbet_leave_attachment d-none">
+                            <label class="form-label" for="attachment">Supporting document</label>
+                            <input type="file" name="attachment" id="attachment" class="form-control"
+                                   accept=".pdf,.jpg,.jpeg,.png"/>
+                            <div class="form-text">PDF, JPG or PNG, up to 10 MB (e.g. a medical certificate).</div>
                         </div>
 
                         <div class="mb-3">
@@ -244,6 +273,28 @@
                         </button>
                         <a href="/my/leaves" class="btn btn-outline-secondary ms-2">Cancel</a>
                     </form>
+                </div>
+
+                <div class="col-lg-4 mt-4 mt-lg-0">
+                    <div class="card o_nbet_public_holidays">
+                        <div class="card-header">
+                            <i class="fa fa-calendar me-1"/> Upcoming public holidays
+                        </div>
+                        <ul class="list-group list-group-flush" t-if="public_holidays">
+                            <li class="list-group-item" t-foreach="public_holidays" t-as="ph">
+                                <div class="fw-semibold" t-esc="ph['name']"/>
+                                <small class="text-muted">
+                                    <t t-esc="ph['date_from'].strftime('%a %d %b %Y')"/>
+                                    <t t-if="ph['date_to']">
+                                        – <t t-esc="ph['date_to'].strftime('%a %d %b %Y')"/>
+                                    </t>
+                                </small>
+                            </li>
+                        </ul>
+                        <div class="card-body text-muted small" t-if="not public_holidays">
+                            No public holidays in the next 90 days.
+                        </div>
+                    </div>
                 </div>
             </div>
         </t>
@@ -289,9 +340,27 @@
                     <th>Duration</th>
                     <td><t t-esc="leave.number_of_days"/> day(s)</td>
                 </tr>
+                <tr t-if="leave.request_unit_half">
+                    <th>Period</th>
+                    <td><t t-esc="'Afternoon' if leave.request_date_from_period == 'pm' else 'Morning'"/></td>
+                </tr>
                 <tr t-if="leave.name">
                     <th>Description</th>
                     <td><t t-esc="leave.name"/></td>
+                </tr>
+                <tr t-if="approver_label">
+                    <th>Approval</th>
+                    <td><t t-esc="approver_label"/></td>
+                </tr>
+                <tr t-if="attachments">
+                    <th>Supporting documents</th>
+                    <td>
+                        <div t-foreach="attachments" t-as="att">
+                            <a t-att-href="att['url']">
+                                <i class="fa fa-paperclip me-1"/><t t-esc="att['name']"/>
+                            </a>
+                        </div>
+                    </td>
                 </tr>
             </table>
 
