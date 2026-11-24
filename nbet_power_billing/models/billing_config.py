@@ -61,10 +61,43 @@ class NbetBillingConfig(models.Model):
 
     @api.model
     def get_config(self, company=None):
-        """Return or create the billing config for the given company."""
+        """Return or create the billing config for the given company.
+
+        Settings > NBET Power Billing (nbet_power_billing_account) stores its
+        values as ir.config_parameter keys. Any field left empty here is
+        filled from those keys so invoicing works whichever screen was used.
+        """
         if company is None:
             company = self.env.company
-        config = self.search([('company_id', '=', company.id)], limit=1)
+        Config = self.sudo()
+        config = Config.search([('company_id', '=', company.id)], limit=1)
         if not config:
-            config = self.create({'company_id': company.id})
-        return config
+            config = Config.create({'company_id': company.id})
+        config._fill_from_settings()
+        return self.browse(config.id)
+
+    def _fill_from_settings(self):
+        """Copy values saved through Settings into empty fields of this record."""
+        ICP = self.env['ir.config_parameter'].sudo()
+        for rec in self:
+            vals = {}
+            for fname, field in rec._fields.items():
+                if field.type != 'many2one' or fname == 'company_id' or rec[fname]:
+                    continue
+                param = ICP.get_param(f'nbet_power_billing.{fname}')
+                if not param or not param.isdigit():
+                    continue
+                target = self.env[field.comodel_name].sudo().browse(int(param)).exists()
+                if target:
+                    vals[fname] = target.id
+            if vals:
+                rec.sudo().write(vals)
+
+    @api.model
+    def action_open_config(self):
+        """Open the current company's configuration instead of a blank form."""
+        config = self.get_config()
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'nbet_power_billing.action_nbet_billing_config')
+        action['res_id'] = config.id
+        return action

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NBET Power Billing – Accounting Integration',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.0.1',
     'summary': 'Accounting configuration and journal entry generation for NBET settlement',
     'description': """
         Extends res.config.settings with NBET-specific accounting configuration:

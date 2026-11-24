@@ -142,6 +142,37 @@ class ResConfigSettings(models.TransientModel):
     )
 
     # ──────────────────────────────────────────────────────────────────────────
+    # Keep Settings and nbet.billing.config in step
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _nbet_config_field_map(self):
+        """Settings field name -> nbet.billing.config field name."""
+        config_fields = self.env['nbet.billing.config']._fields
+        return {
+            fname: fname[len('nbet_'):]
+            for fname in self._fields
+            if fname.startswith('nbet_') and fname[len('nbet_'):] in config_fields
+        }
+
+    @api.model
+    def get_values(self):
+        res = super().get_values()
+        config = self.env['nbet.billing.config'].get_config(self.env.company)
+        for settings_field, config_field in self._nbet_config_field_map().items():
+            value = config[config_field]
+            res[settings_field] = value.id if isinstance(value, models.BaseModel) else value
+        return res
+
+    def set_values(self):
+        super().set_values()
+        config = self.env['nbet.billing.config'].get_config(self.company_id)
+        vals = {}
+        for settings_field, config_field in self._nbet_config_field_map().items():
+            value = self[settings_field]
+            vals[config_field] = value.id if isinstance(value, models.BaseModel) else value
+        config.sudo().write(vals)
+
+    # ──────────────────────────────────────────────────────────────────────────
     # Helpers to read settings as a dict (used by accounting_service)
     # ──────────────────────────────────────────────────────────────────────────
 
